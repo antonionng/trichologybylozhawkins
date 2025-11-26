@@ -49,13 +49,13 @@ export function BlogHighlightsSection() {
                   <h3 className="font-display text-xl text-brand-graphite">{post.title}</h3>
                   <p className="text-sm leading-relaxed text-brand-graphite/70">{post.excerpt}</p>
                 </div>
-                <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-brand-graphite/55">
-                  <span>{formatPublishedDate(post.published)}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs uppercase tracking-[0.3em] text-brand-graphite/55">{formatPublishedDate(post.published)}</span>
                   <Link
                     href={`/blog/${post.slug}`}
-                    className="font-semibold text-brand-graphite hover:text-brand-salmon focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-salmon"
+                    className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-graphite hover:text-brand-salmon focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-salmon"
                   >
-                    Read →
+                    READ →
                   </Link>
                 </div>
               </Surface>
