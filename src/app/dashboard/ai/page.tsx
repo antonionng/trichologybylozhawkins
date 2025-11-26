@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { listGenerations, listPromptTemplates } from "@/server/modules/ai/service";
 import { Surface } from "@/components/layout/Surface";
 import { TemplateForm } from "@/components/dashboard/ai/TemplateForm";

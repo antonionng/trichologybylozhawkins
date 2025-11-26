@@ -1,6 +1,8 @@
 import { prisma } from "@/server/db/client";
 import { Surface } from "@/components/layout/Surface";
 
+export const dynamic = 'force-dynamic';
+
 const INTROS = [
   {
     title: "CRM Signals",

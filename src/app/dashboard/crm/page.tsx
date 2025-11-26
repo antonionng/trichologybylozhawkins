@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { listContacts, getPipelineBoard, listRecentActivities } from "@/server/modules/crm/service";
 import { Surface } from "@/components/layout/Surface";
 

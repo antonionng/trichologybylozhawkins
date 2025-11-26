@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { listCollections, listEntries } from "@/server/modules/cms/service";
 import { Surface } from "@/components/layout/Surface";
 
