@@ -1,7 +1,7 @@
 import IORedis from "ioredis";
 import { getServerEnv } from "@/server/schema";
 
-let redis: IORedis.Redis | null = null;
+let redis: IORedis | null = null;
 
 export const getRedisConnection = () => {
   if (!redis) {
