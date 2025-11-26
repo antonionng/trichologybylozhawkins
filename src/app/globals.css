@@ -3,31 +3,78 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --color-sand: #E8EDF2;
+  --color-ivory: #F5F7FA;
+  --color-salmon: #28577F;
+  --color-sage: #B8C8D8;
+  --color-graphite: #232220;
+  --color-clay: #9DB0C4;
+  --color-mist: #D1D9E3;
+  --shadow-glass: 0 32px 80px -40px rgba(23, 24, 27, 0.35);
+  --shadow-card: 0 18px 48px -24px rgba(23, 24, 27, 0.28);
+  --shadow-soft-top: 0 8px 24px -12px rgba(35, 34, 32, 0.18);
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+html {
+  background-color: var(--color-ivory);
+  scroll-behavior: smooth;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  min-height: 100vh;
+  background-color: var(--color-ivory);
+  color: var(--color-graphite);
+  font-family: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-feature-settings: "liga" 1, "kern" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap, 6rem);
+}
+
+.glass-panel {
+  background-color: rgba(245, 247, 250, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-glass);
+  border-radius: 28px;
+}
+
+.texture-linen {
+  background-image: url("/textures/linen.svg");
+  background-repeat: repeat;
+  background-size: 420px;
+}
+
+.texture-veined {
+  background-image: url("/textures/veined-paper.svg");
+  background-repeat: repeat;
+  background-size: 360px;
+}
+
+.motion-safe\\:parallax-layer {
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  .shadow-soft-top {
+    box-shadow: var(--shadow-soft-top);
   }
 }

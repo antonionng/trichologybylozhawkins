@@ -1,0 +1,33 @@
+[
+  {
+    "id": "93ace027-f9ec-46cf-9556-19447c54969f",
+    "kind": "blog_post",
+    "title": "Placeholder title",
+    "slug": "placeholder-title",
+    "content": "Generated blog_post placeholder content. Configure OPENAI_API_KEY to receive real outputs.",
+    "tone_alignment": 0.6,
+    "quality_score": 0.6,
+    "metadata": {},
+    "created_for": null
+  },
+  {
+    "id": "ab64eb73-f159-43dc-ba2a-7d35c94cba96",
+    "kind": "social_caption",
+    "slug": "ai-social_caption-1762771762636",
+    "content": "Generated social_caption placeholder content. Configure OPENAI_API_KEY to receive real outputs.",
+    "tone_alignment": 0.6,
+    "quality_score": 0.6,
+    "metadata": {},
+    "created_for": null
+  },
+  {
+    "id": "4b0e5b04-c141-4dd2-b566-495c931bf3f1",
+    "kind": "newsletter",
+    "slug": "ai-newsletter-1762771762636",
+    "content": "Generated newsletter placeholder content. Configure OPENAI_API_KEY to receive real outputs.",
+    "tone_alignment": 0.6,
+    "quality_score": 0.6,
+    "metadata": {},
+    "created_for": null
+  }
+]

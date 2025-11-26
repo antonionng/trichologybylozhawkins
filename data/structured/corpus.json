@@ -1,0 +1,12 @@
+[
+  {
+    "id": "f8101498-2a44-4292-9efc-d1b77ce8fb47",
+    "title": "Readme",
+    "slug": "readme",
+    "category": "general",
+    "topics": [],
+    "format": "md",
+    "source_path": "README.md",
+    "content": "## Source Materials\n\nPlace Lorraine Hawkins' curriculum assets (PDF, Markdown, DOCX, or TXT) in this directory before running `npm run ingest`.\n\nRecommended structure:\n\n```\ntrichology/\n└── data/\n    └── source-materials/\n        ├── trichocare-phase-1/\n        │   ├── day-01.md\n        │   ├── day-02.md\n        │   └── slides.pdf\n        └── hair-science-fundamentals/\n            └── module-overview.md\n```\n\nFiles without frontmatter will inherit metadata from their containing folder names. Frontmatter fields that will improve ingestion quality:\n\n```yaml\n---\ntitle: Trichocare Phase 1 – Day 01\nmodule: Anatomy Foundations\ntopics:\n  - scalp health\n  - consultation\naudience: stylist\nformat: slide-notes\n---\n```\n\n\n"
+  }
+]

@@ -1,0 +1,906 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// CRM MODELS
+model Contact {
+  id                 String      @id @default(cuid())
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  firstName          String
+  lastName           String
+  email              String      @unique
+  phone              String?
+  jobTitle           String?
+  lifecycleStage     LifecycleStage @default(LEAD)
+  source             String?
+  ownerId            String?
+  companyId          String?
+  company            Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  deals              Deal[]
+  activities         Activity[]
+  tasks              Task[]
+  audienceMemberships AudienceMember[]
+  orders             Order[]
+  enrollments        Enrollment[]
+  entitlements       Entitlement[]
+  automationRuns     AutomationRun[]
+  generationRequests GeneratedContent[] @relation("GeneratedByContact")
+  emailSends         EmailSend[]
+  courseEnquiries    CourseEnquiry[]
+  chatConversations  ChatConversation[]
+}
+
+model Company {
+  id         String    @id @default(cuid())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  name       String
+  domain     String?
+  industry   String?
+  size       String?
+  notes      String?
+  contacts   Contact[]
+  deals      Deal[]
+  activities Activity[]
+  tasks      Task[]
+}
+
+model DealPipeline {
+  id        String       @id @default(cuid())
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  name      String
+  isDefault Boolean      @default(false)
+  stages    DealStage[]
+  deals     Deal[]
+}
+
+model DealStage {
+  id          String       @id @default(cuid())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  name        String
+  order       Int
+  probability Int          @default(0)
+  pipelineId  String
+  pipeline    DealPipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  deals       Deal[]
+
+  @@unique([pipelineId, order])
+}
+
+model Deal {
+  id           String     @id @default(cuid())
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  name         String
+  description  String?
+  amount       Decimal?   @db.Decimal(14, 2)
+  currency     String?    @default("USD")
+  expectedClose DateTime?
+  stageId      String
+  pipelineId   String
+  contactId    String?
+  companyId    String?
+  ownerId      String?
+  stage        DealStage  @relation(fields: [stageId], references: [id])
+  pipeline     DealPipeline @relation(fields: [pipelineId], references: [id])
+  contact      Contact?   @relation(fields: [contactId], references: [id])
+  company      Company?   @relation(fields: [companyId], references: [id])
+  activities   Activity[]
+  tasks        Task[]
+  order        Order?     @relation("DealOrder")
+  courseEnquiries CourseEnquiry[]
+}
+
+model Activity {
+  id          String      @id @default(cuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  activityAt  DateTime    @default(now())
+  type        ActivityType
+  subject     String
+  body        String?
+  outcome     ActivityOutcome?
+  contactId   String?
+  companyId   String?
+  dealId      String?
+  ownerId     String?
+  contact     Contact?    @relation(fields: [contactId], references: [id])
+  company     Company?    @relation(fields: [companyId], references: [id])
+  deal        Deal?       @relation(fields: [dealId], references: [id])
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  title       String
+  description String?
+  dueAt       DateTime?
+  status      TaskStatus @default(PENDING)
+  priority    TaskPriority @default(NORMAL)
+  contactId   String?
+  companyId   String?
+  dealId      String?
+  ownerId     String?
+  contact     Contact?   @relation(fields: [contactId], references: [id])
+  company     Company?   @relation(fields: [companyId], references: [id])
+  deal        Deal?      @relation(fields: [dealId], references: [id])
+}
+
+/// CMS MODELS
+model Collection {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  name        String
+  description String?
+  slug        String    @unique
+  type        CollectionType @default(DOCUMENT)
+  entries     Entry[]
+}
+
+model Entry {
+  id            String        @id @default(cuid())
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  publishedAt   DateTime?
+  status        EntryStatus   @default(DRAFT)
+  slug          String
+  title         String
+  summary       String?
+  content       Json
+  meta          Json?
+  collectionId  String
+  authorId      String?
+  collection    Collection    @relation(fields: [collectionId], references: [id])
+  versions      EntryVersion[]
+  mediaLinks    EntryMedia[]
+
+  @@unique([collectionId, slug])
+}
+
+model EntryVersion {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  version   Int
+  snapshot  Json
+  entryId   String
+  authorId  String?
+  entry     Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@unique([entryId, version])
+}
+
+model MediaAsset {
+  id          String        @id @default(cuid())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  title       String?
+  description String?
+  path        String        @unique
+  mimeType    String
+  sizeBytes   Int
+  metadata    Json?
+  createdBy   String?
+  entryMedia  EntryMedia[]
+  heroCourses Course[]      @relation("CourseHeroMedia")
+  downloadableAssets DownloadableAsset[] @relation("AssetMedia")
+}
+
+model EntryMedia {
+  id         String     @id @default(cuid())
+  entryId    String
+  mediaId    String
+  fieldKey   String?
+  createdAt  DateTime   @default(now())
+  entry      Entry      @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  media      MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([entryId, mediaId, fieldKey])
+}
+
+/// EDUCATION & COMMERCE MODELS
+model Course {
+  id              String             @id @default(cuid())
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  slug            String             @unique
+  title           String
+  subtitle        String?
+  description     String?
+  level           CourseLevel        @default(GENERAL)
+  category        String?
+  durationMinutes Int?
+  heroMediaId     String?
+  status          CourseStatus       @default(DRAFT)
+  enrollmentType  EnrollmentType     @default(ON_DEMAND)
+  previewVideoUrl String?
+  meta            Json?
+  heroMedia       MediaAsset?        @relation("CourseHeroMedia", fields: [heroMediaId], references: [id])
+  modules         CourseModule[]
+  sessions        CourseSession[]
+  pricing         CoursePrice[]
+  downloads       DownloadableAsset[]
+  enrollments     Enrollment[]
+  orderItems      OrderItem[]
+  enquiries       CourseEnquiry[]
+  entitlements    Entitlement[]
+}
+
+model CourseModule {
+  id          String        @id @default(cuid())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  title       String
+  description String?
+  position    Int           @default(0)
+  courseId    String
+  content     Json?
+  course      Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons     CourseLesson[]
+
+  @@unique([courseId, position])
+}
+
+model CourseLesson {
+  id          String       @id @default(cuid())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  moduleId    String
+  title       String
+  description String?
+  position    Int          @default(0)
+  videoUrl    String?
+  downloadableId String?
+  content     Json?
+  module      CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  downloadable DownloadableAsset? @relation(fields: [downloadableId], references: [id])
+
+  @@unique([moduleId, position])
+}
+
+model CourseSession {
+  id           String        @id @default(cuid())
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  courseId     String
+  cohortName   String?
+  startDate    DateTime?
+  endDate      DateTime?
+  capacity     Int?
+  seatsTaken   Int           @default(0)
+  status       SessionStatus @default(UPCOMING)
+  enrollmentWindowStart DateTime?
+  enrollmentWindowEnd   DateTime?
+  course       Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrollments  Enrollment[]
+
+  @@index([courseId, status])
+}
+
+model CoursePrice {
+  id              String           @id @default(cuid())
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  courseId        String
+  amount          Decimal          @db.Decimal(14, 2)
+  currency        String           @default("USD")
+  billingType     BillingType      @default(ONE_TIME)
+  billingCycle    BillingCycle?
+  isPrimary       Boolean          @default(false)
+  priceExternalId String?
+  course          Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  orderItems      OrderItem[]
+
+  @@index([courseId, isPrimary])
+}
+
+model CourseEnquiry {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  courseId    String
+  contactId   String?
+  email       String
+  name        String
+  phone       String?
+  message     String?
+  source      String?
+  consentToMarketing Boolean @default(false)
+  status      EnquiryStatus @default(NEW)
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  contact     Contact?  @relation(fields: [contactId], references: [id])
+  dealId      String?
+  deal        Deal?     @relation(fields: [dealId], references: [id])
+}
+
+model Enrollment {
+  id           String        @id @default(cuid())
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  contactId    String
+  courseId     String
+  sessionId    String?
+  orderId      String?
+  status       EnrollmentStatus @default(ACTIVE)
+  activatedAt  DateTime?
+  expiresAt    DateTime?
+  notes        String?
+  contact      Contact       @relation(fields: [contactId], references: [id])
+  course       Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  session      CourseSession? @relation(fields: [sessionId], references: [id])
+  order        Order?        @relation(fields: [orderId], references: [id])
+  entitlements Entitlement[]
+}
+
+model DownloadableAsset {
+  id          String      @id @default(cuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  courseId    String
+  mediaId     String?
+  title       String
+  description String?
+  filePath    String?
+  mimeType    String?
+  checksum    String?
+  course      Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  media       MediaAsset? @relation("AssetMedia", fields: [mediaId], references: [id])
+  lessons     CourseLesson[]
+  entitlements Entitlement[]
+}
+
+model Order {
+  id             String        @id @default(cuid())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  contactId      String
+  dealId         String?       @unique
+  totalAmount    Decimal       @db.Decimal(14, 2)
+  currency       String        @default("USD")
+  status         OrderStatus   @default(PENDING)
+  paymentProvider PaymentProvider @default(STRIPE)
+  providerSessionId String?
+  providerPaymentIntentId String?
+  metadata       Json?
+  contact        Contact       @relation(fields: [contactId], references: [id])
+  deal           Deal?         @relation("DealOrder", fields: [dealId], references: [id])
+  items          OrderItem[]
+  enrollments    Enrollment[]
+  payments       PaymentEvent[]
+  entitlements   Entitlement[]
+}
+
+model OrderItem {
+  id          String      @id @default(cuid())
+  createdAt   DateTime    @default(now())
+  orderId     String
+  courseId    String?
+  quantity    Int         @default(1)
+  unitAmount  Decimal     @db.Decimal(14, 2)
+  currency    String      @default("USD")
+  metadata    Json?
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  course      Course?     @relation(fields: [courseId], references: [id])
+  priceId     String?
+  price       CoursePrice? @relation(fields: [priceId], references: [id])
+}
+
+model PaymentEvent {
+  id          String      @id @default(cuid())
+  createdAt   DateTime    @default(now())
+  orderId     String
+  type        PaymentEventType
+  payload     Json?
+  occurredAt  DateTime    @default(now())
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Entitlement {
+  id            String            @id @default(cuid())
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  contactId     String
+  courseId      String?
+  downloadId    String?
+  type          EntitlementType   @default(COURSE_ACCESS)
+  resourceUri   String?
+  startsAt      DateTime?         @default(now())
+  expiresAt     DateTime?
+  source        EntitlementSource @default(ORDER)
+  orderId       String?
+  enrollmentId  String?
+  contact       Contact           @relation(fields: [contactId], references: [id])
+  course        Course?           @relation(fields: [courseId], references: [id])
+  download      DownloadableAsset? @relation(fields: [downloadId], references: [id])
+  order         Order?            @relation(fields: [orderId], references: [id])
+  enrollment    Enrollment?       @relation(fields: [enrollmentId], references: [id])
+}
+
+/// EMAIL MARKETING MODELS
+model Audience {
+  id          String           @id @default(cuid())
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  name        String
+  description String?
+  type        AudienceType     @default(STANDARD)
+  criteria    Json?
+  members     AudienceMember[]
+  campaigns   EmailCampaign[]
+  automations Automation[]
+}
+
+model AudienceMember {
+  id          String          @id @default(cuid())
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  audienceId  String
+  contactId   String?
+  email       String
+  firstName   String?
+  lastName    String?
+  status      AudienceMemberStatus @default(SUBSCRIBED)
+  subscribedAt DateTime?      @default(now())
+  unsubscribedAt DateTime?
+  audience    Audience        @relation(fields: [audienceId], references: [id], onDelete: Cascade)
+  contact     Contact?        @relation(fields: [contactId], references: [id])
+  sends       EmailSend[]
+  automationRuns AutomationRun[]
+
+  @@unique([audienceId, email])
+}
+
+model EmailCampaign {
+  id           String            @id @default(cuid())
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  audienceId   String
+  name         String
+  subject      String
+  fromName     String?
+  fromEmail    String?
+  replyTo      String?
+  status       CampaignStatus    @default(DRAFT)
+  scheduledFor DateTime?
+  sentAt       DateTime?
+  preheader    String?
+  contentHtml  String?
+  contentText  String?
+  settings     Json?
+  audience     Audience          @relation(fields: [audienceId], references: [id])
+  sends        EmailSend[]
+}
+
+model EmailSend {
+  id             String         @id @default(cuid())
+  createdAt      DateTime       @default(now())
+  campaignId     String
+  audienceMemberId String?
+  contactId      String?
+  email          String
+  status         EmailSendStatus @default(PENDING)
+  sentAt         DateTime?
+  openedAt       DateTime?
+  clickedAt      DateTime?
+  bouncedAt      DateTime?
+  bounceReason   String?
+  metadata       Json?
+  campaign       EmailCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  audienceMember AudienceMember? @relation(fields: [audienceMemberId], references: [id])
+  contact        Contact?        @relation(fields: [contactId], references: [id])
+
+  @@unique([campaignId, audienceMemberId])
+}
+
+model Automation {
+  id          String          @id @default(cuid())
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  name        String
+  status      AutomationStatus @default(DRAFT)
+  audienceId  String?
+  triggerType AutomationTriggerType
+  triggerConfig Json
+  audience    Audience?       @relation(fields: [audienceId], references: [id])
+  steps       AutomationStep[]
+  runs        AutomationRun[]
+}
+
+model AutomationStep {
+  id          String            @id @default(cuid())
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  automationId String
+  type        AutomationStepType
+  name        String
+  position    Int
+  config      Json
+  automation  Automation        @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  events      AutomationEvent[]
+
+  @@unique([automationId, position])
+}
+
+model AutomationRun {
+  id           String           @id @default(cuid())
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  automationId String
+  contactId    String?
+  audienceMemberId String?
+  status       AutomationRunStatus @default(PENDING)
+  startedAt    DateTime?
+  completedAt  DateTime?
+  automation   Automation       @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  contact      Contact?         @relation(fields: [contactId], references: [id])
+  audienceMember AudienceMember? @relation(fields: [audienceMemberId], references: [id])
+  events       AutomationEvent[]
+}
+
+model AutomationEvent {
+  id            String          @id @default(cuid())
+  createdAt     DateTime        @default(now())
+  automationRunId String
+  stepId        String?
+  status        AutomationEventStatus @default(PENDING)
+  occurredAt    DateTime?       @default(now())
+  payload       Json?
+  errorMessage  String?
+  run           AutomationRun   @relation(fields: [automationRunId], references: [id], onDelete: Cascade)
+  step          AutomationStep? @relation(fields: [stepId], references: [id])
+}
+
+/// AI CONTENT ENGINE MODELS
+model PromptTemplate {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  name           String
+  description    String?
+  useCase        String?
+  inputSchema    Json?
+  outputSchema   Json?
+  template       String
+  temperature    Float?   @default(0.7)
+  provider       AIProvider @default(OPENAI)
+  defaultMetadata Json?
+  generatedContents GeneratedContent[]
+}
+
+model GeneratedContent {
+  id             String          @id @default(cuid())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  status         GenerationStatus @default(PENDING)
+  templateId     String?
+  requestedBy    String?
+  contactId      String?
+  input          Json?
+  output         Json?
+  usage          Json?
+  error          String?
+  template       PromptTemplate? @relation(fields: [templateId], references: [id])
+  contact        Contact?        @relation("GeneratedByContact", fields: [contactId], references: [id])
+  feedback       GenerationFeedback[]
+}
+
+model GenerationFeedback {
+  id              String      @id @default(cuid())
+  createdAt       DateTime    @default(now())
+  generationId    String
+  rating          Int?
+  comment         String?
+  submittedBy     String?
+  generation      GeneratedContent @relation(fields: [generationId], references: [id], onDelete: Cascade)
+}
+
+/// ENUMS
+enum LifecycleStage {
+  LEAD
+  MARKETING_QUALIFIED_LEAD
+  SALES_QUALIFIED_LEAD
+  CUSTOMER
+  EVANGELIST
+  OTHER
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  MEETING
+  TASK
+  NOTE
+  OTHER
+}
+
+enum ActivityOutcome {
+  COMPLETED
+  NO_SHOW
+  RESCHEDULED
+  LEFT_MESSAGE
+  NEEDS_FOLLOW_UP
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum CollectionType {
+  DOCUMENT
+  MEDIA
+  PAGE
+  SNIPPET
+}
+
+enum EntryStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum CourseLevel {
+  GENERAL
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  PROFESSIONAL
+}
+
+enum CourseStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  RETIRED
+}
+
+enum EnrollmentType {
+  ON_DEMAND
+  COHORT
+  LIVE
+  HYBRID
+}
+
+enum SessionStatus {
+  UPCOMING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum BillingType {
+  ONE_TIME
+  SUBSCRIPTION
+}
+
+enum BillingCycle {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum EnquiryStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  PENDING
+  COMPLETED
+  CANCELLED
+  SUSPENDED
+}
+
+enum OrderStatus {
+  PENDING
+  AWAITING_PAYMENT
+  PAID
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentProvider {
+  STRIPE
+  MANUAL
+  OFFLINE
+}
+
+enum PaymentEventType {
+  PAYMENT_INITIATED
+  PAYMENT_SUCCEEDED
+  PAYMENT_FAILED
+  REFUND_INITIATED
+  REFUND_SUCCEEDED
+}
+
+enum EntitlementType {
+  COURSE_ACCESS
+  DOWNLOAD_ACCESS
+  COHORT_ACCESS
+  BONUS_MATERIAL
+}
+
+enum EntitlementSource {
+  ORDER
+  MANUAL
+  AUTOMATION
+}
+
+enum AudienceType {
+  STANDARD
+  DYNAMIC
+}
+
+enum AudienceMemberStatus {
+  SUBSCRIBED
+  UNSUBSCRIBED
+  BOUNCED
+  COMPLAINED
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  CANCELLED
+}
+
+enum EmailSendStatus {
+  PENDING
+  PROCESSING
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  BOUNCED
+  FAILED
+}
+
+enum AutomationStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum AutomationTriggerType {
+  MANUAL
+  SCHEDULE
+  EVENT
+  SEGMENT
+}
+
+enum AutomationStepType {
+  WAIT
+  SEND_EMAIL
+  BRANCH
+  UPDATE_FIELD
+  CREATE_TASK
+  NOTIFY
+  GENERATE_CONTENT
+}
+
+enum AutomationRunStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum AutomationEventStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  SKIPPED
+}
+
+enum AIProvider {
+  OPENAI
+  AZURE_OPENAI
+  ANTHROPIC
+  CUSTOM
+}
+
+enum GenerationStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+/// CHAT ASSISTANT MODELS
+model ChatConversation {
+  id          String      @id @default(cuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  contactId   String?
+  sessionId   String?
+  title       String?
+  metadata    Json?
+  status      ChatStatus  @default(ACTIVE)
+  contact     Contact?    @relation(fields: [contactId], references: [id])
+  messages    ChatMessage[]
+  actions     ChatAction[]
+
+  @@index([contactId])
+  @@index([sessionId])
+}
+
+model ChatMessage {
+  id             String           @id @default(cuid())
+  createdAt      DateTime         @default(now())
+  conversationId String
+  role           ChatRole
+  content        String
+  metadata       Json?
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+model ChatAction {
+  id             String           @id @default(cuid())
+  createdAt      DateTime         @default(now())
+  conversationId String
+  actionType     ChatActionType
+  resourceType   String?
+  resourceId     String?
+  status         ChatActionStatus @default(PENDING)
+  payload        Json?
+  result         Json?
+  error          String?
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([resourceType, resourceId])
+}
+
+enum ChatStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum ChatActionType {
+  CREATE_CONTACT
+  UPDATE_CONTACT
+  CREATE_ENQUIRY
+  CREATE_BOOKING
+  FETCH_COURSES
+  LOG_ACTIVITY
+}
+
+enum ChatActionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
