@@ -78,7 +78,7 @@ export const videoLessons: VideoLesson[] = [
       "Quick reference cheat sheet included",
     ],
     image: {
-      src: "/images/video-ingredient-placeholder.png",
+      src: "/images/video-ingredients-placeholder.png",
       alt: "Video lesson placeholder artwork for Understanding Scalp Care Ingredients.",
     },
     slug: "ingredient-science-playbook",
