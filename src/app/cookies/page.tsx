@@ -2,6 +2,7 @@ import { PageSection } from "@/components/layout/PageSection";
 import { Container } from "@/components/layout/Container";
 import { SectionHeading } from "@/components/typography/SectionHeading";
 import { Surface } from "@/components/layout/Surface";
+import { siteContact, siteContactLinks } from "@/lib/siteContact";
 
 export default function Cookies() {
   return (
@@ -29,7 +30,7 @@ export default function Cookies() {
                 <h3 className="font-semibold text-brand-graphite">Essential Cookies</h3>
                 <p>These cookies are necessary for the website to function properly. They enable basic features like:</p>
                 <ul className="list-disc pl-6 space-y-1">
-                  <li>Maintaining your session when you're logged in</li>
+                  <li>Maintaining your session when you&apos;re logged in</li>
                   <li>Remembering items in your cart</li>
                   <li>Ensuring secure connections</li>
                 </ul>
@@ -80,8 +81,8 @@ export default function Cookies() {
               <h2 className="font-display text-xl text-brand-graphite">Questions?</h2>
               <p>If you have questions about how we use cookies, contact us at:</p>
               <p>
-                <a href="mailto:hello@lorrainehawkins.com" className="underline decoration-brand-salmon/40 underline-offset-4">
-                  hello@lorrainehawkins.com
+                <a href={siteContactLinks.mailto} className="underline decoration-brand-salmon/40 underline-offset-4">
+                  {siteContact.email}
                 </a>
               </p>
             </div>

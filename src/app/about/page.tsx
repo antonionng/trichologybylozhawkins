@@ -1,264 +1,151 @@
 import Image from "next/image";
-import { PageSection } from "@/components/layout/PageSection";
 import { Container } from "@/components/layout/Container";
-import { SectionHeading } from "@/components/typography/SectionHeading";
-import { Surface } from "@/components/layout/Surface";
 import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { ButtonLink } from "@/components/ui/Button";
 import { photography } from "@/lib/visualAssets";
 
 const aboutMetrics = [
-  { value: "2,400+", label: "scalp analyses completed" },
-  { value: "38", label: "global salon partners" },
-  { value: "12", label: "published education modules" },
+  { value: "18+", label: "Years practice" },
+  { value: "2,400+", label: "Consultations" },
+  { value: "Video & live", label: "Formats" },
 ];
 
 const careerMilestones = [
-  {
-    year: "2007",
-    title: "Starting out",
-    description:
-      "Qualified from the Institute of Trichologists and began working with dermatologists in London clinics, focusing on complex scalp conditions.",
-  },
-  {
-    year: "2013",
-    title: "Teaching salons",
-    description:
-      "Started training salon teams on scalp health assessments and treatments, helping them add valuable services their clients appreciate.",
-  },
-  {
-    year: "2018",
-    title: "Developing courses",
-    description:
-      "Created comprehensive training programs combining hands-on workshops, video lessons, and ongoing support for practitioners.",
-  },
-  {
-    year: "2024",
-    title: "Expanding globally",
-    description:
-      "Now advising brands and wellness businesses while running a private clinic and teaching professionals worldwide.",
-  },
+  { year: "2007", title: "Clinical foundations", description: "Qualified from the Institute of Trichologists. Began working alongside dermatologists in London clinics, focusing on complex scalp conditions and diagnostics.", color: "bg-rose-400" },
+  { year: "2013", title: "Training professionals", description: "Started teaching salon teams how to assess scalp health, deliver treatments, and have supportive conversations with clients.", color: "bg-amber-400" },
+  { year: "2018", title: "Building education programs", description: "Created structured training programs — hands-on workshops and online courses — making trichology education accessible to more practitioners.", color: "bg-emerald-400" },
+  { year: "2025", title: "Video education", description: "Launched condition-specific video training modules for hair professionals. Evidence-based clinical education accessible to practitioners everywhere.", color: "bg-sky-400" },
 ];
 
 const philosophyPillars = [
-  {
-    title: "Science-based approach",
-    description:
-      "Every treatment and recommendation is backed by research and proven methods. What works in the real world matters most.",
-  },
-  {
-    title: "Compassionate care",
-    description:
-      "Scalp and hair concerns are personal. Clients and students receive supportive, judgment-free guidance they can actually use.",
-  },
-  {
-    title: "Practical education",
-    description:
-      "Training focuses on skills you can apply immediately. Learn techniques that help your clients and grow your business.",
-  },
-];
-
-const mediaFeatures = [
-  {
-    outlet: "The Trichology Journal",
-    highlight: "Featured for innovative training methods that combine technology with hands-on learning.",
-  },
-  {
-    outlet: "Salon Business Weekly",
-    highlight: "Recognized as a leading educator helping salons add profitable scalp health services.",
-  },
-  {
-    outlet: "Wellness Futures Summit",
-    highlight: "Keynote speaker on effective scalp treatments and professional consultation techniques.",
-  },
-];
-
-const advisoryCollective = [
-  {
-    name: "Elaine Brooks, Cosmetic Scientist",
-    focus: "Advises on ingredient selection and product formulations that work for all hair types and textures.",
-  },
-  {
-    name: "Dr. Samir Patel, Dermatologist",
-    focus: "Medical referral partner for cases requiring specialist dermatological treatment and care.",
-  },
-  {
-    name: "Aisha Morgan, Salon Business Consultant",
-    focus: "Helps salons implement new scalp services, from pricing to marketing and staff training.",
-  },
+  { num: "01", title: "Evidence-based", description: "Every recommendation grounded in research and clinical experience. Lorraine won't tell you something works unless she's seen it work.", accent: "border-rose-200" },
+  { num: "02", title: "Honest and clear", description: "No miracle cures, no jargon. What's happening, what helps, what doesn't — in language anyone can understand.", accent: "border-amber-200" },
+  { num: "03", title: "Practical", description: "Education you can use immediately. Whether managing your own concerns or building a trichology practice.", accent: "border-emerald-200" },
 ];
 
 export default function About() {
   return (
-    <main>
-      <PageSection tone="sand" texture="linen" collage={{ parallax: true }}>
-        <Container className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-center">
-          <div className="space-y-8">
-            <SectionHeading
-              eyebrow="About"
-              title="Lorraine Hawkins"
-              description="Trichologist and educator helping people understand and improve their scalp health with science-backed methods."
-            />
-            <div className="space-y-4 text-base leading-relaxed text-brand-graphite/78">
-              <p>
-                For nearly two decades, Lorraine has specialized in understanding scalp health. She helps individuals restore their hair and scalp while training salon professionals to do the same.
+    <main className="min-h-screen">
+      {/* ── Hero ─────────────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-brand-sand/60 via-brand-linen/20 to-white">
+        <div className="absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-brand-salmon/[0.04]" />
+
+        <Container className="relative pb-10 pt-14 sm:pb-14 sm:pt-20">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start">
+            <div className="space-y-5">
+              <span className="inline-block rounded-full bg-brand-salmon/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.4em] text-brand-salmon">About</span>
+              <h1 className="font-display text-3xl leading-[1.15] text-brand-graphite sm:text-[2.5rem]">Lorraine Hawkins</h1>
+              <p className="text-base leading-relaxed text-brand-graphite/70">
+                Clinical trichologist and educator. Lorraine trains hair professionals through video courses, structured programs, and hands-on workshops — all built on 18 years of clinical experience.
               </p>
-              <p>
-                Today she runs a private clinic, teaches courses globally, and advises brands on effective, evidence-based scalp care.
-              </p>
+              <div className="space-y-3 text-sm leading-relaxed text-brand-graphite/60">
+                <p>For nearly two decades, Lorraine has worked in clinical practice and professional education. She creates condition-specific video training, structured courses, and delivers hands-on workshops for trichologists, stylists, and salon teams.</p>
+                <p>Her approach: explain what&rsquo;s happening clearly, recommend what&rsquo;s supported by evidence, and be honest about what she doesn&rsquo;t know.</p>
+              </div>
+              <div className="flex flex-wrap gap-3 pt-1">
+                <ButtonLink href="/education" variant="secondary" size="sm">Browse Training</ButtonLink>
+                <ButtonLink href="/education/videos" variant="ghost" size="sm">Video Courses</ButtonLink>
+              </div>
+              <div className="grid grid-cols-3 gap-3 pt-2">
+                {aboutMetrics.map((m) => (
+                  <div key={m.label} className="rounded-xl border border-brand-graphite/8 bg-white p-3 text-center">
+                    <p className="font-display text-lg text-brand-graphite">{m.value}</p>
+                    <p className="text-[10px] uppercase tracking-[0.15em] text-brand-graphite/40">{m.label}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-4">
-              <ButtonLink href="/education" variant="secondary" size="lg">
-                View courses
-              </ButtonLink>
-              <ButtonLink href="/services" variant="ghost" size="lg">
-                Book consultation
-              </ButtonLink>
+            <div className="space-y-4">
+              <div className="overflow-hidden rounded-2xl">
+                <Image
+                  src={photography.hero.src}
+                  alt="Lorraine Hawkins — clinical trichologist and educator."
+                  width={600} height={780}
+                  className="h-full w-full object-cover saturate-[0.92] contrast-[1.05]"
+                  priority
+                />
+              </div>
+              <div className="rounded-xl border border-brand-graphite/8 bg-white p-4 space-y-2">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-graphite/45">Credentials</p>
+                <ul className="space-y-1.5 text-sm text-brand-graphite/65">
+                  {["Fellow, Institute of Trichologists (FIT)", "Certified Nutritional Practitioner", "18+ years clinical trichology & education"].map((c) => (
+                    <li key={c} className="flex gap-2">
+                      <span className="mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-salmon" />
+                      <span>{c}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              {aboutMetrics.map((metric) => (
-                <Surface
-                  key={metric.label}
-                  variant="subtle"
-                  padding="lg"
-                  className="flex flex-col gap-1 text-brand-graphite"
-                >
-                  <span className="font-display text-2xl">{metric.value}</span>
-                  <span className="text-sm uppercase tracking-[0.28em] text-brand-graphite/65">{metric.label}</span>
-                </Surface>
+          </div>
+        </Container>
+      </section>
+
+      {/* ── Education mission ─────────────────────────────────────────── */}
+      <section className="py-8 sm:py-10">
+        <Container>
+          <div className="mb-6 text-center">
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-brand-graphite/35">What Lorraine does</span>
+            <h2 className="mt-1 font-display text-2xl text-brand-graphite">Education mission</h2>
+          </div>
+          <div className="mx-auto max-w-2xl">
+            <div className="flex flex-col gap-3 rounded-2xl border border-brand-sage/20 bg-white p-5 shadow-sm">
+              <span className="inline-flex self-start rounded-full bg-brand-sage/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-brand-graphite/55">Professional education</span>
+              <h3 className="font-display text-lg text-brand-graphite">Training hair professionals</h3>
+              <p className="flex-1 text-sm leading-relaxed text-brand-graphite/60">Video courses, structured training programs, and hands-on workshops for trichologists, stylists, and salon teams. Clinical skills and consultation confidence built on 18 years of practice.</p>
+              <ButtonLink href="/education" variant="ghost" size="sm">Training programs &rarr;</ButtonLink>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* ── Timeline ─────────────────────────────────────────────────── */}
+      <section className="border-y border-brand-graphite/6 bg-gradient-to-br from-brand-mist/15 via-brand-sand/25 to-white py-10 sm:py-12">
+        <Container>
+          <div className="mb-8 text-center">
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-brand-graphite/35">Journey</span>
+            <h2 className="mt-1 font-display text-2xl text-brand-graphite">How this practice evolved</h2>
+          </div>
+          <div className="relative mx-auto max-w-3xl">
+            {/* Gradient connecting line */}
+            <div className="absolute left-[19px] top-0 h-full w-px bg-gradient-to-b from-rose-200 via-amber-200 to-sky-200" aria-hidden />
+            <div className="space-y-5">
+              {careerMilestones.map((m) => (
+                <div key={m.year} className="relative flex gap-5 pl-2">
+                  <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center">
+                    <span className={`h-3 w-3 rounded-full ${m.color} shadow-sm`} />
+                  </div>
+                  <div className="rounded-xl border border-brand-graphite/8 bg-white p-4 flex-1 shadow-sm">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-brand-graphite/40">{m.year}</p>
+                    <h3 className="mt-0.5 font-display text-base text-brand-graphite">{m.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-brand-graphite/60">{m.description}</p>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
-          <div className="space-y-6">
-            <Surface variant="glass" padding="none" className="overflow-hidden rounded-glass-lg">
-              <Image
-                src={photography.hero.src}
-                alt={photography.hero.alt}
-                width={600}
-                height={780}
-                className="h-full w-full object-cover saturate-[0.92] contrast-[1.05]"
-                priority
-              />
-            </Surface>
-            <Surface variant="card" padding="lg" className="space-y-3 text-sm leading-relaxed text-brand-graphite/78">
-              <p className="font-semibold text-brand-graphite">Credentials snapshot</p>
-              <ul className="space-y-2">
-                <li className="flex gap-2">
-                  <span className="mt-[6px] inline-block h-1.5 w-1.5 flex-none rounded-full bg-brand-salmon" />
-                  <span>Fellow, Institute of Trichologists (FIT)</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-[6px] inline-block h-1.5 w-1.5 flex-none rounded-full bg-brand-salmon" />
-                  <span>Certified Nutritional Practitioner & stress management facilitator</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-[6px] inline-block h-1.5 w-1.5 flex-none rounded-full bg-brand-salmon" />
-                  <span>Former Head of Education at Shoreline Wellness Collective</span>
-                </li>
-              </ul>
-            </Surface>
-          </div>
         </Container>
-      </PageSection>
+      </section>
 
-      <PageSection tone="transparent">
-        <Container className="space-y-10">
-          <SectionHeading
-            eyebrow="Journey"
-            title="How this practice evolved"
-            description="Nearly two decades of learning, growing, and refining an approach that truly helps people."
-            align="center"
-          />
-          <div className="relative mx-auto max-w-4xl space-y-6 border-l border-brand-graphite/12 pl-8">
-            {careerMilestones.map((milestone) => (
-              <div key={milestone.year} className="relative space-y-2 pl-6">
-                <span
-                  className="absolute -left-[15px] top-1 inline-flex h-3 w-3 rounded-full bg-brand-salmon"
-                  aria-hidden
-                />
-                <p className="text-xs uppercase tracking-[0.3em] text-brand-graphite/55">{milestone.year}</p>
-                <h3 className="font-display text-xl text-brand-graphite">{milestone.title}</h3>
-                <p className="text-sm leading-relaxed text-brand-graphite/75">{milestone.description}</p>
+      {/* ── Philosophy pillars ────────────────────────────────────────── */}
+      <section className="py-8 sm:py-10">
+        <Container>
+          <div className="mb-6 text-center">
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-brand-graphite/35">Approach</span>
+            <h2 className="mt-1 font-display text-2xl text-brand-graphite">How Lorraine works</h2>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            {philosophyPillars.map((p) => (
+              <div key={p.title} className={`flex flex-col gap-3 rounded-2xl border-t-4 ${p.accent} border border-brand-graphite/8 bg-white p-5 shadow-sm`}>
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-graphite/5 text-xs font-bold text-brand-graphite/50">{p.num}</span>
+                <h3 className="font-display text-lg text-brand-graphite">{p.title}</h3>
+                <p className="text-sm leading-relaxed text-brand-graphite/60">{p.description}</p>
               </div>
             ))}
           </div>
         </Container>
-      </PageSection>
-
-      <PageSection tone="mist" texture="veined">
-        <Container className="space-y-10">
-          <SectionHeading
-            eyebrow="Approach"
-            title="How Lorraine works"
-            description="Effective scalp care combines scientific knowledge with genuine understanding of what clients need."
-            align="center"
-          />
-          <div className="grid gap-6 lg:grid-cols-3">
-            {philosophyPillars.map((pillar) => (
-              <Surface key={pillar.title} variant="card" padding="md" className="space-y-3">
-                <h3 className="font-display text-xl text-brand-graphite">{pillar.title}</h3>
-                <p className="text-sm leading-relaxed text-brand-graphite/75">{pillar.description}</p>
-              </Surface>
-            ))}
-          </div>
-        </Container>
-      </PageSection>
-
-      <PageSection tone="transparent">
-        <Container className="space-y-10">
-          <SectionHeading
-            eyebrow="Recognition"
-            title="Featured insights and speaking"
-            description="Lorraine shares expertise through industry events, publications, and professional forums."
-            align="center"
-          />
-          <div className="grid gap-5 md:grid-cols-3">
-            {mediaFeatures.map((feature) => (
-              <Surface key={feature.outlet} variant="card" padding="md" className="space-y-3">
-                <p className="text-xs uppercase tracking-[0.3em] text-brand-graphite/55">{feature.outlet}</p>
-                <p className="text-sm leading-relaxed text-brand-graphite/75">{feature.highlight}</p>
-              </Surface>
-            ))}
-          </div>
-        </Container>
-      </PageSection>
-
-      <PageSection tone="sand" texture="linen">
-        <Container className="space-y-10">
-          <SectionHeading
-            eyebrow="Network"
-            title="Expert collaborators"
-            description="Lorraine works with trusted specialists to provide comprehensive care when clients need additional support."
-            align="center"
-          />
-          <div className="grid gap-6 lg:grid-cols-3">
-            {advisoryCollective.map((advisor) => (
-              <Surface
-                key={advisor.name}
-                variant="card"
-                padding="md"
-                className="space-y-3 text-sm leading-relaxed text-brand-graphite/78"
-              >
-                <p className="font-display text-xl text-brand-graphite">{advisor.name}</p>
-                <p>{advisor.focus}</p>
-              </Surface>
-            ))}
-          </div>
-          <Surface
-            variant="glass"
-            padding="lg"
-            className="mx-auto flex flex-col gap-4 rounded-glass-lg border border-white/40 bg-white/80 backdrop-blur-sm text-base leading-relaxed text-brand-graphite/78 lg:w-3/4"
-          >
-            <p>
-              This network ensures clients get comprehensive support, whether they need specialist medical care, nutrition guidance, or business development help.
-            </p>
-            <ButtonLink href="/contact" variant="secondary" size="md" className="w-fit">
-              Get in touch
-            </ButtonLink>
-          </Surface>
-        </Container>
-      </PageSection>
+      </section>
 
       <TestimonialsSection />
       <ConsultationCta />

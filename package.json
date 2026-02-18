@@ -4,15 +4,24 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "worker": "npx tsx src/server/jobs/worker.ts",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "seed:user": "npx tsx scripts/seed-user.ts",
     "test": "vitest",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "ingest:extract": "npx tsx scripts/ingest/extract-content.ts",
+    "ingest:structure": "npx tsx scripts/ingest/structure-courses.ts",
+    "ingest": "npm run ingest:extract && npm run ingest:structure"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^5.19.1",
     "@supabase/supabase-js": "^2.45.4",
     "@tailwindcss/typography": "^0.5.19",
@@ -24,17 +33,23 @@
     "openai": "^4.56.0",
     "react": "^18",
     "react-dom": "^18",
+    "react-hook-form": "^7.68.0",
     "react-markdown": "^10.1.0",
+    "resend": "^4.3.0",
     "remark-gfm": "^4.0.1",
     "stripe": "^16.10.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
+    "mammoth": "^1.11.0",
+    "officeparser": "^6.0.1",
+    "pdf-parse": "^2.4.5",
     "postcss": "^8",
     "prisma": "^5.19.1",
     "tailwindcss": "^3.4.1",

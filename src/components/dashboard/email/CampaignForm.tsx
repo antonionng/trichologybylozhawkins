@@ -17,7 +17,7 @@ export function CampaignForm({ audiences, onCreated }: CampaignFormProps) {
   const [audienceId, setAudienceId] = useState(audiences[0]?.id ?? "");
   const [name, setName] = useState("");
   const [subject, setSubject] = useState("");
-  const [fromName, setFromName] = useState("Bunny at Home Academy");
+  const [fromName, setFromName] = useState("Lorraine Hawkins Studio");
   const [scheduledFor, setScheduledFor] = useState("");
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
@@ -77,7 +77,7 @@ export function CampaignForm({ audiences, onCreated }: CampaignFormProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: `Write a premium, concise subject line for the "${name || "Bunny at Home"}" course announcement aimed at ${audiences.find((a) => a.id === audienceId)?.name ?? "our learners"}. Return only the subject line.`,
+          prompt: `Write a premium, concise subject line for the "${name || "Lorraine Hawkins"}" course announcement aimed at ${audiences.find((a) => a.id === audienceId)?.name ?? "our learners"}. Return only the subject line.`,
         }),
       });
       if (!response.ok) {

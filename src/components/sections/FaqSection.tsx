@@ -14,17 +14,17 @@ export function FaqSection() {
 
   return (
     <PageSection tone="mist" texture="linen">
-      <Container className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+      <Container className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
         <div className="space-y-6">
           <SectionHeading
             eyebrow="FAQ"
-            title="Common questions answered"
-            description="Clear, honest answers to help you decide if Lorraine's courses and services are right for you."
+            title="Common questions"
+            description="Honest answers to help you decide if Lorraine's courses and services are right for you."
           />
           <Surface variant="card" padding="lg" className="space-y-3 text-sm text-brand-graphite/75">
-            <p className="font-semibold text-brand-graphite">Need more information?</p>
+            <p className="font-semibold text-brand-graphite">Still have questions?</p>
             <p>
-              Contact us for a personalized consultation. We'll answer your questions and help you choose the right service or course.
+              Get in touch and Lorraine or her team will help you find the right course, service, or next step.
             </p>
           </Surface>
         </div>
@@ -41,12 +41,12 @@ export function FaqSection() {
               >
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between text-left"
+                  className="flex w-full items-center justify-between text-left gap-4"
                   onClick={() => setOpenIndex(isOpen ? null : index)}
                 >
                   <span className="font-display text-lg text-brand-graphite">{faq.question}</span>
-                  <span className="text-2xl text-brand-graphite/50" aria-hidden>
-                    {isOpen ? "−" : "+"}
+                  <span className="text-2xl text-brand-graphite/50 shrink-0" aria-hidden>
+                    {isOpen ? "\u2212" : "+"}
                   </span>
                   <span className="sr-only">{isOpen ? "Collapse answer" : "Expand answer"}</span>
                 </button>
@@ -56,9 +56,7 @@ export function FaqSection() {
                       initial={shouldReduceMotion ? false : { opacity: 0, height: 0 }}
                       animate={shouldReduceMotion ? undefined : { opacity: 1, height: "auto" }}
                       exit={shouldReduceMotion ? undefined : { opacity: 0, height: 0 }}
-                      transition={
-                        shouldReduceMotion ? undefined : { duration: 0.35, ease: [0.25, 0.95, 0.45, 1] }
-                      }
+                      transition={shouldReduceMotion ? undefined : { duration: 0.35, ease: [0.25, 0.95, 0.45, 1] }}
                       className="mt-4 text-sm leading-relaxed text-brand-graphite/70"
                     >
                       {faq.answer}
@@ -73,4 +71,3 @@ export function FaqSection() {
     </PageSection>
   );
 }
-

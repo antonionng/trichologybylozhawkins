@@ -1,7 +1,9 @@
 import { prisma } from "@/server/db/client";
 import {
   activityLogSchema,
+  activityQuerySchema,
   bulkTaskUpdateSchema,
+  contactPatchSchema,
   contactQuerySchema,
   contactUpsertSchema,
   dealUpsertSchema,
@@ -34,19 +36,56 @@ export const upsertContact = async (input: ContactMutationInput) => {
   });
 };
 
+export const updateContact = async (input: z.input<typeof contactPatchSchema>) => {
+  const data = contactPatchSchema.parse(input);
+  const { id, ...payload } = data;
+  return prisma.contact.update({
+    where: { id },
+    data: payload,
+  });
+};
+
+export const getContactById = async (id: string) => {
+  return prisma.contact.findUnique({
+    where: { id },
+    include: {
+      company: true,
+      deals: { include: { stage: true, pipeline: true } },
+      tasks: true,
+      activities: { orderBy: { activityAt: "desc" }, take: 20 },
+      courseEnquiries: { orderBy: { createdAt: "desc" }, take: 5 },
+      orders: { orderBy: { createdAt: "desc" }, take: 5 },
+      enrollments: { orderBy: { createdAt: "desc" }, take: 5, include: { course: true } },
+      emailSends: { orderBy: { createdAt: "desc" }, take: 5, include: { campaign: true } },
+      chatConversations: { orderBy: { updatedAt: "desc" }, take: 5 },
+      quizAttempts: {
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        include: {
+          quiz: { select: { id: true, title: true, slug: true } },
+        },
+      },
+    },
+  });
+};
+
 export const listContacts = async (params: z.input<typeof contactQuerySchema>) => {
   const filters = contactQuerySchema.parse(params);
-  const { page, pageSize, search, ...rest } = filters;
+  const { page, pageSize, search, company, ...rest } = filters;
 
   const where: Prisma.ContactWhereInput = {
     ...(rest.lifecycleStage && { lifecycleStage: rest.lifecycleStage }),
     ...(rest.ownerId && { ownerId: rest.ownerId }),
     ...(rest.companyId && { companyId: rest.companyId }),
+    ...(company && {
+      company: { name: { contains: company, mode: "insensitive" } },
+    }),
     ...(search && {
       OR: [
         { firstName: { contains: search, mode: "insensitive" } },
         { lastName: { contains: search, mode: "insensitive" } },
         { email: { contains: search, mode: "insensitive" } },
+        { company: { name: { contains: search, mode: "insensitive" } } },
       ],
     }),
   };
@@ -158,5 +197,34 @@ export const listRecentActivities = async (limit = 10) => {
       deal: true,
     },
   });
+};
+
+export const listActivities = async (params: z.input<typeof activityQuerySchema>) => {
+  const filters = activityQuerySchema.parse(params);
+  const { page, pageSize, sort, ...rest } = filters;
+
+  const where: Prisma.ActivityWhereInput = {
+    ...(rest.contactId && { contactId: rest.contactId }),
+    ...(rest.companyId && { companyId: rest.companyId }),
+    ...(rest.dealId && { dealId: rest.dealId }),
+    ...(rest.type && { type: rest.type }),
+  };
+
+  const [items, total] = await Promise.all([
+    prisma.activity.findMany({
+      where,
+      orderBy: { activityAt: sort },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        contact: true,
+        company: true,
+        deal: true,
+      },
+    }),
+    prisma.activity.count({ where }),
+  ]);
+
+  return { items, total, page, pageSize };
 };
 

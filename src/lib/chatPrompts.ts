@@ -6,6 +6,88 @@ import {
   faqItems,
 } from "./content";
 
+// Condition reference knowledge for the AI assistant
+const conditionKnowledge = [
+  {
+    name: "Alopecia Areata",
+    category: "Hair Loss",
+    description: "Autoimmune condition causing patchy hair loss with well-demarcated shiny patches. Short exclamation hairs may appear at the periphery. Unpredictable but often resolves over time. Can occur at any age.",
+    treatment: "GP can prescribe steroids (injected or topical) to suppress immune cells attacking follicles."
+  },
+  {
+    name: "Male Pattern Hair Loss (MPHL)",
+    category: "Hair Loss",
+    description: "Androgenic alopecia beginning after puberty. Caused by DHT effects, progresses slowly over years to decades. Charted using Hamilton-Norwood scale. Inherited from either or both parents.",
+    treatment: "Minoxidil solution, Finasteride tablets, Dutasteride, or hair transplantation."
+  },
+  {
+    name: "Female Pattern Hair Loss (FPHL)",
+    category: "Hair Loss",
+    description: "Similar to MPHL with follicle miniaturization, often at inner frontal hairline. Genetically driven, charted using Ludwig scale. No cure but manageable.",
+    treatment: "Minoxidil solution. Manage expectations - accelerated phases followed by stability periods."
+  },
+  {
+    name: "Telogen Effluvium",
+    category: "Hair Loss",
+    description: "Sudden excess hair shedding. Causes include postpartum, illness, blood loss, medications, hormonal disorders, or nutritional deficiencies.",
+    treatment: "Good prognosis once underlying cause is treated."
+  },
+  {
+    name: "Traction Alopecia",
+    category: "Hair Loss",
+    description: "Hair loss from repeated pulling - ponytails, braids, cornrows, dreadlocks. Causes inflammation, soreness, or itching. May cause scarring if continued.",
+    treatment: "Early intervention allows recovery. Remove tension and treat inflammation to prevent permanent loss."
+  },
+  {
+    name: "Frontal Fibrosing Alopecia",
+    category: "Hair Loss",
+    description: "Scarring alopecia affecting the frontal hairline. Destroys follicles which are replaced by scar tissue.",
+    treatment: "Hair will not regrow in scarred areas. Focus on halting progression."
+  },
+  {
+    name: "Trichotillomania",
+    category: "Behavioral",
+    description: "Compulsive hair pulling from scalp, eyebrows, or eyelashes. Stress-related, often co-occurs with other habits. Provides sense of relief.",
+    treatment: "For most resolves within 12 months; some have lifelong disorder. Requires behavioral intervention."
+  },
+  {
+    name: "Seborrheic Dermatitis",
+    category: "Scalp Condition",
+    description: "Red, yellow, greasy flakes with inflammation. Associated with nasal folds and eyebrows. Genetic, yeast-related, or stress-triggered. Worse in winter.",
+    treatment: "Long-term recurring condition that can be managed but not cured."
+  },
+  {
+    name: "Psoriasis",
+    category: "Scalp Condition",
+    description: "Pink/silvery scaled plaques, often posterior hairline and above ears. Autoimmune, genetic, stress-related. Causes scalp tightness and itchiness.",
+    treatment: "Can be managed but not cured."
+  },
+  {
+    name: "Allergic Contact Dermatitis",
+    category: "Dermatitis",
+    description: "Type 4 reaction with redness, heat, swelling, blistering. Occurs 12-72 hours after exposure. Once sensitized, lifelong condition.",
+    treatment: "Avoid allergen. GP/Pharmacy for hydrocortisone, antihistamines, or topical steroids."
+  },
+  {
+    name: "Irritant Contact Dermatitis (ICD)",
+    category: "Dermatitis",
+    description: "Skin barrier damage from chemicals or detergents. Common in hairdressers. Causes soreness, redness, cracked or weeping skin.",
+    treatment: "Temporary reaction. Avoid irritants, use emollient or moisturizing cream."
+  },
+  {
+    name: "Folliculitis",
+    category: "Infection",
+    description: "Inflammation of hair follicle. Causes itching, burning, redness. Can be bacterial or friction-based.",
+    treatment: "Very good prognosis - easily treated and curable."
+  },
+  {
+    name: "Tinea Capitis (Ringworm)",
+    category: "Infection",
+    description: "Fungal infection causing dry scaling with moth-eaten hair loss. Highly contagious via combs or towels.",
+    treatment: "GP referral required. Positive prognosis once treated."
+  }
+];
+
 export function buildSystemPrompt(): string {
   const servicesInfo = services
     .map(
@@ -30,6 +112,13 @@ export function buildSystemPrompt(): string {
 
   const faqInfo = faqItems
     .map((f) => `Q: ${f.question}\nA: ${f.answer}`)
+    .join("\n\n");
+
+  const conditionsInfo = conditionKnowledge
+    .map(
+      (c) =>
+        `### ${c.name} (${c.category})\n${c.description}\nTreatment: ${c.treatment}`
+    )
     .join("\n\n");
 
   return `You are Lorraine Hawkins' AI assistant, helping visitors to her trichology and scalp health platform.
@@ -66,6 +155,12 @@ ${intensivesInfo}
 
 ## Frequently Asked Questions
 ${faqInfo}
+
+## Hair & Scalp Condition Reference
+
+Use this knowledge base to provide accurate information about common conditions:
+
+${conditionsInfo}
 
 ## What You Can Help With
 
@@ -120,6 +215,13 @@ export const ACTION_PROMPT_TEMPLATES = {
   
   bookConsultation: `Let me help you request a consultation booking. I'll need a few details: your name, email, phone number, and a brief description of what you'd like to discuss. The team will follow up within 24 hours to confirm a time.`,
 };
+
+
+
+
+
+
+
 
 
 

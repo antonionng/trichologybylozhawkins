@@ -9,10 +9,40 @@ import {
   courseUpsertSchema,
   enrollmentUpdateSchema,
   getServerEnv,
+  videoProductPriceSchema,
+  videoProductUpsertSchema,
 } from "@/server/schema";
 import { EnrollmentStatus, PaymentEventType } from "@prisma/client";
 import Stripe from "stripe";
 import { z } from "zod";
+
+const getVideoProductDelegate = () =>
+  (prisma as any).videoProduct as
+    | {
+        findMany: Function;
+        findUnique: Function;
+        create: Function;
+        update: Function;
+        delete: Function;
+      }
+    | undefined;
+
+const getVideoProductPriceDelegate = () =>
+  (prisma as any).videoProductPrice as
+    | {
+        updateMany: Function;
+        update: Function;
+        create: Function;
+      }
+    | undefined;
+
+const warnVideoProductsUnavailable = () => {
+  // Next dev does not typecheck by default, so schema/client mismatches can show up only at runtime.
+  console.warn(
+    "[education] Prisma Client is missing VideoProduct models. " +
+      "Run `npm --prefix trichology run prisma:generate` (or `npx prisma generate` in /trichology) and restart the dev server."
+  );
+};
 
 const courseMutationSchema = courseUpsertSchema.extend({
   id: z.string().cuid().optional(),
@@ -34,8 +64,19 @@ const sessionMutationSchema = courseSessionSchema.extend({
   id: z.string().cuid().optional(),
 });
 
+const videoProductMutationSchema = videoProductUpsertSchema.extend({
+  id: z.string().cuid().optional(),
+});
+
+const videoPriceMutationSchema = videoProductPriceSchema.extend({
+  id: z.string().cuid().optional(),
+});
+
 const stripeClient = () => {
   const env = getServerEnv();
+  if (!env.STRIPE_SECRET_KEY) {
+    throw new Error("STRIPE_SECRET_KEY is not configured. Set DEV_SKIP_CHECKOUT=true to bypass checkout in development.");
+  }
   return new Stripe(env.STRIPE_SECRET_KEY, {
     apiVersion: "2024-06-20",
   });
@@ -57,6 +98,29 @@ export const upsertCourse = async (input: z.infer<typeof courseMutationSchema>) 
   });
 };
 
+export const upsertVideoProduct = async (
+  input: z.infer<typeof videoProductMutationSchema>
+) => {
+  const data = videoProductMutationSchema.parse(input);
+  const { id, ...payload } = data;
+  const videoProduct = getVideoProductDelegate();
+  if (!videoProduct) {
+    warnVideoProductsUnavailable();
+    throw new Error("Video products are not available yet. Please regenerate Prisma Client.");
+  }
+
+  if (id) {
+    return videoProduct.update({
+      where: { id },
+      data: payload as any,
+    });
+  }
+
+  return videoProduct.create({
+    data: payload as any,
+  });
+};
+
 export const upsertCourseModule = async (
   input: z.infer<typeof moduleMutationSchema>
 ) => {
@@ -70,7 +134,21 @@ export const upsertCourseModule = async (
     });
   }
 
-  return prisma.courseModule.create({ data: payload });
+  let position = payload.position;
+  if (typeof position !== "number") {
+    const agg = await prisma.courseModule.aggregate({
+      where: { courseId: payload.courseId },
+      _max: { position: true },
+    });
+    position = (agg._max.position ?? -1) + 1;
+  }
+
+  return prisma.courseModule.create({
+    data: {
+      ...payload,
+      position,
+    },
+  });
 };
 
 export const upsertCourseLesson = async (
@@ -86,7 +164,21 @@ export const upsertCourseLesson = async (
     });
   }
 
-  return prisma.courseLesson.create({ data: payload });
+  let position = payload.position;
+  if (typeof position !== "number") {
+    const agg = await prisma.courseLesson.aggregate({
+      where: { moduleId: payload.moduleId },
+      _max: { position: true },
+    });
+    position = (agg._max.position ?? -1) + 1;
+  }
+
+  return prisma.courseLesson.create({
+    data: {
+      ...payload,
+      position,
+    },
+  });
 };
 
 export const upsertCoursePrice = async (
@@ -112,6 +204,34 @@ export const upsertCoursePrice = async (
   return prisma.coursePrice.create({ data: payload });
 };
 
+export const upsertVideoProductPrice = async (
+  input: z.infer<typeof videoPriceMutationSchema>
+) => {
+  const data = videoPriceMutationSchema.parse(input);
+  const { id, ...payload } = data;
+  const videoPrice = getVideoProductPriceDelegate();
+  if (!videoPrice) {
+    warnVideoProductsUnavailable();
+    throw new Error("Video products are not available yet. Please regenerate Prisma Client.");
+  }
+
+  if (payload.isPrimary) {
+    await videoPrice.updateMany({
+      where: { videoProductId: payload.videoProductId },
+      data: { isPrimary: false },
+    });
+  }
+
+  if (id) {
+    return videoPrice.update({
+      where: { id },
+      data: payload,
+    });
+  }
+
+  return videoPrice.create({ data: payload });
+};
+
 export const upsertCourseSession = async (
   input: z.infer<typeof sessionMutationSchema>
 ) => {
@@ -126,6 +246,106 @@ export const upsertCourseSession = async (
   }
 
   return prisma.courseSession.create({ data: payload });
+};
+
+export const getEducationStats = async () => {
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const [
+    totalCourses,
+    publishedCourses,
+    draftCourses,
+    reviewCourses,
+    activeEnrollments,
+    enrollmentsLast30Days,
+    enquiriesNew,
+    upcomingSessionsCount,
+    sessionsNeedingCapacityAttention,
+    revenueAllTime,
+    revenueLast30Days,
+    topCourses,
+  ] = await Promise.all([
+    prisma.course.count(),
+    prisma.course.count({ where: { status: "PUBLISHED" } }),
+    prisma.course.count({ where: { status: "DRAFT" } }),
+    prisma.course.count({ where: { status: "REVIEW" } }),
+    prisma.enrollment.count({ where: { status: "ACTIVE" } }),
+    prisma.enrollment.count({
+      where: { status: "ACTIVE", createdAt: { gte: thirtyDaysAgo } },
+    }),
+    prisma.courseEnquiry.count({ where: { status: "NEW" } }),
+    prisma.courseSession.count({
+      where: {
+        status: { in: ["UPCOMING", "IN_PROGRESS"] },
+        startDate: { not: null },
+      },
+    }),
+    prisma.courseSession.count({
+      where: {
+        status: { in: ["UPCOMING", "IN_PROGRESS"] },
+        capacity: { not: null },
+        startDate: { not: null },
+        // heuristic: flag sessions that are >= 80% full
+        seatsTaken: { gte: 1 },
+      },
+    }),
+    prisma.orderItem.aggregate({
+      where: { courseId: { not: null }, order: { status: "PAID" } },
+      _sum: { unitAmount: true },
+    }),
+    prisma.orderItem.aggregate({
+      where: {
+        courseId: { not: null },
+        order: { status: "PAID", createdAt: { gte: thirtyDaysAgo } },
+      },
+      _sum: { unitAmount: true },
+    }),
+    prisma.course.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        enrollmentType: true,
+        _count: { select: { enrollments: true, enquiries: true, sessions: true } },
+      },
+    }),
+  ]);
+
+  return {
+    totals: {
+      courses: totalCourses,
+      coursesPublished: publishedCourses,
+      coursesDraft: draftCourses,
+      coursesInReview: reviewCourses,
+      enrollmentsActive: activeEnrollments,
+      enquiriesNew,
+      sessionsUpcomingOrLive: upcomingSessionsCount,
+    },
+    last30Days: {
+      enrollments: enrollmentsLast30Days,
+      revenue: revenueLast30Days._sum.unitAmount ?? 0,
+    },
+    revenueAllTime: revenueAllTime._sum.unitAmount ?? 0,
+    alerts: {
+      sessionsNeedingCapacityAttention,
+    },
+    topCourses,
+  };
+};
+
+export const getRecentEnrollments = async (limit = 5) => {
+  return prisma.enrollment.findMany({
+    take: limit,
+    orderBy: { createdAt: "desc" },
+    include: {
+      contact: true,
+      course: true,
+    },
+  });
 };
 
 export const getCourseCatalog = async (slug?: string) => {
@@ -144,8 +364,130 @@ export const getCourseCatalog = async (slug?: string) => {
         orderBy: { startDate: "asc" },
       },
       downloads: true,
+      heroMedia: true,
     },
     orderBy: { createdAt: "desc" },
+  });
+};
+
+export const getVideoCatalog = async (slug?: string) => {
+  const videoProduct = getVideoProductDelegate();
+  if (!videoProduct) {
+    warnVideoProductsUnavailable();
+    return [];
+  }
+
+  return videoProduct.findMany({
+    where: slug ? { slug } : { status: "PUBLISHED" },
+    include: {
+      pricing: { orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }] },
+      heroMedia: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+export const getAdminCourseCatalog = async () => {
+  return prisma.course.findMany({
+    where: { slug: { not: "academy-quizzes" } },
+    include: {
+      modules: { include: { lessons: true }, orderBy: { position: "asc" } },
+      pricing: { orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }] },
+      sessions: { orderBy: { startDate: "asc" } },
+      downloads: true,
+      heroMedia: true,
+      _count: {
+        select: { enrollments: true, enquiries: true, sessions: true, modules: true, downloads: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+export const getAdminVideoCatalog = async () => {
+  const videoProduct = getVideoProductDelegate();
+  if (!videoProduct) {
+    warnVideoProductsUnavailable();
+    return [];
+  }
+
+  return videoProduct.findMany({
+    include: {
+      pricing: { orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }] },
+      heroMedia: true,
+      _count: { select: { accesses: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+export const getCourse = async (id: string) => {
+  return prisma.course.findUnique({
+    where: { id },
+    include: {
+      modules: {
+        include: { lessons: true },
+        orderBy: { position: "asc" },
+      },
+      pricing: {
+        orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+      },
+      sessions: {
+        orderBy: { startDate: "asc" },
+      },
+      downloads: true,
+      heroMedia: true,
+      _count: {
+        select: { enrollments: true },
+      },
+    },
+  });
+};
+
+export const getVideoProduct = async (id: string) => {
+  const videoProduct = getVideoProductDelegate();
+  if (!videoProduct) {
+    warnVideoProductsUnavailable();
+    return null;
+  }
+
+  return videoProduct.findUnique({
+    where: { id },
+    include: {
+      pricing: { orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }] },
+      heroMedia: true,
+      _count: { select: { accesses: true } },
+    },
+  });
+};
+
+export const deleteCourse = async (id: string) => {
+  return prisma.course.delete({
+    where: { id },
+  });
+};
+
+export const deleteVideoProduct = async (id: string) => {
+  const videoProduct = getVideoProductDelegate();
+  if (!videoProduct) {
+    warnVideoProductsUnavailable();
+    throw new Error("Video products are not available yet. Please regenerate Prisma Client.");
+  }
+
+  return videoProduct.delete({
+    where: { id },
+  });
+};
+
+export const deleteCourseModule = async (id: string) => {
+  return prisma.courseModule.delete({
+    where: { id },
+  });
+};
+
+export const deleteCourseLesson = async (id: string) => {
+  return prisma.courseLesson.delete({
+    where: { id },
   });
 };
 
@@ -156,41 +498,68 @@ export const createCheckoutSession = async (
   const env = getServerEnv();
   const client = stripeClient();
 
-  const course = await prisma.course.findUnique({
-    where: { id: data.courseId },
-    include: { pricing: true },
-  });
+  const isCourse = data.productType === "COURSE";
+  const isVideo = data.productType === "VIDEO";
 
-  if (!course) {
+  const course = isCourse
+    ? await prisma.course.findUnique({
+        where: { id: data.productId },
+        include: { pricing: true },
+      })
+    : null;
+
+  const videoProduct = isVideo
+    ? await (async () => {
+        const delegate = getVideoProductDelegate();
+        if (!delegate) {
+          warnVideoProductsUnavailable();
+          return null;
+        }
+        return delegate.findUnique({
+          where: { id: data.productId },
+          include: { pricing: true },
+        });
+      })()
+    : null;
+
+  if (isCourse && !course) {
     throw new Error("Course not found.");
   }
 
-  const price =
-    course.pricing.find((item) => item.id === data.priceId) ??
-    course.pricing.find((item) => item.isPrimary) ??
-    course.pricing[0];
-
-  if (!price) {
-    throw new Error("Course price is not configured.");
+  if (isVideo && !videoProduct) {
+    throw new Error("Video not found.");
   }
 
+  const pricing = isCourse ? course!.pricing : videoProduct!.pricing;
+  const selectedPrice =
+    pricing.find((item) => item.id === data.priceId) ??
+    pricing.find((item) => item.isPrimary) ??
+    pricing[0];
+
+  if (!selectedPrice) {
+    throw new Error("Price is not configured.");
+  }
+
+  const customerEmail = data.metadata?.userEmail;
+
   const session = await client.checkout.sessions.create({
-    mode: price.billingType === "ONE_TIME" ? "payment" : "subscription",
+    mode: selectedPrice.billingType === "ONE_TIME" ? "payment" : "subscription",
     success_url: data.successUrl,
     cancel_url: data.cancelUrl,
+    ...(customerEmail ? { customer_email: customerEmail } : {}),
     line_items: [
       {
         price_data: {
-          currency: price.currency.toLowerCase(),
-          unit_amount: Number(price.amount) * 100,
+          currency: selectedPrice.currency.toLowerCase(),
+          unit_amount: Number(selectedPrice.amount) * 100,
           product_data: {
-            name: course.title,
-            description: course.subtitle ?? "",
+            name: isCourse ? course!.title : videoProduct!.title,
+            description: (isCourse ? course!.subtitle : videoProduct!.subtitle) ?? "",
           },
           recurring:
-            price.billingType === "SUBSCRIPTION"
+            selectedPrice.billingType === "SUBSCRIPTION"
               ? {
-                  interval: (price.billingCycle ?? "MONTHLY").toLowerCase() as
+                  interval: (selectedPrice.billingCycle ?? "MONTHLY").toLowerCase() as
                     | "month"
                     | "year"
                     | "week",
@@ -201,8 +570,9 @@ export const createCheckoutSession = async (
       },
     ],
     metadata: {
-      courseId: course.id,
-      priceId: price.id,
+      productType: data.productType,
+      productId: data.productId,
+      priceId: selectedPrice.id,
       ...data.metadata,
     },
   });
@@ -210,20 +580,27 @@ export const createCheckoutSession = async (
   await prisma.order.create({
     data: {
       contactId: data.contactId ?? (await ensureAnonymousContact(session.customer_details)).id,
-      totalAmount: price.amount,
-      currency: price.currency,
+      totalAmount: selectedPrice.amount,
+      currency: selectedPrice.currency,
       status: "PENDING",
       paymentProvider: "STRIPE",
       providerSessionId: session.id,
       metadata: data.metadata,
       items: {
         create: [
-          {
-            courseId: course.id,
-            unitAmount: price.amount,
-            currency: price.currency,
-            priceId: price.id,
-          },
+          isCourse
+            ? {
+                courseId: course!.id,
+                unitAmount: selectedPrice.amount,
+                currency: selectedPrice.currency,
+                priceId: selectedPrice.id,
+              }
+            : {
+                videoProductId: videoProduct!.id,
+                unitAmount: selectedPrice.amount,
+                currency: selectedPrice.currency,
+                videoPriceId: selectedPrice.id,
+              },
         ],
       },
     },
@@ -272,6 +649,14 @@ export const handleCheckoutFulfillment = async (options: {
     throw new Error("Order not found during fulfillment.");
   }
 
+  if (options.status === "succeeded" && order.status === "PAID") {
+    return;
+  }
+
+  if (options.status === "failed" && order.status === "CANCELLED") {
+    return;
+  }
+
   await prisma.order.update({
     where: { id: order.id },
     data: {
@@ -292,14 +677,39 @@ export const handleCheckoutFulfillment = async (options: {
   if (options.status === "succeeded") {
     for (const item of order.items) {
       if (item.courseId) {
-        await prisma.enrollment.create({
-          data: {
-            contactId: order.contactId,
-            courseId: item.courseId,
-            status: EnrollmentStatus.ACTIVE,
-            orderId: order.id,
-          },
+        const existing = await prisma.enrollment.findFirst({
+          where: { orderId: order.id, courseId: item.courseId },
+          select: { id: true },
         });
+
+        if (!existing) {
+          await prisma.enrollment.create({
+            data: {
+              contactId: order.contactId,
+              courseId: item.courseId,
+              status: EnrollmentStatus.ACTIVE,
+              orderId: order.id,
+            },
+          });
+        }
+      }
+
+      if (item.videoProductId) {
+        const existing = await prisma.videoAccess.findFirst({
+          where: { orderId: order.id, videoProductId: item.videoProductId },
+          select: { id: true },
+        });
+
+        if (!existing) {
+          await prisma.videoAccess.create({
+            data: {
+              contactId: order.contactId,
+              videoProductId: item.videoProductId,
+              status: EnrollmentStatus.ACTIVE,
+              orderId: order.id,
+            },
+          });
+        }
       }
     }
   }
@@ -325,6 +735,11 @@ export const createCourseEnquiry = async (
 ) => {
   const data = courseEnquirySchema.parse(input);
 
+  const course = await prisma.course.findUnique({
+    where: { id: data.courseId },
+    select: { title: true },
+  });
+
   const contact = await prisma.contact.upsert({
     where: { email: data.email },
     update: {
@@ -342,12 +757,42 @@ export const createCourseEnquiry = async (
     },
   });
 
-  return prisma.courseEnquiry.create({
-    data: {
-      ...data,
-      consentToMarketing: data.consentToMarketing ?? false,
-      contactId: contact.id,
-    },
+  const enquiry = await prisma.$transaction(async (tx) => {
+    const created = await tx.courseEnquiry.create({
+      data: {
+        ...data,
+        consentToMarketing: data.consentToMarketing ?? false,
+        contactId: contact.id,
+      },
+    });
+
+    await tx.activity.create({
+      data: {
+        contactId: contact.id,
+        dealId: created.dealId ?? undefined,
+        type: "NOTE",
+        subject: `Course enquiry • ${course?.title ?? "Lorraine Hawkins Program"}`,
+        body:
+          data.message ??
+          `New enquiry submitted for ${course?.title ?? "Lorraine Hawkins program"}.`,
+        activityAt: new Date(),
+      },
+    });
+
+    await tx.task.create({
+      data: {
+        contactId: contact.id,
+        dealId: created.dealId ?? undefined,
+        title: `Follow up: ${course?.title ?? "Education enquiry"}`,
+        description: `Enquiry from ${data.name} (${data.email}) via education site.`,
+        priority: "HIGH",
+        status: "PENDING",
+      },
+    });
+
+    return created;
   });
+
+  return enquiry;
 };
 

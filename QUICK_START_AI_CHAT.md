@@ -191,8 +191,11 @@ https://platform.openai.com/usage
 
 ```env
 OPENAI_API_KEY=sk-...your-key...
+AUTH_SECRET=...a-long-random-secret...
 DATABASE_URL=postgresql://...
 ```
+
+Tip: generate a strong secret with `openssl rand -hex 32` and paste it as `AUTH_SECRET`.
 
 ### AI Model Used
 
@@ -295,6 +298,12 @@ npm run dev
 Then click the chat bubble at http://localhost:3000 🎯
 
 Enjoy your amazing, helpful, agentic AI assistant! 🤖✨
+
+
+
+
+
+
 
 
 

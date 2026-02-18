@@ -2,297 +2,211 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { PageSection } from "@/components/layout/PageSection";
 import { Container } from "@/components/layout/Container";
-import { SectionHeading } from "@/components/typography/SectionHeading";
-import { Surface } from "@/components/layout/Surface";
 import { ButtonLink, Button } from "@/components/ui/Button";
 import { photography } from "@/lib/visualAssets";
 import { EnquiryForm } from "@/components/contact/EnquiryForm";
+import { mailtoWithSubject, siteContact, siteContactLinks } from "@/lib/siteContact";
 
 const responseInsights = [
-  { value: "24–48h", label: "Response time" },
-  { value: "Mon–Thu", label: "Consultation days" },
-  { value: "UK, EU & US", label: "Main regions" },
+  { value: "24–48h", label: "Response" },
+  { value: "Mon–Thu", label: "Consultations" },
+  { value: "UK, EU & US", label: "Regions" },
 ];
 
 const enquiryTracks = [
   {
+    icon: (
+      <svg className="h-4 w-4 text-brand-sage" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" /></svg>
+    ),
+    badge: "Training",
+    badgeClass: "bg-brand-sage/15 text-brand-graphite/55",
+    borderClass: "border-brand-sage/20",
     title: "Training & salon partnerships",
-    description:
-      "Interested in courses, team training, or salon workshops? We'll help you choose the right option and plan delivery for your team.",
-    bulletPoints: [
-      "Video courses with instant access",
-      "In-person workshops in London or at your salon",
-      "Ongoing support and business guidance",
-    ],
-    primaryCta: {
-      label: "Discuss training options",
-      href: "mailto:hello@lorrainehawkins.com?subject=Education%20partnership",
-    },
-    secondaryCta: { label: "View all courses", href: "/education#video-library" },
+    description: "Interested in courses, team training, or salon workshops?",
+    bullets: ["Video courses with instant access", "In-person workshops", "Ongoing support"],
+    secondaryHref: "/education",
+    secondaryLabel: "View courses",
   },
   {
-    title: "Personal consultations",
-    description:
-      "Looking for expert help with your scalp or hair health? Book a consultation to get a professional assessment and treatment plan.",
-    bulletPoints: [
-      "Professional scalp imaging and analysis",
-      "Personalized treatment and product recommendations",
-      "Referrals to specialists if needed",
-    ],
-    primaryCta: { label: "Book consultation", href: "mailto:hello@lorrainehawkins.com?subject=Clinic%20consultation" },
-    secondaryCta: { label: "Learn about services", href: "/services" },
-  },
-];
-
-const resourcePrompts = [
-  {
-    title: "Course catalog",
-    description: "Browse all available video courses, see what's included, and find pricing information.",
-    href: "/education#video-library",
-  },
-  {
-    title: "Consultation guide",
-    description: "Learn what happens in your first appointment and how to prepare for the best results.",
-    href: "/services",
+    icon: (
+      <svg className="h-4 w-4 text-brand-salmon" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0" /></svg>
+    ),
+    badge: "Consultations",
+    badgeClass: "bg-brand-salmon/10 text-brand-salmon",
+    borderClass: "border-brand-salmon/15",
+    title: "Clinical consultations",
+    description: "Expert clinical assessment with Lorraine, or case review and mentorship for practitioners.",
+    bullets: ["Professional scalp imaging", "Personalised treatment plan", "Specialist referrals if needed"],
+    secondaryHref: "/services",
+    secondaryLabel: "Learn about services",
   },
 ];
 
 const contactFaqs = [
-  {
-    question: "Can Lorraine come to our location for training?",
-    answer:
-      "Yes! Lorraine travels for in-person training across the UK, Europe, North America, and the Middle East. We'll discuss travel and logistics when you book.",
-  },
-  {
-    question: "Do you offer payment plans?",
-    answer:
-      "Payment options are available for both individual clients and salon teams. We'll explain all options during your initial consultation.",
-  },
-  {
-    question: "How many people can attend a workshop?",
-    answer:
-      "Workshops work best with 4-15 participants, but we can accommodate larger teams across multiple sessions if needed.",
-  },
+  { q: "Can Lorraine come to our location?", a: "Yes — UK, Europe, North America, and the Middle East. We'll discuss logistics when you book." },
+  { q: "Do you offer payment plans?", a: "Payment options available for individuals and salon teams. We'll explain during your initial consultation." },
+  { q: "How many can attend a workshop?", a: "4-15 participants ideal, but we can accommodate larger teams across multiple sessions." },
 ];
 
 const officeHours = [
   { label: "Consultations", detail: "Mon & Wed · 10am–5pm GMT" },
   { label: "Training", detail: "Tue–Thu · 9am–6pm GMT" },
-  { label: "Email", detail: "Monitored daily · urgent calls welcome" },
+  { label: "Email", detail: "Monitored daily" },
 ];
 
 export default function Contact() {
   const [isEnquiryFormOpen, setIsEnquiryFormOpen] = useState(false);
 
   return (
-    <main>
+    <main className="min-h-screen">
       <EnquiryForm isOpen={isEnquiryFormOpen} onClose={() => setIsEnquiryFormOpen(false)} />
-      <PageSection tone="sand" texture="linen" collage={{ parallax: true }}>
-        <Container className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-center">
-          <div className="space-y-8">
-            <SectionHeading
-              eyebrow="Contact"
-              title="Get in touch"
-              description="Whether you need personal scalp care, team training, or speaking engagements, let us know how we can help."
-            />
-            <div className="flex flex-wrap gap-4 text-sm text-brand-graphite/75">
-              <a href="mailto:hello@lorrainehawkins.com" className="underline decoration-brand-salmon/40 underline-offset-4">
-                hello@lorrainehawkins.com
-              </a>
-              <span className="hidden text-brand-graphite/30 sm:block">•</span>
-              <a href="tel:+442012345678" className="underline decoration-brand-salmon/40 underline-offset-4">
-                +44 (0)20 1234 5678
-              </a>
+
+      {/* ── Hero ─────────────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-brand-sand/60 via-brand-linen/20 to-white">
+        <div className="absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-brand-salmon/[0.04]" />
+
+        <Container className="relative pb-10 pt-14 sm:pb-14 sm:pt-20">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start">
+            <div className="space-y-5">
+              <span className="inline-block rounded-full bg-brand-salmon/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.4em] text-brand-salmon">Contact</span>
+              <h1 className="font-display text-3xl leading-[1.15] text-brand-graphite sm:text-[2.5rem]">Get in touch</h1>
+              <p className="max-w-lg text-base leading-relaxed text-brand-graphite/65">
+                Personal scalp care, team training, or speaking engagements — let us know how we can help.
+              </p>
+              <div className="flex flex-wrap gap-3 text-sm text-brand-graphite/60">
+                <a href={siteContactLinks.mailto} className="underline decoration-brand-salmon/40 underline-offset-4 hover:text-brand-graphite">{siteContact.email}</a>
+                <span className="hidden text-brand-graphite/20 sm:block">&bull;</span>
+                <a href={siteContactLinks.tel} className="underline decoration-brand-salmon/40 underline-offset-4 hover:text-brand-graphite">{siteContact.phoneDisplay}</a>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button variant="secondary" size="sm" onClick={() => setIsEnquiryFormOpen(true)}>Send enquiry</Button>
+                <ButtonLink href="/education/videos" variant="ghost" size="sm">View courses</ButtonLink>
+              </div>
+              <div className="grid grid-cols-3 gap-3 pt-1">
+                {responseInsights.map((m) => (
+                  <div key={m.label} className="rounded-xl border border-brand-graphite/8 bg-white p-3 text-center">
+                    <p className="font-display text-lg text-brand-graphite">{m.value}</p>
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-brand-graphite/40">{m.label}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <Button variant="secondary" size="md" onClick={() => setIsEnquiryFormOpen(true)}>
-                Send enquiry
-              </Button>
-              <ButtonLink href="/education#video-library" variant="ghost" size="md">
-                View courses
-              </ButtonLink>
+            <div className="space-y-4">
+              <div className="overflow-hidden rounded-2xl">
+                <Image src={photography.salonTeam.src} alt={photography.salonTeam.alt} width={600} height={780} className="h-full w-full object-cover saturate-[0.92] contrast-[1.05]" priority />
+              </div>
+              <div className="rounded-xl border border-brand-graphite/8 bg-white p-4 space-y-2">
+                <p className="text-xs font-bold text-brand-graphite">Want to talk first?</p>
+                <p className="text-sm text-brand-graphite/55">Book a 30-minute call to discuss your needs.</p>
+                <Button variant="secondary" size="sm" onClick={() => setIsEnquiryFormOpen(true)}>Request a call</Button>
+              </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              {responseInsights.map((metric) => (
-                <Surface
-                  key={metric.label}
-                  variant="subtle"
-                  padding="lg"
-                  className="flex flex-col gap-1 text-brand-graphite"
-                >
-                  <span className="font-display text-2xl">{metric.value}</span>
-                  <span className="text-sm uppercase tracking-[0.28em] text-brand-graphite/65">{metric.label}</span>
-                </Surface>
-              ))}
-            </div>
-          </div>
-          <div className="space-y-6">
-            <Surface variant="glass" padding="none" className="overflow-hidden rounded-glass-lg">
-              <Image
-                src={photography.salonTeam.src}
-                alt={photography.salonTeam.alt}
-                width={600}
-                height={780}
-                className="h-full w-full object-cover saturate-[0.92] contrast-[1.05]"
-                priority
-              />
-            </Surface>
-            <Surface variant="card" padding="lg" className="space-y-3 text-sm leading-relaxed text-brand-graphite/78">
-              <p className="font-semibold text-brand-graphite">Want to talk first?</p>
-              <p>Book a 30-minute call to discuss your needs and get personalized recommendations.</p>
-              <Button variant="secondary" size="md" onClick={() => setIsEnquiryFormOpen(true)}>
-                Request a call
-              </Button>
-            </Surface>
           </div>
         </Container>
-      </PageSection>
+      </section>
 
-      <PageSection tone="transparent">
-        <Container className="space-y-10">
-          <SectionHeading
-            eyebrow="What are you looking for?"
-            title="Choose what fits your needs"
-            description="Tell us about your situation so we can provide the most helpful information and guidance."
-            align="center"
-          />
-          <div className="grid gap-8 lg:grid-cols-2">
+      {/* ── Enquiry tracks ────────────────────────────────────────────── */}
+      <section className="py-10 sm:py-12">
+        <Container>
+          <div className="mb-6 text-center">
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-brand-graphite/35">How can we help?</span>
+            <h2 className="mt-1 font-display text-2xl text-brand-graphite">Choose what fits</h2>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
             {enquiryTracks.map((track) => (
-              <Surface key={track.title} variant="card" padding="lg" className="flex h-full flex-col gap-5">
-                <h3 className="font-display text-2xl text-brand-graphite">{track.title}</h3>
-                <p className="text-sm leading-relaxed text-brand-graphite/75">{track.description}</p>
-                <ul className="space-y-2 text-sm leading-relaxed text-brand-graphite/75">
-                  {track.bulletPoints.map((bullet) => (
-                    <li key={bullet} className="flex gap-2">
-                      <span className="mt-[6px] inline-block h-1.5 w-1.5 flex-none rounded-full bg-brand-salmon/40" />
-                      <span>{bullet}</span>
+              <div key={track.title} className={`flex flex-col gap-4 rounded-2xl border ${track.borderClass} bg-white p-5 shadow-sm`}>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-graphite/5">{track.icon}</span>
+                  <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] ${track.badgeClass}`}>{track.badge}</span>
+                </div>
+                <h3 className="font-display text-lg text-brand-graphite">{track.title}</h3>
+                <p className="text-sm leading-relaxed text-brand-graphite/60">{track.description}</p>
+                <ul className="space-y-1.5">
+                  {track.bullets.map((b) => (
+                    <li key={b} className="flex gap-2 text-xs text-brand-graphite/50">
+                      <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-brand-salmon/50" />
+                      <span>{b}</span>
                     </li>
                   ))}
                 </ul>
-                <div className="mt-auto flex flex-wrap gap-4">
-                  <Button
-                    variant="secondary"
-                    size="md"
-                    onClick={() => setIsEnquiryFormOpen(true)}
-                  >
-                    {track.primaryCta.label}
+                <div className="flex flex-wrap gap-3 mt-auto">
+                  <Button variant="secondary" size="sm" onClick={() => setIsEnquiryFormOpen(true)}>
+                    {track.title === "Clinical consultations" ? "Book consultation" : "Discuss training"}
                   </Button>
-                  <ButtonLink href={track.secondaryCta.href} variant="ghost" size="md">
-                    {track.secondaryCta.label}
-                  </ButtonLink>
-                </div>
-              </Surface>
-            ))}
-          </div>
-        </Container>
-      </PageSection>
-
-      <PageSection tone="mist" texture="veined">
-        <Container className="space-y-10">
-          <SectionHeading
-            eyebrow="Resources"
-            title="Learn more before you reach out"
-            description="Browse helpful information about courses and consultations to help you decide what's right for you."
-            align="center"
-          />
-          <div className="grid gap-5 md:grid-cols-2">
-            {resourcePrompts.map((resource) => (
-              <Surface key={resource.title} variant="card" padding="lg" className="space-y-3">
-                <h3 className="font-display text-xl text-brand-graphite">{resource.title}</h3>
-                <p className="text-sm leading-relaxed text-brand-graphite/75">{resource.description}</p>
-                <ButtonLink href={resource.href} variant="ghost" size="md" className="w-fit">
-                  View resource
-                </ButtonLink>
-              </Surface>
-            ))}
-          </div>
-        </Container>
-      </PageSection>
-
-      <PageSection tone="mist" texture="veined">
-        <Container className="space-y-12">
-          <SectionHeading
-            eyebrow="Availability"
-            title="When we're available"
-            description="We work with people worldwide. Choose in-person or video call consultations based on what works for you."
-            align="center"
-          />
-          <div className="mx-auto max-w-4xl">
-            <div className="grid gap-6 md:grid-cols-3">
-              {officeHours.map((entry, index) => (
-                <Surface 
-                  key={entry.label} 
-                  variant="glass" 
-                  padding="lg" 
-                  className="group relative overflow-hidden border border-brand-salmon/10 transition-all duration-300 hover:border-brand-salmon/30 hover:shadow-card"
-                >
-                  {/* Decorative accent */}
-                  <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-brand-salmon/60 to-brand-salmon/20" />
-                  
-                  <div className="space-y-4">
-                    {/* Number indicator */}
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-salmon/10 text-brand-salmon transition-all group-hover:bg-brand-salmon/20">
-                      <span className="font-display text-xl font-semibold">
-                        {index + 1}
-                      </span>
-                    </div>
-                    
-                    {/* Content */}
-                    <div className="space-y-2">
-                      <h3 className="font-display text-xl text-brand-graphite">
-                        {entry.label}
-                      </h3>
-                      <p className="text-sm leading-relaxed text-brand-graphite/75">
-                        {entry.detail}
-                      </p>
-                    </div>
-                  </div>
-                </Surface>
-              ))}
-            </div>
-            
-            {/* Additional info card */}
-            <Surface 
-              variant="card" 
-              padding="lg" 
-              className="mt-8 border border-brand-salmon/10 bg-white/80 backdrop-blur-sm"
-            >
-              <div className="flex flex-col items-center gap-4 text-center">
-                <div className="space-y-2">
-                  <h4 className="font-display text-lg text-brand-graphite">
-                    Working across time zones
-                  </h4>
-                  <p className="text-sm leading-relaxed text-brand-graphite/75">
-                    We accommodate clients in the UK, Europe, North America, and beyond. 
-                    Let us know your preferred time and we'll find a slot that works.
-                  </p>
+                  <ButtonLink href={track.secondaryHref} variant="ghost" size="sm">{track.secondaryLabel}</ButtonLink>
                 </div>
               </div>
-            </Surface>
-          </div>
-        </Container>
-      </PageSection>
-
-      <PageSection tone="sand" texture="linen">
-        <Container className="space-y-10">
-          <SectionHeading
-            eyebrow="FAQs"
-            title="Common questions"
-            description="Quick answers to help you decide. Include any other questions in your enquiry."
-            align="center"
-          />
-          <div className="space-y-4">
-            {contactFaqs.map((faq) => (
-              <Surface key={faq.question} variant="card" padding="lg" className="space-y-2">
-                <h3 className="font-display text-lg text-brand-graphite">{faq.question}</h3>
-                <p className="text-sm leading-relaxed text-brand-graphite/75">{faq.answer}</p>
-              </Surface>
             ))}
           </div>
         </Container>
-      </PageSection>
+      </section>
+
+      {/* ── Availability + FAQs merged ────────────────────────────────── */}
+      <section className="border-y border-brand-graphite/6 bg-gradient-to-br from-brand-mist/15 via-brand-sand/20 to-white py-10 sm:py-12">
+        <Container>
+          <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
+            {/* Availability */}
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-brand-graphite/35">Availability</span>
+              <h2 className="mt-1 mb-4 font-display text-xl text-brand-graphite">When we&rsquo;re available</h2>
+              <div className="space-y-3">
+                {officeHours.map((h, i) => (
+                  <div key={h.label} className="flex items-center gap-3 rounded-xl border border-brand-graphite/8 bg-white p-3 shadow-sm">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-salmon/10 text-xs font-bold text-brand-salmon">{i + 1}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-brand-graphite">{h.label}</p>
+                      <p className="text-xs text-brand-graphite/50">{h.detail}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-brand-graphite/40">We work across time zones — UK, Europe, and North America. Let us know your preference.</p>
+            </div>
+
+            {/* FAQs */}
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-brand-graphite/35">FAQs</span>
+              <h2 className="mt-1 mb-4 font-display text-xl text-brand-graphite">Common questions</h2>
+              <div className="space-y-3">
+                {contactFaqs.map((faq) => (
+                  <div key={faq.q} className="rounded-xl border border-brand-graphite/8 bg-white p-4 shadow-sm space-y-1">
+                    <p className="text-sm font-semibold text-brand-graphite">{faq.q}</p>
+                    <p className="text-sm leading-relaxed text-brand-graphite/55">{faq.a}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* ── Resources strip ───────────────────────────────────────────── */}
+      <section className="py-8 sm:py-10">
+        <Container>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <a href="/education/videos" className="group flex items-center gap-4 rounded-2xl border border-brand-graphite/8 bg-white p-5 shadow-sm transition-all hover:shadow-md">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-salmon/10">
+                <svg className="h-5 w-5 text-brand-salmon" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-brand-graphite group-hover:text-brand-salmon transition-colors">Course catalog</p>
+                <p className="text-xs text-brand-graphite/50">Browse all video courses and pricing</p>
+              </div>
+            </a>
+            <a href="/services" className="group flex items-center gap-4 rounded-2xl border border-brand-graphite/8 bg-white p-5 shadow-sm transition-all hover:shadow-md">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-sage/12">
+                <svg className="h-5 w-5 text-brand-sage" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" /></svg>
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-brand-graphite group-hover:text-brand-sage transition-colors">Consultation guide</p>
+                <p className="text-xs text-brand-graphite/50">What happens in your first appointment</p>
+              </div>
+            </a>
+          </div>
+        </Container>
+      </section>
     </main>
   );
 }

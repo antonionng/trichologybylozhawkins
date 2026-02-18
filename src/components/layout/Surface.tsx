@@ -13,16 +13,18 @@ type SurfaceProps = {
 };
 
 const variantClasses: Record<SurfaceVariant, string> = {
-  glass: "glass-panel",
-  card: "rounded-glass-md bg-white border border-brand-graphite/10 shadow-card",
-  subtle: "rounded-glass-md bg-brand-ivory border border-brand-graphite/5",
+  glass:
+    "rounded-2xl border border-white/40 bg-white/85 shadow-[0_16px_40px_-24px_rgba(15,23,42,0.25)] backdrop-blur-xl",
+  card:
+    "rounded-2xl border border-black/5 bg-white shadow-[0_10px_25px_-18px_rgba(15,23,42,0.4)]",
+  subtle: "rounded-2xl border border-black/5 bg-white/70",
 };
 
 const paddingClasses: Record<NonNullable<SurfaceProps["padding"]>, string> = {
   none: "",
-  sm: "p-4 sm:p-6",
-  md: "p-6 sm:p-8",
-  lg: "p-8 sm:p-10",
+  sm: "p-3 sm:p-5",
+  md: "p-5 sm:p-7",
+  lg: "p-7 sm:p-9",
 };
 
 export function Surface({

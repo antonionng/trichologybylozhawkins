@@ -2,6 +2,7 @@ import { PageSection } from "@/components/layout/PageSection";
 import { Container } from "@/components/layout/Container";
 import { SectionHeading } from "@/components/typography/SectionHeading";
 import { Surface } from "@/components/layout/Surface";
+import { siteContact, siteContactLinks } from "@/lib/siteContact";
 
 export default function Privacy() {
   return (
@@ -35,7 +36,7 @@ export default function Privacy() {
                 <li>Provide consultations and educational services</li>
                 <li>Process payments and send receipts</li>
                 <li>Respond to your enquiries and provide support</li>
-                <li>Send course materials and resources you've purchased</li>
+                <li>Send course materials and resources you&apos;ve purchased</li>
                 <li>Improve our services and user experience</li>
               </ul>
             </div>
@@ -72,8 +73,8 @@ export default function Privacy() {
               <h2 className="font-display text-xl text-brand-graphite">Contact Us</h2>
               <p>For privacy questions or to exercise your rights, contact us at:</p>
               <p>
-                <a href="mailto:hello@lorrainehawkins.com" className="underline decoration-brand-salmon/40 underline-offset-4">
-                  hello@lorrainehawkins.com
+                <a href={siteContactLinks.mailto} className="underline decoration-brand-salmon/40 underline-offset-4">
+                  {siteContact.email}
                 </a>
               </p>
             </div>

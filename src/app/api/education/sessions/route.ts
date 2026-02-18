@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { upsertCourseSession } from "@/server/modules/education/service";
+import { requireUser } from "@/server/security/auth";
 
 export async function POST(request: Request) {
   try {
+    await requireUser({ role: "ADMIN" });
     const body = await request.json();
     const session = await upsertCourseSession(body);
     return NextResponse.json(session);

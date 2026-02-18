@@ -5,12 +5,13 @@ import {
   EmailJobData,
   FulfillmentJobData,
   AiJobData,
+  PostImageJobData,
 } from "./queues";
 import { prisma } from "@/server/db/client";
 import { handleCheckoutFulfillment } from "@/server/modules/education/service";
-import { runGeneration } from "@/server/modules/ai/service";
+import { runGeneration, triggerPostImageGeneration } from "@/server/modules/ai/service";
 
-const queuePrefix = process.env.QUEUE_PREFIX ?? "bunny-platform";
+const queuePrefix = process.env.QUEUE_PREFIX ?? "lorraine-platform";
 const connection = getRedisConnection();
 
 const emailHandler = async (job: Job<EmailJobData>) => {
@@ -96,8 +97,14 @@ const automationHandler = async (
   });
 };
 
-const aiHandler = async (job: Job<AiJobData>) => {
-  await runGeneration(job.data.generationId);
+const aiHandler = async (job: Job<AiJobData | PostImageJobData>) => {
+  if (job.name === "generate-post-image") {
+    const data = job.data as PostImageJobData;
+    await triggerPostImageGeneration(data.slotId);
+  } else {
+    const data = job.data as AiJobData;
+    await runGeneration(data.generationId);
+  }
 };
 
 const fulfillmentHandler = async (
@@ -123,7 +130,7 @@ export const automationWorker = new Worker<AutomationJobData>(
   }
 );
 
-export const aiWorker = new Worker<AiJobData>("ai", aiHandler, {
+export const aiWorker = new Worker<AiJobData | PostImageJobData>("ai", aiHandler, {
   connection,
   prefix: queuePrefix,
 });

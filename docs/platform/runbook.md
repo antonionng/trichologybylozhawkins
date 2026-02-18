@@ -14,6 +14,12 @@
    npm run prisma:generate
    npm run dev
    ```
+   
+   Tip: for local Postgres + Redis, you can use the included Docker compose file:
+   ```bash
+   docker compose -f docker-compose.yml up -d
+   ```
+   And use `env.local.template` as a starting point for `.env.local`.
 3. Optionally run queues with a separate Node process executing `ts-node src/server/jobs/worker.ts` or compile via `ts-node/register`.
 
 ## Seeding / Fixtures

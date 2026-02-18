@@ -13,30 +13,28 @@ export function ConsultationCta() {
 
   return (
     <PageSection tone="graphite" texture="linen" padding="compact" className="relative">
-      <Container className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+      <Container className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
         <div className="space-y-6 text-brand-graphite">
-          <span className="text-xs uppercase tracking-[0.3em] text-brand-graphite/60">Get started</span>
+          <span className="text-xs uppercase tracking-[0.3em] text-brand-graphite/60">Next steps</span>
           <h2 className="font-display text-3xl leading-snug">
-            Ready for expert guidance on your scalp health journey?
+            Not sure where to start?
           </h2>
-          <p className="text-sm leading-relaxed text-brand-graphite/75">
-            Get a professional scalp assessment, personalized treatment plan, and ongoing support. Whether for yourself or your salon team, Lorraine provides clear next steps.
-          </p>
-          <div className="flex flex-wrap items-center gap-4">
-            <ButtonLink href="/contact" variant="secondary" size="lg">
-              Book a consultation
-            </ButtonLink>
-            <ButtonLink href="/services" variant="ghost" size="lg">
-              View all services
+
+          <div className="space-y-4 max-w-xl">
+            <p className="text-sm font-semibold text-brand-sage">Interested in training?</p>
+            <p className="text-sm leading-relaxed text-brand-graphite/75">
+              Explore video courses, structured training programs, or discuss bespoke workshops for your team.
+            </p>
+            <ButtonLink href="/services" variant="secondary" size="md">
+              Explore training options
             </ButtonLink>
           </div>
         </div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
-          transition={
-            shouldReduceMotion ? undefined : { duration: 0.8, ease: [0.25, 0.95, 0.45, 1] }
-          }
+          transition={shouldReduceMotion ? undefined : { duration: 0.8, ease: [0.25, 0.95, 0.45, 1] }}
           viewport={{ once: true, margin: "-10%" }}
           className="relative"
         >
@@ -56,4 +54,3 @@ export function ConsultationCta() {
     </PageSection>
   );
 }
-

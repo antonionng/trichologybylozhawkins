@@ -11,9 +11,19 @@ type ModalProps = {
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
+  closeOnBackdropClick?: boolean;
+  closeOnEscape?: boolean;
 };
 
-export function Modal({ isOpen, onClose, children, size = 'md', className }: ModalProps) {
+export function Modal({ 
+  isOpen, 
+  onClose, 
+  children, 
+  size = 'md', 
+  className,
+  closeOnBackdropClick = true,
+  closeOnEscape = true
+}: ModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -27,7 +37,7 @@ export function Modal({ isOpen, onClose, children, size = 'md', className }: Mod
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && closeOnEscape) {
         onClose();
       }
     };
@@ -37,7 +47,7 @@ export function Modal({ isOpen, onClose, children, size = 'md', className }: Mod
     return () => {
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, closeOnEscape]);
 
   const sizeClasses = {
     sm: 'max-w-md',
@@ -57,7 +67,7 @@ export function Modal({ isOpen, onClose, children, size = 'md', className }: Mod
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
-            onClick={onClose}
+            onClick={() => closeOnBackdropClick && onClose()}
             aria-hidden="true"
           />
           

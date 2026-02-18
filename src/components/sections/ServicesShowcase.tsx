@@ -14,15 +14,15 @@ export function ServicesShowcase() {
 
   return (
     <PageSection tone="mist" texture="veined" className="relative">
-      <Container className="space-y-16">
+      <Container className="space-y-10">
         <SectionHeading
           eyebrow="Services"
-          title="Expert care and professional training"
-          description="From personal consultations to team training, every service combines scientific expertise with practical, real-world application."
+          title="Consultations and training"
+          description="Personal scalp health consultations for individuals, and hands-on training for salon teams and practitioners."
           align="center"
         />
 
-        <div className="grid gap-12 lg:grid-cols-3">
+        <div className="grid gap-6 lg:grid-cols-3">
           {services.map((service, index) => (
             <motion.article
               key={service.id}
@@ -47,8 +47,13 @@ export function ServicesShowcase() {
                     loading="lazy"
                   />
                   <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-brand-graphite/85 to-transparent" />
-                  <div className="absolute left-6 bottom-6 rounded-full bg-brand-ivory/85 px-3 py-1 text-xs uppercase tracking-[0.3em] text-brand-graphite">
-                    {service.duration}
+                  <div className="absolute left-6 bottom-6 flex items-center gap-2">
+                    <span className="rounded-full bg-brand-ivory/85 px-3 py-1 text-xs uppercase tracking-[0.3em] text-brand-graphite">
+                      {service.duration}
+                    </span>
+                    <span className="rounded-full bg-brand-sage/80 px-3 py-1 text-xs uppercase tracking-[0.2em] text-brand-graphite">
+                      Education
+                    </span>
                   </div>
                 </div>
               </Surface>
@@ -61,7 +66,7 @@ export function ServicesShowcase() {
                     {service.focus.map((item) => (
                       <span
                         key={item}
-                        className="rounded-full bg-brand-sage/40 px-3 py-1 text-xs uppercase tracking-[0.3em] text-brand-graphite/70"
+                        className="rounded-full bg-[#28577F]/10 px-3 py-1 text-xs uppercase tracking-[0.3em] text-[#28577F]"
                       >
                         {item}
                       </span>
@@ -79,4 +84,3 @@ export function ServicesShowcase() {
     </PageSection>
   );
 }
-

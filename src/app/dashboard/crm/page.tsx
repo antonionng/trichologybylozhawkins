@@ -1,6 +1,12 @@
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
+
+import Link from "next/link";
 import { listContacts, getPipelineBoard, listRecentActivities } from "@/server/modules/crm/service";
-import { Surface } from "@/components/layout/Surface";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminButton } from "@/components/admin/AdminButton";
+import { AdminMetric } from "@/components/admin/AdminMetric";
+import { Panel } from "@/components/admin/Panel";
+import { AdminBadge } from "@/components/admin/AdminBadge";
 
 export default async function CrmDashboard() {
   const [pipeline, contacts, activities] = await Promise.all([
@@ -9,112 +15,173 @@ export default async function CrmDashboard() {
     listRecentActivities(8),
   ]);
 
+  const allStages = pipeline.flatMap((lane) =>
+    lane.stages.map((stage) => ({ ...stage, pipelineName: lane.name }))
+  );
+
+  const totalDeals = allStages.reduce((s, st) => s + st.deals.length, 0);
+  const totalValue = allStages.reduce(
+    (s, st) => s + st.deals.reduce((a: number, d: any) => a + Number(d.amount ?? 0), 0),
+    0
+  );
+
   return (
     <div className="space-y-6">
-      <Surface variant="glass" padding="lg" className="space-y-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-black/40">
-            Pipeline Overview
-          </p>
-          <h1 className="text-2xl font-semibold text-black">Active deal flow</h1>
+      <AdminPageHeader
+        title="CRM Pipeline"
+        subtitle="Manage deals, contacts, and activities"
+        breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "CRM" }]}
+        actions={
+          <>
+            <AdminButton href="/dashboard/crm/contacts/new" variant="primary" size="md">
+              + New Contact
+            </AdminButton>
+            <AdminButton href="/dashboard/crm/contacts" variant="secondary" size="md">
+              All Contacts
+            </AdminButton>
+          </>
+        }
+      />
+
+      {/* Key metrics */}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <AdminMetric label="Total Deals" value={totalDeals} />
+        <AdminMetric label="Pipeline Value" value={`£${totalValue.toLocaleString()}`} />
+        <AdminMetric label="Total Contacts" value={contacts.total} />
+      </div>
+
+      {/* Kanban board */}
+      <Panel variant="default" padding="none">
+        <div className="px-4 py-3 border-b border-admin-border">
+          <h2 className="text-sm font-semibold text-admin-text">Deal Pipeline</h2>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {pipeline.flatMap((lane) =>
-            lane.stages.map((stage) => (
-              <div
-                key={`${lane.id}-${stage.id}`}
-                className="rounded-lg border border-black/5 bg-white/70 p-4 shadow-sm"
-              >
-                <p className="text-xs uppercase tracking-[0.2em] text-black/40">
-                  {lane.name}
-                </p>
-                <h3 className="mt-1 text-sm font-semibold text-black">{stage.name}</h3>
-                <p className="mt-3 text-2xl font-semibold text-[#bf7c00]">
-                  {stage.deals.length}
-                </p>
-                <p className="text-xs text-black/50">
-                  {stage.deals.length === 1 ? "Deal" : "Deals"} in stage
-                </p>
-              </div>
-            ))
+        <div className="flex overflow-x-auto gap-px bg-admin-border">
+          {allStages.length === 0 ? (
+            <div className="flex-1 bg-admin-panel p-8 text-center text-sm text-admin-text-muted">
+              No pipeline configured yet. Create a pipeline to start tracking deals.
+            </div>
+          ) : (
+            allStages.map((stage) => {
+              const stageValue = stage.deals.reduce(
+                (a: number, d: any) => a + Number(d.amount ?? 0),
+                0
+              );
+              return (
+                <div
+                  key={stage.id}
+                  className="flex-1 min-w-[200px] bg-admin-panel p-3 space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-semibold text-admin-text-secondary uppercase tracking-wider">
+                      {stage.name}
+                    </h3>
+                    <span className="text-[10px] text-admin-text-muted">
+                      {stage.deals.length}
+                    </span>
+                  </div>
+                  {stageValue > 0 && (
+                    <p className="text-[10px] text-admin-text-muted">
+                      £{stageValue.toLocaleString()}
+                    </p>
+                  )}
+                  <div className="space-y-1.5 mt-2">
+                    {stage.deals.map((deal: any) => (
+                      <div
+                        key={deal.id}
+                        className="rounded-md border border-admin-border bg-admin-elevated p-2.5 hover:border-admin-border-strong transition-colors"
+                      >
+                        <p className="text-xs font-medium text-admin-text truncate">
+                          {deal.name}
+                        </p>
+                        {deal.amount ? (
+                          <p className="text-[10px] text-admin-accent mt-0.5">
+                            £{Number(deal.amount).toLocaleString()}
+                          </p>
+                        ) : null}
+                        {deal.contact && (
+                          <p className="text-[10px] text-admin-text-muted mt-0.5 truncate">
+                            {deal.contact.firstName} {deal.contact.lastName}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                    {stage.deals.length === 0 && (
+                      <p className="text-[10px] text-admin-text-muted text-center py-3 italic">
+                        Empty
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
-      </Surface>
+      </Panel>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Surface variant="card" padding="lg" className="lg:col-span-2 overflow-hidden">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-black/40">Key Contacts</p>
-              <h2 className="text-xl font-semibold text-black">Recent arrivals</h2>
-            </div>
+      {/* Two column: contacts + activity */}
+      <div className="grid gap-4 xl:grid-cols-3">
+        <Panel variant="default" padding="none" className="xl:col-span-2">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-admin-border">
+            <h2 className="text-sm font-semibold text-admin-text">Recent Contacts</h2>
+            <AdminButton href="/dashboard/crm/contacts" variant="ghost" size="sm">
+              View all
+            </AdminButton>
           </div>
-          <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-y-2 text-left text-sm">
-              <thead className="text-xs uppercase tracking-[0.2em] text-black/40">
-                <tr>
-                  <th className="px-3 py-2">Name</th>
-                  <th className="px-3 py-2">Email</th>
-                  <th className="px-3 py-2">Company</th>
-                  <th className="px-3 py-2">Lifecycle</th>
-                </tr>
-              </thead>
-              <tbody>
-                {contacts.items.map((contact) => (
-                  <tr key={contact.id} className="rounded-lg bg-white/70 text-black">
-                    <td className="px-3 py-2 font-medium">
-                      {contact.firstName} {contact.lastName}
-                    </td>
-                    <td className="px-3 py-2 text-black/70">{contact.email}</td>
-                    <td className="px-3 py-2 text-black/70">
-                      {contact.company?.name ?? "—"}
-                    </td>
-                    <td className="px-3 py-2 text-xs uppercase tracking-[0.2em] text-[#bf7c00]">
-                      {contact.lifecycleStage.replace(/_/g, " ")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {contacts.items.length === 0 ? (
-              <p className="mt-4 text-sm text-black/60">
-                No contacts yet. Pipe enquiries through the education section or import your
-                existing lists via API.
-              </p>
-            ) : null}
-          </div>
-        </Surface>
-        <Surface variant="glass" padding="lg" className="space-y-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-black/40">Activity Feed</p>
-            <h2 className="text-xl font-semibold text-black">Latest touchpoints</h2>
-          </div>
-          <div className="space-y-3 text-sm">
-            {activities.map((activity) => (
-              <div
-                key={activity.id}
-                className="rounded-lg border border-black/5 bg-white/60 p-4"
+          <div className="divide-y divide-admin-border">
+            {contacts.items.map((contact: any) => (
+              <Link
+                key={contact.id}
+                href={`/dashboard/crm/contacts/${contact.id}`}
+                className="flex items-center justify-between px-4 py-2.5 hover:bg-white/[0.02] transition-colors group"
               >
-                <p className="text-xs uppercase tracking-[0.2em] text-[#bf7c00]">
-                  {activity.type}
-                </p>
-                <p className="mt-1 font-medium text-black">{activity.subject}</p>
-                <p className="text-xs text-black/60">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-admin-accent/10 text-[10px] font-semibold text-admin-accent">
+                    {contact.firstName?.[0]}{contact.lastName?.[0]}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-admin-text truncate group-hover:text-admin-accent transition-colors">
+                      {contact.firstName} {contact.lastName}
+                    </p>
+                    <p className="text-xs text-admin-text-muted truncate">{contact.email}</p>
+                  </div>
+                </div>
+                <AdminBadge variant="accent">{contact.lifecycleStage.replace(/_/g, " ")}</AdminBadge>
+              </Link>
+            ))}
+            {contacts.items.length === 0 && (
+              <p className="px-4 py-8 text-center text-sm text-admin-text-muted">
+                No contacts yet.
+              </p>
+            )}
+          </div>
+        </Panel>
+
+        <Panel variant="default" padding="none">
+          <div className="px-4 py-3 border-b border-admin-border">
+            <h2 className="text-sm font-semibold text-admin-text">Activity Feed</h2>
+          </div>
+          <div className="divide-y divide-admin-border max-h-80 overflow-y-auto">
+            {activities.map((activity: any) => (
+              <div key={activity.id} className="px-4 py-2.5 hover:bg-white/[0.02] transition-colors">
+                <div className="flex items-center gap-2">
+                  <AdminBadge variant="accent">{activity.type}</AdminBadge>
+                </div>
+                <p className="text-sm text-admin-text mt-1">{activity.subject}</p>
+                <p className="text-xs text-admin-text-muted">
                   {activity.contact
                     ? `${activity.contact.firstName} ${activity.contact.lastName}`
-                    : "Unassigned contact"}
+                    : "Unassigned"}
                 </p>
               </div>
             ))}
-            {activities.length === 0 ? (
-              <p className="text-sm text-black/60">
-                Engage leads by logging calls, consults, and follow-ups to trigger automations.
+            {activities.length === 0 && (
+              <p className="px-4 py-8 text-center text-sm text-admin-text-muted">
+                No activity yet.
               </p>
-            ) : null}
+            )}
           </div>
-        </Surface>
+        </Panel>
       </div>
     </div>
   );
 }
-

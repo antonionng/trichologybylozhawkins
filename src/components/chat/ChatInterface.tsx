@@ -42,68 +42,11 @@ export function ChatInterface({
     scrollToBottom();
   }, [messages, streamingContent]);
 
-  // Send initial message if provided
-  useEffect(() => {
-    if (initialMessage && messages.length === 0) {
-      handleSendMessage(initialMessage);
-    }
-  }, [initialMessage]);
-
-  // Load existing conversation
-  useEffect(() => {
-    const loadConversation = async () => {
-      if (sessionId && !conversationId) {
-        try {
-          const response = await fetch(
-            `/api/chat/conversations?sessionId=${sessionId}`
-          );
-          if (response.ok) {
-            const conversations = await response.json();
-            if (conversations.length > 0) {
-              const latest = conversations[0];
-              setConversationId(latest.id);
-              
-              // Load messages
-              const detailResponse = await fetch(
-                `/api/chat/conversations?id=${latest.id}`
-              );
-              if (detailResponse.ok) {
-                const conversation = await detailResponse.json();
-                setMessages(
-                  conversation.messages.map((m: any) => ({
-                    id: m.id,
-                    role: m.role.toLowerCase(),
-                    content: m.content,
-                    createdAt: new Date(m.createdAt),
-                  }))
-                );
-              }
-            }
-          }
-        } catch (error) {
-          console.error("Failed to load conversation:", error);
-        } finally {
-          // Mark initial load as complete
-          setTimeout(() => {
-            isInitialLoadRef.current = false;
-          }, 100);
-        }
-      } else {
-        // No session to load, mark as complete immediately
-        setTimeout(() => {
-          isInitialLoadRef.current = false;
-        }, 100);
-      }
-    };
-
-    loadConversation();
-  }, [sessionId]);
-
   const handleSendMessage = useCallback(
     async (content: string) => {
       // Mark as no longer initial load when user interacts
       isInitialLoadRef.current = false;
-      
+
       // Add user message immediately
       const userMessage: Message = {
         id: `temp-${Date.now()}`,
@@ -240,7 +183,7 @@ export function ChatInterface({
             id: `error-${Date.now()}`,
             role: "assistant",
             content:
-              "I apologize, but I'm having trouble responding right now. Please try again in a moment.",
+              "I apologize, but I&apos;m having trouble responding right now. Please try again in a moment.",
             createdAt: new Date(),
           },
         ]);
@@ -253,6 +196,63 @@ export function ChatInterface({
     },
     [conversationId, sessionId, contactId]
   );
+
+  // Send initial message if provided
+  useEffect(() => {
+    if (initialMessage && messages.length === 0) {
+      handleSendMessage(initialMessage);
+    }
+  }, [initialMessage, messages.length, handleSendMessage]);
+
+  // Load existing conversation
+  useEffect(() => {
+    const loadConversation = async () => {
+      if (sessionId && !conversationId) {
+        try {
+          const response = await fetch(
+            `/api/chat/conversations?sessionId=${sessionId}`
+          );
+          if (response.ok) {
+            const conversations = await response.json();
+            if (conversations.length > 0) {
+              const latest = conversations[0];
+              setConversationId(latest.id);
+              
+              // Load messages
+              const detailResponse = await fetch(
+                `/api/chat/conversations?id=${latest.id}`
+              );
+              if (detailResponse.ok) {
+                const conversation = await detailResponse.json();
+                setMessages(
+                  conversation.messages.map((m: any) => ({
+                    id: m.id,
+                    role: m.role.toLowerCase(),
+                    content: m.content,
+                    createdAt: new Date(m.createdAt),
+                  }))
+                );
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Failed to load conversation:", error);
+        } finally {
+          // Mark initial load as complete
+          setTimeout(() => {
+            isInitialLoadRef.current = false;
+          }, 100);
+        }
+      } else {
+        // No session to load, mark as complete immediately
+        setTimeout(() => {
+          isInitialLoadRef.current = false;
+        }, 100);
+      }
+    };
+
+    loadConversation();
+  }, [sessionId, conversationId]);
 
   const handleNewConversation = () => {
     setMessages([]);
@@ -271,7 +271,7 @@ export function ChatInterface({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-display text-lg text-black/90">
-              Chat with Lorraine's Assistant
+              Chat with Lorraine&apos;s Assistant
             </h3>
             <p className="text-xs text-black/50">
               Ask about scalp health, services, or courses
@@ -298,8 +298,8 @@ export function ChatInterface({
                 Hello! How can I help you today?
               </h4>
               <p className="text-sm text-black/60">
-                I'm here to answer questions about trichology, scalp health, and
-                Lorraine's services and courses.
+                I&apos;m here to answer questions about trichology, scalp health, and
+                Lorraine&apos;s services and courses.
               </p>
             </div>
           )}
@@ -344,9 +344,9 @@ export function ChatInterface({
 function getActionMessage(functionName: string, result: any): string | null {
   switch (functionName) {
     case "create_contact":
-      return "✓ I've saved your details. Lorraine's team will be in touch soon.";
+      return "✓ I&apos;ve saved your details. Lorraine&apos;s team will be in touch soon.";
     case "submit_course_enquiry":
-      return "✓ Your course enquiry has been submitted. You'll receive more information via email within 24 hours.";
+      return "✓ Your course enquiry has been submitted. You&apos;ll receive more information via email within 24 hours.";
     case "book_consultation":
       return "✓ Your consultation request has been received. The team will contact you within 24 hours to confirm your appointment.";
     default:

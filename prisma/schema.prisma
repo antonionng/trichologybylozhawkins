@@ -19,21 +19,56 @@ model Contact {
   jobTitle           String?
   lifecycleStage     LifecycleStage @default(LEAD)
   source             String?
+  notes              String?
   ownerId            String?
   companyId          String?
   company            Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  user               User?
   deals              Deal[]
   activities         Activity[]
   tasks              Task[]
   audienceMemberships AudienceMember[]
   orders             Order[]
   enrollments        Enrollment[]
+  videoAccesses      VideoAccess[]
   entitlements       Entitlement[]
   automationRuns     AutomationRun[]
   generationRequests GeneratedContent[] @relation("GeneratedByContact")
   emailSends         EmailSend[]
   courseEnquiries    CourseEnquiry[]
   chatConversations  ChatConversation[]
+  quizAttempts       QuizAttempt[]
+}
+
+/// AUTH MODELS
+model User {
+  id           String    @id @default(cuid())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  email        String    @unique
+  passwordHash String?
+  role         UserRole  @default(LEARNER)
+  contactId    String?   @unique
+  lastLoginAt  DateTime?
+
+  contact      Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  tokens       AuthToken[]
+  lessonProgress LessonProgress[]
+  videoWatches   VideoWatch[]
+  videoNotes     VideoNote[]
+}
+
+model AuthToken {
+  id        String        @id @default(cuid())
+  createdAt DateTime      @default(now())
+  type      AuthTokenType
+  tokenHash String        @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
 }
 
 model Company {
@@ -82,7 +117,7 @@ model Deal {
   name         String
   description  String?
   amount       Decimal?   @db.Decimal(14, 2)
-  currency     String?    @default("USD")
+  currency     String?    @default("GBP")
   expectedClose DateTime?
   stageId      String
   pipelineId   String
@@ -192,6 +227,8 @@ model MediaAsset {
   createdBy   String?
   entryMedia  EntryMedia[]
   heroCourses Course[]      @relation("CourseHeroMedia")
+  heroVideoProducts VideoProduct[] @relation("VideoProductHeroMedia")
+  heroWorkshops Workshop[]  @relation("WorkshopHeroMedia")
   downloadableAssets DownloadableAsset[] @relation("AssetMedia")
 }
 
@@ -233,6 +270,16 @@ model Course {
   orderItems      OrderItem[]
   enquiries       CourseEnquiry[]
   entitlements    Entitlement[]
+  quizzes              Quiz[]
+  recommendedForQuizzes Quiz[]       @relation("RecommendedCourseForQuiz")
+  conditions           CourseCondition[]
+  lessonProgress       LessonProgress[]
+
+  // Sales & Marketing Content
+  learningOutcomes     String[]      @default([])
+  requirements         String[]      @default([])
+  targetAudience       String[]      @default([])
+  faqs                 Json?         @default("[]")
 }
 
 model CourseModule {
@@ -263,6 +310,7 @@ model CourseLesson {
   content     Json?
   module      CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   downloadable DownloadableAsset? @relation(fields: [downloadableId], references: [id])
+  lessonProgress LessonProgress[]
 
   @@unique([moduleId, position])
 }
@@ -292,7 +340,7 @@ model CoursePrice {
   updatedAt       DateTime         @updatedAt
   courseId        String
   amount          Decimal          @db.Decimal(14, 2)
-  currency        String           @default("USD")
+  currency        String           @default("GBP")
   billingType     BillingType      @default(ONE_TIME)
   billingCycle    BillingCycle?
   isPrimary       Boolean          @default(false)
@@ -301,6 +349,72 @@ model CoursePrice {
   orderItems      OrderItem[]
 
   @@index([courseId, isPrimary])
+}
+
+model VideoProduct {
+  id              String           @id @default(cuid())
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  slug            String           @unique
+  title           String
+  subtitle        String?
+  description     String?
+  category        String?
+  durationMinutes Int?
+  heroMediaId     String?
+  status          CourseStatus     @default(DRAFT)
+  videoSourceType VideoSourceType  @default(UPLOAD)
+  // Either a Supabase storage path (for UPLOAD) or a public URL (for LINK)
+  videoPath       String?
+  videoUrl        String?
+  // AI-generated page content blocks
+  publicContent   Json?            @default("{}")
+  memberContent   Json?            @default("{}")
+  meta            Json?
+
+  heroMedia       MediaAsset?      @relation("VideoProductHeroMedia", fields: [heroMediaId], references: [id])
+  pricing         VideoProductPrice[]
+  accesses        VideoAccess[]
+  orderItems      OrderItem[]
+  watches         VideoWatch[]
+  videoNotes      VideoNote[]
+}
+
+model VideoProductPrice {
+  id              String        @id @default(cuid())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  videoProductId  String
+  amount          Decimal       @db.Decimal(14, 2)
+  currency        String        @default("GBP")
+  billingType     BillingType   @default(ONE_TIME)
+  billingCycle    BillingCycle?
+  isPrimary       Boolean       @default(false)
+  priceExternalId String?
+
+  videoProduct    VideoProduct  @relation(fields: [videoProductId], references: [id], onDelete: Cascade)
+  orderItems      OrderItem[]
+
+  @@index([videoProductId, isPrimary])
+}
+
+model VideoAccess {
+  id             String           @id @default(cuid())
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  contactId      String
+  videoProductId String
+  orderId        String?
+  status         EnrollmentStatus @default(ACTIVE)
+  activatedAt    DateTime?
+  expiresAt      DateTime?
+
+  contact        Contact      @relation(fields: [contactId], references: [id])
+  videoProduct   VideoProduct @relation(fields: [videoProductId], references: [id], onDelete: Cascade)
+  order          Order?       @relation(fields: [orderId], references: [id])
+
+  @@index([contactId, status])
+  @@unique([contactId, videoProductId])
 }
 
 model CourseEnquiry {
@@ -364,7 +478,7 @@ model Order {
   contactId      String
   dealId         String?       @unique
   totalAmount    Decimal       @db.Decimal(14, 2)
-  currency       String        @default("USD")
+  currency       String        @default("GBP")
   status         OrderStatus   @default(PENDING)
   paymentProvider PaymentProvider @default(STRIPE)
   providerSessionId String?
@@ -374,6 +488,7 @@ model Order {
   deal           Deal?         @relation("DealOrder", fields: [dealId], references: [id])
   items          OrderItem[]
   enrollments    Enrollment[]
+  videoAccesses  VideoAccess[]
   payments       PaymentEvent[]
   entitlements   Entitlement[]
 }
@@ -383,14 +498,18 @@ model OrderItem {
   createdAt   DateTime    @default(now())
   orderId     String
   courseId    String?
+  videoProductId String?
   quantity    Int         @default(1)
   unitAmount  Decimal     @db.Decimal(14, 2)
-  currency    String      @default("USD")
+  currency    String      @default("GBP")
   metadata    Json?
   order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
   course      Course?     @relation(fields: [courseId], references: [id])
   priceId     String?
   price       CoursePrice? @relation(fields: [priceId], references: [id])
+  videoPriceId String?
+  videoPrice   VideoProductPrice? @relation(fields: [videoPriceId], references: [id])
+  videoProduct VideoProduct? @relation(fields: [videoProductId], references: [id])
 }
 
 model PaymentEvent {
@@ -590,6 +709,7 @@ model GeneratedContent {
   template       PromptTemplate? @relation(fields: [templateId], references: [id])
   contact        Contact?        @relation("GeneratedByContact", fields: [contactId], references: [id])
   feedback       GenerationFeedback[]
+  contentAssets  ContentAsset[]
 }
 
 model GenerationFeedback {
@@ -600,6 +720,76 @@ model GenerationFeedback {
   comment         String?
   submittedBy     String?
   generation      GeneratedContent @relation(fields: [generationId], references: [id], onDelete: Cascade)
+}
+
+model ContentPlan {
+  id          String      @id @default(cuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  name        String
+  description String?
+  objective   String?
+  timezone    String?     @default("UTC")
+  startDate   DateTime?
+  endDate     DateTime?
+  ownerId     String?
+  tags        Json?
+  slots       ContentSlot[]
+}
+
+model ContentSlot {
+  id               String            @id @default(cuid())
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  planId           String?
+  plan             ContentPlan?      @relation(fields: [planId], references: [id], onDelete: SetNull)
+  title            String
+  brief            String?
+  persona          String?
+  campaign         String?
+  channel          ContentChannel    @default(GENERIC)
+  scheduledFor     DateTime?
+  publishWindowEnd DateTime?
+  publishedAt      DateTime?
+  status           ContentSlotStatus @default(DRAFT)
+  priority         Int?
+  metadata         Json?
+  assets           ContentAsset[]
+}
+
+model ContentAsset {
+  id           String           @id @default(cuid())
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  slotId       String
+  slot         ContentSlot      @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  generationId String?
+  generation   GeneratedContent? @relation(fields: [generationId], references: [id])
+  type         ContentAssetType
+  title        String?
+  summary      String?
+  prompt       Json?
+  metadata     Json?
+  mediaUrl     String?
+  variants     AssetVariant[]
+}
+
+model AssetVariant {
+  id           String             @id @default(cuid())
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  assetId      String
+  asset        ContentAsset       @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  platform     ContentChannel     @default(GENERIC)
+  status       AssetVariantStatus @default(DRAFT)
+  headline     String?
+  copy         String?
+  cta          String?
+  hashtags     String?
+  mediaUrl     String?
+  thumbnailUrl String?
+  aspectRatio  String?
+  metadata     Json?
 }
 
 /// ENUMS
@@ -831,6 +1021,49 @@ enum GenerationStatus {
   FAILED
 }
 
+enum ContentChannel {
+  GENERIC
+  INSTAGRAM
+  FACEBOOK
+  LINKEDIN
+  TIKTOK
+  PINTEREST
+  X
+  YOUTUBE
+  BLOG
+  EMAIL
+}
+
+enum ContentSlotStatus {
+  DRAFT
+  NEEDS_REVIEW
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ContentAssetType {
+  COPY
+  IMAGE
+  VIDEO
+  DOCUMENT
+  OTHER
+}
+
+enum VideoSourceType {
+  UPLOAD
+  LINK
+}
+
+enum AssetVariantStatus {
+  DRAFT
+  NEEDS_REVIEW
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
 /// CHAT ASSISTANT MODELS
 model ChatConversation {
   id          String      @id @default(cuid())
@@ -902,5 +1135,205 @@ enum ChatActionStatus {
   PENDING
   COMPLETED
   FAILED
+}
+
+enum UserRole {
+  ADMIN
+  LEARNER
+}
+
+enum AuthTokenType {
+  INVITE
+  RESET
+}
+
+/// IN-PERSON WORKSHOP MODELS
+model Workshop {
+  id              String          @id @default(cuid())
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  slug            String          @unique
+  title           String
+  headline        String?
+  summary         String?
+  longDescription String?         @db.Text
+  duration        String?
+  investment      String?
+  location        String?
+  status          CourseStatus     @default(DRAFT)
+  heroMediaId     String?
+  heroMedia       MediaAsset?     @relation("WorkshopHeroMedia", fields: [heroMediaId], references: [id])
+  // Structured JSON arrays
+  outcomes        String[]        @default([])
+  whoItsFor       String[]        @default([])
+  whatYouGet      String[]        @default([])
+  agenda          Json?           @default("[]")
+  faqs            Json?           @default("[]")
+  testimonials    Json?           @default("[]")
+  ctaLabel        String?
+  ctaHref         String?
+  meta            Json?
+
+  @@index([status])
+}
+
+/// ASSESSMENT MODELS
+model Quiz {
+  id                  String         @id @default(cuid())
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  courseId            String
+  moduleId            String?
+  lessonId            String?
+  title               String
+  description         String?
+  passingScore        Int            @default(70)
+  timeLimit           Int?           // in minutes
+  isRequired          Boolean        @default(false)
+  status              QuizStatus     @default(DRAFT)
+  // Lead gen fields
+  isPublic            Boolean        @default(false)
+  slug                String?        @unique
+  resultsCopy         Json?          // { low: {headline, body}, medium: {...}, high: {...} }
+  recommendedCourseId String?
+  course              Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  recommendedCourse   Course?        @relation("RecommendedCourseForQuiz", fields: [recommendedCourseId], references: [id], onDelete: SetNull)
+  questions           QuizQuestion[]
+  attempts            QuizAttempt[]
+
+  @@index([courseId])
+  @@index([recommendedCourseId])
+}
+
+model QuizQuestion {
+  id            String       @id @default(cuid())
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  quizId        String
+  position      Int          @default(0)
+  questionText  String
+  questionType  QuestionType @default(MULTIPLE_CHOICE)
+  options       Json?        // Array of options for MC questions
+  correctAnswer Json         // Index or value of correct answer
+  explanation   String?
+  points        Int          @default(1)
+  quiz          Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@unique([quizId, position])
+}
+
+model QuizAttempt {
+  id          String            @id @default(cuid())
+  createdAt   DateTime          @default(now())
+  quizId      String
+  contactId   String
+  score       Int
+  maxScore    Int
+  percentage  Float
+  passed      Boolean
+  answers     Json              // Array of { questionId, answer, isCorrect }
+  aiFeedback  Json?             // Structured AI summary for Lorraine + participant email
+  startedAt   DateTime          @default(now())
+  completedAt DateTime?
+  timeSpent   Int?              // in seconds
+  quiz        Quiz              @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  contact     Contact           @relation(fields: [contactId], references: [id])
+
+  @@index([quizId])
+  @@index([contactId])
+}
+
+enum QuizStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+  MULTIPLE_SELECT
+}
+
+/// CONDITION REFERENCE MODELS
+model ConditionReference {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  slug          String   @unique
+  name          String
+  category      String?
+  description   String?
+  whatIsIt      String?  @db.Text
+  symptoms      Json?    // Array of symptom strings
+  causes        Json?    // Array of cause strings
+  treatments    Json?    // Array of treatment strings
+  keyFacts      Json?    // Array of key facts
+  imageUrl      String?
+  relatedConditions Json? // Array of related condition slugs
+  status        ConditionStatus @default(DRAFT)
+  courses       CourseCondition[]
+}
+
+model CourseCondition {
+  id           String             @id @default(cuid())
+  courseId     String
+  conditionId  String
+  course       Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  condition    ConditionReference @relation(fields: [conditionId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, conditionId])
+}
+
+enum ConditionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+/// LESSON PROGRESS TRACKING
+model LessonProgress {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  userId      String
+  lessonId    String
+  courseId     String
+  completedAt DateTime?
+  user        User           @relation(fields: [userId], references: [id])
+  lesson      CourseLesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  course      Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId, courseId])
+}
+
+/// VIDEO WATCH TRACKING
+model VideoWatch {
+  id             String       @id @default(cuid())
+  createdAt      DateTime     @default(now())
+  userId         String
+  videoProductId String
+  watchedAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id])
+  video          VideoProduct @relation(fields: [videoProductId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoProductId])
+  @@index([userId])
+}
+
+/// USER VIDEO NOTES
+model VideoNote {
+  id             String       @id @default(cuid())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  userId         String
+  videoProductId String
+  content        String       @default("")
+  user           User         @relation(fields: [userId], references: [id])
+  video          VideoProduct @relation(fields: [videoProductId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoProductId])
+  @@index([userId])
 }
 

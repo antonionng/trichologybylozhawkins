@@ -11,6 +11,7 @@ export async function GET(request: Request) {
     | null;
   const ownerId = searchParams.get("ownerId") ?? undefined;
   const companyId = searchParams.get("companyId") ?? undefined;
+  const company = searchParams.get("company") ?? undefined;
   const search = searchParams.get("search") ?? undefined;
 
   try {
@@ -20,6 +21,7 @@ export async function GET(request: Request) {
       lifecycleStage: lifecycleStageParam ?? undefined,
       ownerId,
       companyId,
+      company,
       search,
     });
 

@@ -39,12 +39,13 @@ type PageSectionProps = {
   children: ReactNode;
   className?: string;
   innerClassName?: string;
-  padding?: "default" | "compact" | "none";
+  padding?: "default" | "compact" | "tight" | "none";
 };
 
 const paddingClasses: Record<NonNullable<PageSectionProps["padding"]>, string> = {
-  default: "py-16 sm:py-20 lg:py-section",
-  compact: "py-10 sm:py-12",
+  default: "py-12 sm:py-16",
+  compact: "py-8 sm:py-10",
+  tight: "py-4 sm:py-6",
   none: "py-0",
 };
 

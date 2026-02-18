@@ -1,0 +1,315 @@
+[
+  {
+    "slug": "alopecia-areata",
+    "name": "Alopecia Areata",
+    "category": "Hair Loss",
+    "description": "An autoimmune condition causing patchy, non-scarring hair loss that can occur at any age.",
+    "whatIsIt": "Alopecia areata is a common cause of patchy hair loss characterised by well-demarcated, shiny patches of non-scarring hair loss. Short, exclamation-mark hairs may be visible at the periphery of the affected area.",
+    "causedBy": [
+      "Autoimmune disease directed at the hair follicles",
+      "Family history of autoimmune disease",
+      "Can occur at any age"
+    ],
+    "symptoms": [
+      "Well-demarcated shiny patches of hair loss",
+      "Short exclamation-mark hairs at the edge of the lesion",
+      "Generally asymptomatic (no pain or itching)"
+    ],
+    "treatments": [
+      "GP can prescribe steroids (injected or applied directly as creams or liquids) to affected areas",
+      "Steroids suppress the immune cells attacking hair follicles, allowing hair to regrow"
+    ],
+    "keyFacts": [
+      "Unpredictable course — normally resolves over time",
+      "Nail involvement (pitting) may be present",
+      "Non-scarring — follicles are not permanently damaged",
+      "Can occur at any age"
+    ]
+  },
+  {
+    "slug": "female-pattern-hair-loss",
+    "name": "Female Pattern Hair Loss",
+    "category": "Hair Loss",
+    "description": "A genetically driven condition causing progressive thinning across the mid-frontal scalp, often worsened by hormonal changes.",
+    "whatIsIt": "Female pattern hair loss (FPHL) generally presents as a loss of hair volume to the mid-frontal scalp. The parting appears to be getting wider and hair overall feels thinner. It is also known as androgenetic alopecia in women.",
+    "causedBy": [
+      "Genetically driven — involves activation of hair follicle androgen receptors",
+      "Miniaturisation of the hair follicle resulting in progressive hair loss",
+      "Caused by a combination of hormones, ageing and genetics",
+      "May be exacerbated by low ferritin (iron) levels or thyroid dysfunction"
+    ],
+    "symptoms": [
+      "Widening of the hair parting",
+      "Thinning around the parting area",
+      "Reduced volume in a ponytail",
+      "Overall thinning of hair throughout the head",
+      "Psychological impact — low self-esteem"
+    ],
+    "treatments": [
+      "Minoxidil (topical treatment to slow hair loss)",
+      "Topical steroids from GP",
+      "Light therapy",
+      "Wigs or hair transplants"
+    ],
+    "keyFacts": [
+      "There is no cure for FPHL",
+      "Hair loss is not constant — accelerated phases of 3–6 months are followed by periods of stability lasting 6–18 months",
+      "Without medication, it tends to progress in severity over decades"
+    ]
+  },
+  {
+    "slug": "frontal-fibrosing-alopecia",
+    "name": "Frontal Fibrosing Alopecia",
+    "category": "Hair Loss",
+    "description": "A scarring form of hair loss affecting the front and sides of the scalp, where destroyed follicles cannot regrow.",
+    "whatIsIt": "Frontal fibrosing alopecia (FFA) causes hair loss on the front and sides of the scalp. It is a scarring alopecia, meaning the hair follicles are destroyed and replaced by scar tissue. Hair loss may also affect the eyebrows, eyelashes and other body parts.",
+    "causedBy": [
+      "An autoimmune reaction targeting hair follicles",
+      "Genetics may play a role",
+      "Hormonal factors may contribute"
+    ],
+    "symptoms": [
+      "Progressive hair loss on the front and sides of the scalp",
+      "Loss of eyebrows, eyelashes and body hair",
+      "Rash along the hairline in some cases",
+      "Itchy or painful scalp in some cases"
+    ],
+    "treatments": [
+      "Referral to GP for topical steroid cream or ointment",
+      "Steroid injections may be an option in some cases",
+      "Treatment aims to prevent further follicle destruction but cannot regrow hair already lost"
+    ],
+    "keyFacts": [
+      "Scarring alopecia — destroyed follicles cannot regrow",
+      "Hair that has been lost will not grow back",
+      "Early treatment is important to prevent further progression"
+    ]
+  },
+  {
+    "slug": "male-pattern-hair-loss",
+    "name": "Male Pattern Hair Loss",
+    "category": "Hair Loss",
+    "description": "The most common form of hair loss in men, driven by genetic and hormonal factors causing gradual thinning at the temples and crown.",
+    "whatIsIt": "Male pattern hair loss (MPHL), also known as androgenetic alopecia, presents as hair loss at the temples or crown of the head. Hairlines may recede to form an \"M\" shape, or a single spot of baldness may develop at the crown.",
+    "causedBy": [
+      "Combination of genetic and hormonal factors",
+      "DHT (Dihydrotestosterone) causes changes in hair follicles on the scalp",
+      "Affected follicles produce progressively smaller, shorter and lighter hairs until they stop producing hair entirely",
+      "Inherited from either or both parents"
+    ],
+    "symptoms": [
+      "Hair loss at the temples or crown of the head",
+      "Receding hairline forming an \"M\" shape",
+      "Awareness of thinning after puberty — usually no physical symptoms on the scalp",
+      "Psychological impact — low self-esteem, depression and feelings of unattractiveness"
+    ],
+    "treatments": [
+      "Minoxidil (topical treatment — slows hair loss if taken continuously)",
+      "Finasteride (oral medication — reduces levels of DHT)",
+      "Wigs or hair pieces",
+      "Micro-pigmentation",
+      "Hair transplants"
+    ],
+    "keyFacts": [
+      "There is no cure",
+      "Tends to progress very slowly over several years to decades",
+      "Early onset may lead to quicker progression",
+      "Inherited from either or both parents"
+    ]
+  },
+  {
+    "slug": "traction-alopecia",
+    "name": "Traction Alopecia",
+    "category": "Hair Loss",
+    "description": "Hair loss caused by repeated or constant pulling on the hair, often from tight hairstyling techniques.",
+    "whatIsIt": "Traction alopecia is hair loss resulting from repeated or constant pulling on the hair. It typically appears as areas of hair loss to the front and sides of the scalp, punctuated with broken hairs. The pulling force is usually from hairstyling techniques such as tight ponytails, braids, cornrows or dreadlocks.",
+    "causedBy": [
+      "Repeated or constant pulling on the hair from tight hairstyling",
+      "Tight ponytails exerting extreme pulling force on the hair and scalp",
+      "Afro-Caribbean styling techniques — braids, cornrows, dreadlocks"
+    ],
+    "symptoms": [
+      "Areas of hair loss, often at the front and sides of the scalp",
+      "Broken hairs in the affected area",
+      "Inflammation, soreness, stinging or itchiness of the scalp"
+    ],
+    "treatments": [
+      "Stop tight hairstyles immediately",
+      "Anti-biotic from GP if the area is inflamed",
+      "Early intervention gives the best chance of recovery"
+    ],
+    "keyFacts": [
+      "Often not reversible if left untreated",
+      "If treated quickly, follicles can recover and hair will grow back normally",
+      "Continued traction causes inflammation that affects stem cells, creating scarring and permanent hair loss"
+    ]
+  },
+  {
+    "slug": "seborrheic-dermatitis",
+    "name": "Seborrheic Dermatitis",
+    "category": "Scalp & Hair Condition",
+    "description": "A common, recurring scalp condition causing red, yellowy, flaky scales, often linked to yeast, genetics and stress.",
+    "whatIsIt": "Seborrheic dermatitis is a common inflammatory skin condition that appears on the scalp as red, yellowy, flaky scales. It can also affect the nasal folds, eyebrows, armpits and groin. It is a long-term, recurring condition that can be managed but not cured.",
+    "causedBy": [
+      "Genetic predisposition",
+      "Yeast infection (Malassezia)",
+      "Stress-related triggers",
+      "Temperature change — can be worse in winter"
+    ],
+    "symptoms": [
+      "Red, yellowy, flaky scales on the scalp",
+      "Inflammation and soreness",
+      "May also appear on nasal folds, eyebrows, armpits and groin"
+    ],
+    "treatments": [
+      "Medicated anti-dandruff shampoo from the pharmacy",
+      "Descaling preparation may be needed first (coconut oil or salicylic acid)",
+      "Topical steroid cream from GP if needed"
+    ],
+    "keyFacts": [
+      "Can be managed but is a long-term, recurring condition",
+      "Often worse in winter months",
+      "Also known as seborrheic eczema"
+    ]
+  },
+  {
+    "slug": "telogen-effluvium",
+    "name": "Telogen Effluvium",
+    "category": "Scalp & Hair Condition",
+    "description": "Excessive, sudden hair shedding triggered by an underlying internal condition such as illness, hormonal change or nutritional deficiency.",
+    "whatIsIt": "Telogen effluvium is a sudden loss of hair due to various internal factors, resulting in excessive hair shedding. It is a clinical sign that signals the existence of an underlying condition rather than a disease in itself. In rare cases it may also cause hair loss on the pubic region or eyebrows.",
+    "causedBy": [
+      "Post-partum hair loss",
+      "Febrile illness",
+      "Blood loss",
+      "Post-operative responses",
+      "Endocrine disorders",
+      "Drugs and medication",
+      "Metabolic and nutritional disorders"
+    ],
+    "symptoms": [
+      "Sudden excessive hair shedding",
+      "Noticeable increase in hair fall during washing or brushing",
+      "Generally asymptomatic on the scalp",
+      "In rare cases, hair loss on the pubic region or eyebrows"
+    ],
+    "treatments": [
+      "Treatment is directed at the underlying cause",
+      "Identifying and addressing the trigger condition is key to recovery"
+    ],
+    "keyFacts": [
+      "Once the underlying cause is treated, prognosis is normally good and hair growth resumes",
+      "Not a disease itself — it signals an underlying condition",
+      "Hair shedding is typically temporary"
+    ]
+  },
+  {
+    "slug": "trichotillosis",
+    "name": "Trichotillosis",
+    "category": "Scalp & Hair Condition",
+    "description": "A self-inflicted hair condition caused by repeated pulling, twisting or rubbing of the hair, often linked to stress and compulsive behaviour.",
+    "whatIsIt": "Trichotillosis (also referred to as trichotillomania) is a self-inflicted condition that arises from repeated pulling, twisting or rubbing of strands of hair. The most common site of hair loss is the scalp, where hair looks twisted and fragmented. It may also affect eyelashes and eyebrows.",
+    "causedBy": [
+      "Stress-related and compulsive behaviour",
+      "Psychological factors — especially in children",
+      "Linked to stress reduction, emotional regulation and sensory stimulation"
+    ],
+    "symptoms": [
+      "Twisted and fragmented hair on the scalp",
+      "Patchy hair loss from repeated pulling",
+      "Hair loss to eyelashes and eyebrows",
+      "Sense of pleasure or relief after hair is pulled"
+    ],
+    "treatments": [
+      "Seeking treatment for depression, anxiety or poor self-image",
+      "Psychological or behavioural therapy to address underlying triggers"
+    ],
+    "keyFacts": [
+      "For most people, the hair pulling ends within 12 months",
+      "For others, it can be a lifelong disorder",
+      "Most common in children and young adults"
+    ]
+  },
+  {
+    "slug": "irritant-contact-dermatitis",
+    "name": "Irritant Contact Dermatitis",
+    "category": "Scalp Dermatitis",
+    "description": "A temporary skin reaction on the scalp caused by exposure to chemicals or harmful substances, commonly seen in hairdressers.",
+    "whatIsIt": "Irritant contact dermatitis (ICD) is a reaction that takes place when the skin barrier is damaged after exposure to a chemical or harmful substance. The most common occurrence of ICD is on the scalp and hands of people who frequently use detergents and water, often through their work (such as hairdressers).",
+    "causedBy": [
+      "Lengthy exposure to detergents or water removes the natural oils of the outer skin layers, causing irritation",
+      "Chemical agents penetrating the protective outer layers of the skin trigger an inflammatory response",
+      "The body reacts by attempting to neutralise the invading agent and repair damage"
+    ],
+    "symptoms": [
+      "Soreness, redness and inflammation of the affected area",
+      "Cracked or dry skin",
+      "Skin may be weeping with fluid in some areas"
+    ],
+    "treatments": [
+      "Emollient cream from the pharmacy",
+      "Topical corticosteroid from GP if extremely inflamed",
+      "Avoid exposure to the damaging substance"
+    ],
+    "keyFacts": [
+      "ICD is a temporary skin reaction",
+      "Usually calms when exposure to the damaging substance is avoided",
+      "Most common in people who frequently handle detergents and water"
+    ]
+  },
+  {
+    "slug": "allergic-contact-dermatitis",
+    "name": "Allergic Contact Dermatitis",
+    "category": "Scalp Dermatitis",
+    "description": "A type 4 allergic skin reaction causing itchy, red, blistered patches, triggered by repeated exposure to an allergen.",
+    "whatIsIt": "Allergic contact dermatitis is an allergic skin reaction that occurs 12–72 hours after exposure to an allergen. It presents as redness, heat, swelling and pain on the scalp or affected area. It is classified as a type 4 hypersensitivity reaction.",
+    "causedBy": [
+      "Repeated exposure to small doses of an allergen",
+      "Overreaction of the body's autoimmune system",
+      "Many different allergens can trigger this condition"
+    ],
+    "symptoms": [
+      "Redness, heat, swelling and pain",
+      "Patches of skin that are itchy, red and blistered",
+      "Reaction occurs 12–72 hours after exposure",
+      "Sun sensitivity may also be present"
+    ],
+    "treatments": [
+      "Avoid contact with the triggering substance",
+      "Hydrocortisone cream from GP or pharmacy",
+      "Antihistamine medication",
+      "Topical steroids if needed"
+    ],
+    "keyFacts": [
+      "Once the body is sensitised to an allergen, it is for life",
+      "Identifying and avoiding the allergen is the most important step",
+      "Reaction is delayed — appears 12–72 hours after exposure"
+    ]
+  },
+  {
+    "slug": "folliculitis",
+    "name": "Folliculitis",
+    "category": "Scalp Infection",
+    "description": "An infection causing inflammation of the hair follicles, resulting in itchiness, burning and redness. Easily treated and curable.",
+    "whatIsIt": "Folliculitis is a skin condition in which hair follicles become inflamed, typically due to a bacterial infection. It can occur anywhere on hair-bearing skin, though it commonly affects the scalp.",
+    "causedBy": [
+      "Bacterial infection of the hair follicle",
+      "Folliculitis decalvans (a more severe form)",
+      "Can occur on any hair-bearing skin"
+    ],
+    "symptoms": [
+      "Itchiness within the affected follicle",
+      "Burning sensation",
+      "Redness and inflammation around the follicle"
+    ],
+    "treatments": [
+      "GP referral for appropriate treatment",
+      "Antibiotics may be prescribed depending on severity"
+    ],
+    "keyFacts": [
+      "Very good prognosis — easily treated and curable",
+      "Can occur anywhere on hair-bearing skin",
+      "Early treatment prevents complications"
+    ]
+  }
+]

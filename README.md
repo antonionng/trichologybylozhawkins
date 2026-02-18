@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+Lorraine Hawkins / Trichology Platform (Next.js + Prisma + Supabase + BullMQ)
 
-## Getting Started
+## Local setup (macOS)
 
-First, run the development server:
+### Prereqs
+
+- Node.js 18+
+- A Postgres database (local Docker is easiest)
+- Redis (required for queues: AI generation, automations, etc.)
+
+### Option A (recommended): Docker Desktop
+
+1. Install Docker Desktop for Mac.
+2. Start Postgres + Redis:
+
+```bash
+cd /Users/ant/Documents/LorraineHawkin/trichology
+docker compose up -d
+```
+
+### Option B: Homebrew services
+
+```bash
+brew install redis
+brew services start redis
+redis-cli ping  # should print PONG
+```
+
+For Postgres you can either use Docker just for Postgres:
+
+```bash
+cd /Users/ant/Documents/LorraineHawkin/trichology
+docker compose up -d postgres
+```
+
+### Environment
+
+Copy the template env file:
+
+```bash
+cd /Users/ant/Documents/LorraineHawkin/trichology
+cp env.local.template .env.local
+```
+
+Make sure these are correct for your machine:
+- `DATABASE_URL` (Postgres)
+- `REDIS_URL` (Redis, default: `redis://localhost:6379`)
+
+### Install + DB setup
+
+```bash
+cd /Users/ant/Documents/LorraineHawkin/trichology
+npm install
+npm run prisma:generate
+npm run prisma:migrate
+```
+
+### Run the app (2 terminals)
+
+Terminal A (Next.js):
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Terminal B (BullMQ worker — required for Regenerate / AI jobs):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run worker
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+Open `http://localhost:3000`.
 
-## Learn More
+## Why Redis if we use Supabase?
 
-To learn more about Next.js, take a look at the following resources:
+Supabase is used for **database/storage**, but Redis is used for **background job queues** (BullMQ). The app queues AI jobs immediately, and the worker consumes them from Redis and writes results back to Postgres.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## More docs
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+See `docs/platform/runbook.md` and `docs/platform/content-factory.md`.

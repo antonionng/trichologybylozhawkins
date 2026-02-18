@@ -1,5 +1,6 @@
 export * from "./ai";
 export * from "./chat";
+export * from "./content";
 export * from "./cms";
 export * from "./crm";
 export * from "./education";

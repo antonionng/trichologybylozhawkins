@@ -50,16 +50,21 @@ export async function POST(request: Request) {
       outcome: data.urgency === "high" ? undefined : undefined,
     });
 
-    // Create follow-up task if high urgency
-    if (data.urgency === "high") {
-      await upsertTask({
-        title: `Follow up: ${data.enquiryType} enquiry from ${data.firstName} ${data.lastName}`,
-        description: `Contact: ${data.preferredContactMethod === "phone" ? data.phone : data.email}\n\n${data.message}`,
-        priority: TaskPriority.HIGH,
-        status: TaskStatus.PENDING,
-        contactId: contact.id,
-      });
-    }
+    // Create follow-up task for every enquiry (priority based on urgency)
+    const taskPriority =
+      data.urgency === "high"
+        ? TaskPriority.HIGH
+        : data.urgency === "normal"
+        ? TaskPriority.NORMAL
+        : TaskPriority.LOW;
+
+    await upsertTask({
+      title: `Follow up: ${data.enquiryType} enquiry from ${data.firstName} ${data.lastName}`,
+      description: `Contact: ${data.preferredContactMethod === "phone" ? data.phone : data.email}\n\n${data.message}`,
+      priority: taskPriority,
+      status: TaskStatus.PENDING,
+      contactId: contact.id,
+    });
 
     return NextResponse.json({
       success: true,

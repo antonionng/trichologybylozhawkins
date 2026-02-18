@@ -1,182 +1,282 @@
-import { PageSection } from "@/components/layout/PageSection";
+export const dynamic = "force-dynamic";
+
+import Link from "next/link";
+import { prisma } from "@/server/db/client";
 import { Container } from "@/components/layout/Container";
-import { SectionHeading } from "@/components/typography/SectionHeading";
-import { BlogHighlightsSection } from "@/components/sections/BlogHighlightsSection";
-import { Surface } from "@/components/layout/Surface";
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
-import { ButtonLink } from "@/components/ui/Button";
-import { blogHighlights } from "@/lib/content";
+import { blogHighlights, BlogHighlight } from "@/lib/content";
+import { getTopicAccent } from "@/lib/topicAccents";
 
-const insightThemes = [
-  {
-    title: "Clinical guides",
-    description:
-      "Learn assessment techniques, understand different scalp conditions, and develop effective treatment plans.",
-    bullets: ["Scalp assessment methods", "Common condition guides", "When to refer to specialists"],
-  },
-  {
-    title: "Business growth",
-    description:
-      "Practical guidance on pricing services, talking to clients about products, and tracking your results.",
-    bullets: ["Consultation frameworks", "Product recommendation tips", "Simple progress tracking"],
-  },
-  {
-    title: "Case studies",
-    description:
-      "Real examples showing treatment journeys from assessment to results, with lessons learned along the way.",
-    bullets: ["Treatment timelines", "What worked and why", "Client home care routines"],
-  },
-];
+async function getBlogPosts(): Promise<BlogHighlight[]> {
+  try {
+    const collection = await prisma.collection.findUnique({
+      where: { slug: "blog-posts" },
+    });
 
-const researchSignals = [
-  {
-    label: "Real experience",
-    detail: "Every article draws from Lorraine's years of clinical practice and teaching experience.",
-  },
-  {
-    label: "Personally reviewed",
-    detail: "Lorraine reviews and edits each article to ensure accuracy and practical value.",
-  },
-  {
-    label: "Evidence-based",
-    detail: "Information is checked against current research and proven methods that actually work.",
-  },
-];
+    if (collection) {
+      const entries = await prisma.entry.findMany({
+        where: { collectionId: collection.id, status: "PUBLISHED" },
+        orderBy: { publishedAt: "desc" },
+        take: 20,
+      });
 
-export default function Blog() {
-  const [featuredArticle, ...otherArticles] = blogHighlights;
-  const supportingArticles = otherArticles.slice(0, 2);
+      if (entries.length > 0) {
+        return entries.map((entry) => {
+          const meta = (entry.meta ?? {}) as Record<string, any>;
+          return {
+            id: entry.id,
+            title: entry.title,
+            excerpt: entry.summary || "",
+            category: meta.category || "Article",
+            slug: entry.slug,
+            published: entry.publishedAt
+              ? entry.publishedAt.toISOString().slice(0, 10)
+              : entry.createdAt.toISOString().slice(0, 10),
+            heroImage: meta.heroImage || undefined,
+          };
+        });
+      }
+    }
 
-  const formatPublishedDate = (isoDate: string) => {
-    const [year, month, day] = isoDate.split("-");
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const monthIndex = Number(month) - 1;
-    const monthLabel = monthNames[monthIndex] ?? month;
-    return `${day.padStart(2, "0")} ${monthLabel} ${year}`;
-  };
+    // Fall back to ContentSlot (Content Factory)
+    const slots = await prisma.contentSlot.findMany({
+      where: { channel: "BLOG", status: "PUBLISHED" },
+      orderBy: { publishedAt: "desc" },
+      take: 10,
+    });
+    if (slots.length > 0) {
+      return slots.map((slot) => {
+        const meta = (slot.metadata ?? {}) as any;
+        return {
+          id: slot.id,
+          title: slot.title,
+          excerpt: slot.brief || meta.excerpt || "",
+          category: meta.category || "Article",
+          slug: meta.slug || slot.id,
+          published: slot.publishedAt
+            ? slot.publishedAt.toISOString().slice(0, 10)
+            : slot.createdAt.toISOString().slice(0, 10),
+          heroImage: meta.heroImage || undefined,
+        };
+      });
+    }
+
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+function fmtDate(isoDate: string) {
+  const [year, month, day] = isoDate.split("-");
+  const months = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  ];
+  return `${day?.padStart(2, "0") ?? "01"} ${months[Number(month) - 1] ?? month} ${year}`;
+}
+
+export default async function Blog() {
+  const dbPosts = await getBlogPosts();
+  const allPosts = dbPosts.length > 0 ? dbPosts : blogHighlights;
+  const [featured, ...rest] = allPosts;
 
   return (
-    <main>
-      <PageSection tone="sand" texture="linen" className="relative">
-        <Container className="space-y-10">
-          <SectionHeading
-            eyebrow="Knowledge Hub"
-            title="Practical insights from real experience"
-            description="Learn from Lorraine's years of practice. Clear, practical articles that help you understand scalp health and improve your skills."
-          />
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
-            <Surface variant="card" padding="lg" className="space-y-4 text-base leading-relaxed text-brand-graphite/78">
-              <p>
-                Find evidence-based information on scalp health, treatment techniques, and growing your practice. Each article is written from real experience to help you understand not just what to do, but why it works.
+    <main className="min-h-screen">
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-brand-sand/60 via-brand-linen/20 to-white">
+        <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-brand-salmon/[0.04]" />
+
+        <Container className="relative pb-10 pt-14 sm:pb-12 sm:pt-20">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,0.45fr)_minmax(0,0.55fr)] lg:items-start">
+            <div className="space-y-4">
+              <span className="inline-block rounded-full bg-brand-salmon/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.4em] text-brand-salmon">
+                Knowledge Hub
+              </span>
+              <h1 className="font-display text-3xl leading-[1.15] text-brand-graphite sm:text-[2.5rem]">
+                Practical insights from real experience
+              </h1>
+              <p className="text-sm leading-relaxed text-brand-graphite/60">
+                Evidence-based articles on hair loss, scalp health, and
+                trichology practice — written by Lorraine from 18 years of
+                clinical experience.
               </p>
-              <p>
-                Get practical frameworks, step-by-step guides, and tools you can start using immediately. Clear information without unnecessary jargon.
-              </p>
-            </Surface>
-            {featuredArticle ? (
-              <Surface
-                variant="glass"
-                padding="lg"
-                className="space-y-6 rounded-glass-lg border border-white/50 bg-white/80 backdrop-blur-sm text-brand-graphite"
-              >
-                <div className="space-y-3">
-                  <span className="inline-flex rounded-full bg-brand-salmon/60 px-4 py-1 text-xs uppercase tracking-[0.32em] text-brand-ivory">
-                    Featured insight
-                  </span>
-                  <div className="space-y-2">
-                    <h3 className="font-display text-2xl leading-tight">{featuredArticle.title}</h3>
-                    <p className="text-sm uppercase tracking-[0.3em] text-brand-graphite/55">
-                      {featuredArticle.category} · {formatPublishedDate(featuredArticle.published)}
-                    </p>
-                  </div>
-                  <p className="text-sm leading-relaxed text-brand-graphite/75">{featuredArticle.excerpt}</p>
-                </div>
-                <div className="flex flex-wrap gap-4">
-                  <ButtonLink href={`/blog/${featuredArticle.slug}`} variant="secondary" size="md">
-                    Read article
-                  </ButtonLink>
-                  <ButtonLink href="/contact?topic=knowledge-hub" variant="ghost" size="md">
-                    Ask a question
-                  </ButtonLink>
-                </div>
-                {supportingArticles.length > 0 ? (
-                  <div className="space-y-3 border-t border-white/50 pt-4">
-                    <p className="text-xs uppercase tracking-[0.28em] text-brand-graphite/55">More articles</p>
-                    <div className="space-y-2">
-                      {supportingArticles.map((article) => (
-                        <div key={article.id} className="flex items-center justify-between gap-4 text-sm">
-                          <div className="space-y-1">
-                            <p className="font-medium text-brand-graphite">{article.title}</p>
-                            <span className="text-xs uppercase tracking-[0.28em] text-brand-graphite/50">
-                              {article.category} · {formatPublishedDate(article.published)}
-                            </span>
+            </div>
+
+            {/* Featured article */}
+            {featured &&
+              (() => {
+                const accent = getTopicAccent(featured.category);
+                return (
+                  <Link
+                    href={`/blog/${featured.slug}`}
+                    className="group block"
+                  >
+                    <div className="flex flex-col overflow-hidden rounded-2xl border border-brand-graphite/8 bg-white shadow-sm transition-all hover:shadow-md">
+                      {featured.heroImage ? (
+                        <div className="relative h-40 sm:h-48">
+                          <img
+                            src={featured.heroImage}
+                            alt={featured.title}
+                            className="h-full w-full object-cover"
+                          />
+                          <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-brand-graphite shadow-sm">
+                            Featured
                           </div>
-                          <ButtonLink href={`/blog/${article.slug}`} variant="ghost" size="sm">
-                            Open
-                          </ButtonLink>
                         </div>
-                      ))}
+                      ) : (
+                        <div
+                          className={`h-32 bg-gradient-to-br ${accent.gradient} relative`}
+                        >
+                          <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/15" />
+                          <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-brand-graphite shadow-sm">
+                            Featured
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex flex-1 flex-col gap-2 p-5">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`rounded-full ${accent.bg} px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${accent.text}`}
+                          >
+                            {featured.category}
+                          </span>
+                          <span className="text-[10px] text-brand-graphite/35">
+                            {fmtDate(featured.published)}
+                          </span>
+                        </div>
+                        <h2 className="font-display text-lg leading-snug text-brand-graphite transition-colors group-hover:text-brand-salmon">
+                          {featured.title}
+                        </h2>
+                        <p className="line-clamp-3 text-sm leading-relaxed text-brand-graphite/55">
+                          {featured.excerpt}
+                        </p>
+                        <span className="mt-auto text-xs font-semibold text-brand-salmon">
+                          Read article &rarr;
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ) : null}
-              </Surface>
-            ) : null}
+                  </Link>
+                );
+              })()}
           </div>
-        </Container>
-      </PageSection>
 
-      <BlogHighlightsSection />
-
-      <PageSection tone="mist" className="relative">
-        <Container className="space-y-10">
-          <SectionHeading
-            eyebrow="Topics covered"
-            title="What you'll learn"
-            description="Every article includes practical takeaways you can use immediately—checklists, templates, and clear guidance."
-            align="center"
-          />
-          <div className="grid gap-6 lg:grid-cols-3">
-            {insightThemes.map((theme) => (
-              <Surface key={theme.title} variant="card" padding="lg" className="space-y-4">
-                <div className="space-y-2">
-                  <h3 className="font-display text-xl text-brand-graphite">{theme.title}</h3>
-                  <p className="text-sm leading-relaxed text-brand-graphite/75">{theme.description}</p>
-                </div>
-                <ul className="space-y-2 text-sm leading-relaxed text-brand-graphite/70">
-                  {theme.bullets.map((bullet) => (
-                    <li key={bullet} className="flex gap-2">
-                      <span className="mt-1 inline-flex h-2 w-2 flex-none rounded-full bg-brand-salmon/50" />
-                      <span>{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Surface>
-            ))}
-          </div>
+          {/* Supporting articles row (top 3) */}
+          {rest.length > 0 && (
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {rest.slice(0, 3).map((article) => {
+                const accent = getTopicAccent(article.category);
+                return (
+                  <Link
+                    key={article.id}
+                    href={`/blog/${article.slug}`}
+                    className="group block"
+                  >
+                    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-brand-graphite/8 bg-white transition-all hover:border-brand-graphite/15 hover:shadow-md">
+                      {article.heroImage ? (
+                        <div className="h-32">
+                          <img
+                            src={article.heroImage}
+                            alt={article.title}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          className={`h-1 bg-gradient-to-r ${accent.gradient}`}
+                        />
+                      )}
+                      <div className="flex flex-1 flex-col gap-2 p-4">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`rounded-full ${accent.bg} px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${accent.text}`}
+                          >
+                            {article.category}
+                          </span>
+                          <span className="text-[10px] text-brand-graphite/35">
+                            {fmtDate(article.published)}
+                          </span>
+                        </div>
+                        <h3 className="font-display text-base leading-snug text-brand-graphite transition-colors group-hover:text-brand-salmon">
+                          {article.title}
+                        </h3>
+                        <p className="flex-1 line-clamp-2 text-xs leading-relaxed text-brand-graphite/50">
+                          {article.excerpt}
+                        </p>
+                        <span className="mt-auto text-[11px] font-semibold text-brand-salmon">
+                          Read &rarr;
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </Container>
-      </PageSection>
+      </section>
 
-      <PageSection tone="transparent">
-        <Container className="space-y-10">
-          <SectionHeading
-            eyebrow="Quality standards"
-            title="Information you can trust"
-            description="Every article is reviewed for accuracy and practical value before publication."
-            align="center"
-          />
-          <div className="grid gap-6 md:grid-cols-3">
-            {researchSignals.map((signal) => (
-              <Surface key={signal.label} variant="subtle" padding="lg" className="space-y-2 text-sm leading-relaxed">
-                <p className="text-xs uppercase tracking-[0.28em] text-brand-graphite/55">{signal.label}</p>
-                <p className="text-base text-brand-graphite/80">{signal.detail}</p>
-              </Surface>
-            ))}
-          </div>
-        </Container>
-      </PageSection>
+      {/* All remaining articles */}
+      {rest.length > 3 && (
+        <section className="bg-white py-12">
+          <Container>
+            <h2 className="mb-8 font-display text-2xl text-brand-graphite">
+              More articles
+            </h2>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {rest.slice(3).map((article) => {
+                const accent = getTopicAccent(article.category);
+                return (
+                  <Link
+                    key={article.id}
+                    href={`/blog/${article.slug}`}
+                    className="group block"
+                  >
+                    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-brand-graphite/8 bg-white transition-all hover:border-brand-graphite/15 hover:shadow-md">
+                      {article.heroImage ? (
+                        <div className="h-36">
+                          <img
+                            src={article.heroImage}
+                            alt={article.title}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          className={`h-1 bg-gradient-to-r ${accent.gradient}`}
+                        />
+                      )}
+                      <div className="flex flex-1 flex-col gap-2 p-4">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`rounded-full ${accent.bg} px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${accent.text}`}
+                          >
+                            {article.category}
+                          </span>
+                          <span className="text-[10px] text-brand-graphite/35">
+                            {fmtDate(article.published)}
+                          </span>
+                        </div>
+                        <h3 className="font-display text-base leading-snug text-brand-graphite transition-colors group-hover:text-brand-salmon">
+                          {article.title}
+                        </h3>
+                        <p className="flex-1 line-clamp-2 text-xs leading-relaxed text-brand-graphite/50">
+                          {article.excerpt}
+                        </p>
+                        <span className="mt-auto text-[11px] font-semibold text-brand-salmon">
+                          Read &rarr;
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </Container>
+        </section>
+      )}
 
       <ConsultationCta />
     </main>
   );
 }
-

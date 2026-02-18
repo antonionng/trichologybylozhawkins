@@ -1,0 +1,31 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: lorrainehawkins-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: lorrainehawkins
+    ports:
+      - "5432:5432"
+    volumes:
+      - lorrainehawkins_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lorrainehawkins"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: lorrainehawkins-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - lorrainehawkins_redisdata:/data
+
+volumes:
+  lorrainehawkins_pgdata:
+  lorrainehawkins_redisdata:
+

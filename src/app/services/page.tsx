@@ -1,329 +1,142 @@
 import Image from "next/image";
 import { ButtonLink } from "@/components/ui/Button";
-import { ServicesShowcase } from "@/components/sections/ServicesShowcase";
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
-import { PageSection } from "@/components/layout/PageSection";
 import { Container } from "@/components/layout/Container";
-import { SectionHeading } from "@/components/typography/SectionHeading";
-import { Surface } from "@/components/layout/Surface";
 import { services } from "@/lib/content";
 import { photography } from "@/lib/visualAssets";
 
 const serviceMetrics = [
-  { value: "18+", label: "years of experience" },
-  { value: "1,200+", label: "clients helped" },
-  { value: "30+", label: "training sessions yearly" },
-];
-
-const clinicEnhancements = [
-  "Lab test coordination and biomarker analysis when needed",
-  "Evidence-based treatment plans without prescriptions",
-  "Personalized lifestyle, nutrition, and product recommendations",
-];
-
-const partnershipEnhancements = [
-  "Initial consultation to understand your business goals",
-  "Product recommendation training tailored to your offerings",
-  "Ongoing support with progress reviews and guidance",
+  { value: "18+", label: "Years" },
+  { value: "Trusted", label: "By salons" },
+  { value: "30+", label: "Sessions / year" },
 ];
 
 const processSteps = [
-  {
-    step: "01",
-    title: "Assessment & Analysis",
-    description:
-      "Professional scalp imaging, health history review, and comprehensive intake assessment.",
-    bullets: [
-      "Detailed scalp imaging and analysis",
-      "Lifestyle and health factors review",
-    ],
-  },
-  {
-    step: "02",
-    title: "Treatment Planning",
-    description:
-      "Custom treatment plan combining professional care, home routines, and product recommendations.",
-    bullets: [
-      "Personalized treatment timeline",
-      "Product and lifestyle recommendations",
-    ],
-  },
-  {
-    step: "03",
-    title: "Hands-On Training",
-    description:
-      "Learn through practice with guided demonstrations, technique refinement, and real scenarios.",
-    bullets: [
-      "Live demonstrations and practice sessions",
-      "Feedback and technique improvement",
-    ],
-  },
-  {
-    step: "04",
-    title: "Ongoing Support",
-    description:
-      "Continued guidance with progress reviews and adjustments to keep improving results.",
-    bullets: [
-      "Regular progress check-ins",
-      "Access to new resources and updates",
-    ],
-  },
+  { n: "1", title: "Assessment", description: "Scalp imaging, health history, and comprehensive intake.", color: "bg-rose-400" },
+  { n: "2", title: "Planning", description: "Custom treatment plan with product and lifestyle guidance.", color: "bg-amber-400" },
+  { n: "3", title: "Hands-on care", description: "Guided demonstrations, technique refinement, and practice.", color: "bg-emerald-400" },
+  { n: "4", title: "Ongoing support", description: "Progress reviews, adjustments, and continued guidance.", color: "bg-sky-400" },
 ];
 
 const conciergeAssurances = [
-  "Personal support with scheduling, tests, and logistics",
-  "Flexible payment options for individuals and businesses",
-  "Secure, confidential record-keeping",
-  "Referrals to nutrition, dermatology, and wellness specialists when needed",
+  "Personal scheduling and logistics support",
+  "Flexible payment options",
+  "Secure, confidential records",
+  "Specialist referrals when needed",
 ];
 
 export default function Services() {
-  const clinicServices = services.filter((service) => service.id === "service-consultation");
-  const partnershipServices = services.filter((service) => service.id !== "service-consultation");
-
   return (
-    <main>
-      <PageSection tone="sand" texture="linen" collage={{ parallax: true }}>
-        <Container className="grid gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-center">
-          <div className="space-y-8">
-            <SectionHeading
-              eyebrow="Services"
-              title="Expert care and training for lasting results"
-              description="Get professional scalp treatment or train your team to deliver exceptional scalp care services. Every service is backed by science and real-world experience."
-            />
-            <div className="flex flex-wrap gap-4">
-              <ButtonLink href="/contact" variant="secondary" size="lg">
-                Book consultation
-              </ButtonLink>
-              <ButtonLink href="/education" variant="ghost" size="lg">
-                Train your team
-              </ButtonLink>
+    <main className="min-h-screen">
+      {/* ── Hero ─────────────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-brand-sand/60 via-brand-linen/20 to-white">
+        <div className="absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-brand-salmon/[0.04]" />
+
+        <Container className="relative pb-10 pt-14 sm:pb-14 sm:pt-20">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start">
+            <div className="space-y-5">
+              <span className="inline-block rounded-full bg-brand-salmon/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.4em] text-brand-salmon">Services</span>
+              <h1 className="font-display text-3xl leading-[1.15] text-brand-graphite sm:text-[2.5rem]">
+                Consultations &amp; professional training
+              </h1>
+              <p className="max-w-lg text-base leading-relaxed text-brand-graphite/65">
+                Personal scalp health consultations for individuals. Hands-on training for salon teams and practitioners. All led by Lorraine.
+              </p>
+              <div className="flex flex-wrap gap-3 pt-1">
+                <ButtonLink href="/contact" variant="secondary" size="sm">Book consultation</ButtonLink>
+                <ButtonLink href="/education" variant="ghost" size="sm">Train your team</ButtonLink>
+              </div>
+              <div className="grid grid-cols-3 gap-3 pt-2">
+                {serviceMetrics.map((m) => (
+                  <div key={m.label} className="rounded-xl border border-brand-graphite/8 bg-white p-3 text-center">
+                    <p className="font-display text-lg text-brand-graphite">{m.value}</p>
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-brand-graphite/40">{m.label}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              {serviceMetrics.map((metric) => (
-                <Surface
-                  key={metric.label}
-                  variant="subtle"
-                  padding="lg"
-                  className="flex flex-col gap-1 text-brand-graphite"
-                >
-                  <span className="font-display text-2xl">{metric.value}</span>
-                  <span className="text-sm uppercase tracking-[0.28em] text-brand-graphite/65">{metric.label}</span>
-                </Surface>
-              ))}
-            </div>
-          </div>
-          <div className="space-y-6">
-            <Surface variant="glass" padding="none" className="overflow-hidden rounded-glass-lg">
-              <Image
-                src={photography.consultation.src}
-                alt={photography.consultation.alt}
-                width={600}
-                height={780}
-                className="h-full w-full object-cover saturate-[0.92] contrast-[1.05]"
-                priority
-              />
-            </Surface>
-            <Surface variant="card" padding="lg" className="space-y-4 text-brand-graphite/80">
-              <h3 className="font-display text-xl text-brand-graphite">Premium, personalized support</h3>
-              <ul className="space-y-3 text-sm leading-relaxed">
-                {conciergeAssurances.map((item) => (
-                  <li key={item} className="flex gap-3">
-                    <span
-                      className="mt-1 inline-flex h-2.5 w-2.5 flex-none rounded-full bg-brand-salmon"
-                      aria-hidden
-                    />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </Surface>
-          </div>
-        </Container>
-      </PageSection>
-
-      <PageSection tone="transparent" className="relative">
-        <Container className="space-y-12">
-          <SectionHeading
-            eyebrow="Choose your path"
-            title="Personal care or team training"
-            description="Get individual treatment for your scalp health or professional training for your salon team."
-            align="center"
-          />
-          <div className="grid gap-8 lg:grid-cols-2">
-            <Surface variant="card" padding="lg" className="flex h-full flex-col gap-6">
-              <div className="space-y-3">
-                <div className="inline-flex rounded-full bg-brand-salmon/60 px-4 py-1 text-xs uppercase tracking-[0.28em] text-brand-ivory">
-                  For individuals
-                </div>
-                <h3 className="font-display text-2xl text-brand-graphite">Personal consultations</h3>
-                <p className="text-sm leading-relaxed text-brand-graphite/75">
-                  Get expert scalp care with professional assessment, personalized treatment plans, and ongoing support tailored to your needs.
-                </p>
+            <div className="space-y-4">
+              <div className="overflow-hidden rounded-2xl">
+                <Image src={photography.consultation.src} alt={photography.consultation.alt} width={600} height={780} className="h-full w-full object-cover saturate-[0.92] contrast-[1.05]" priority />
               </div>
-              <div className="space-y-4">
-                {clinicServices.map((service) => (
-                  <div key={service.id} className="rounded-2xl border border-brand-graphite/8 bg-white/80 p-5 shadow-sm">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-semibold text-brand-graphite">{service.name}</p>
-                        <p className="text-xs uppercase tracking-[0.3em] text-brand-graphite/60">{service.duration}</p>
-                      </div>
-                      <span className="rounded-full bg-brand-salmon/60 px-3 py-1 text-xs font-medium text-brand-ivory">
-                        Premium care
-                      </span>
-                    </div>
-                    <p className="mt-3 text-sm leading-relaxed text-brand-graphite/75">{service.description}</p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {service.focus.map((item) => (
-                        <span
-                          key={item}
-                          className="rounded-full bg-brand-sage/35 px-3 py-1 text-xs uppercase tracking-[0.28em] text-brand-graphite/70"
-                        >
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-                    <ButtonLink href={service.cta.href} variant="ghost" size="sm" className="mt-4 w-fit">
-                      {service.cta.label}
-                    </ButtonLink>
-                  </div>
-                ))}
-              </div>
-              <div className="space-y-2 text-sm leading-relaxed text-brand-graphite/75">
-                {clinicEnhancements.map((item) => (
-                  <div key={item} className="flex gap-3">
-                    <span className="mt-[6px] inline-block h-1.5 w-1.5 flex-none rounded-full bg-brand-salmon/40" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-              <ButtonLink href="/contact?service=clinic" variant="secondary" size="md" className="w-fit">
-                Book your consultation
-              </ButtonLink>
-            </Surface>
-
-            <Surface variant="card" padding="lg" className="flex h-full flex-col gap-6">
-              <div className="space-y-3">
-                <div className="inline-flex rounded-full bg-brand-sage/30 px-4 py-1 text-xs uppercase tracking-[0.28em] text-brand-graphite/75">
-                  For salon teams
-                </div>
-                <h3 className="font-display text-2xl text-brand-graphite">Professional team training</h3>
-                <p className="text-sm leading-relaxed text-brand-graphite/75">
-                  Train your team in scalp health assessments, treatment techniques, and product recommendations that add value and increase revenue.
-                </p>
-              </div>
-              <div className="space-y-4">
-                {partnershipServices.map((service) => (
-                  <div key={service.id} className="rounded-2xl border border-brand-graphite/8 bg-white/80 p-5 shadow-sm">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-semibold text-brand-graphite">{service.name}</p>
-                        <p className="text-xs uppercase tracking-[0.3em] text-brand-graphite/60">{service.duration}</p>
-                      </div>
-                      <span className="rounded-full bg-brand-graphite/12 px-3 py-1 text-xs font-medium text-brand-graphite">
-                        Team training
-                      </span>
-                    </div>
-                    <p className="mt-3 text-sm leading-relaxed text-brand-graphite/75">{service.description}</p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {service.focus.map((item) => (
-                        <span
-                          key={item}
-                          className="rounded-full bg-brand-salmon/60 px-3 py-1 text-xs uppercase tracking-[0.28em] text-brand-ivory"
-                        >
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-                    <ButtonLink href={service.cta.href} variant="ghost" size="sm" className="mt-4 w-fit">
-                      {service.cta.label}
-                    </ButtonLink>
-                  </div>
-                ))}
-              </div>
-              <div className="space-y-2 text-sm leading-relaxed text-brand-graphite/75">
-                {partnershipEnhancements.map((item) => (
-                  <div key={item} className="flex gap-3">
-                    <span className="mt-[6px] inline-block h-1.5 w-1.5 flex-none rounded-full bg-brand-graphite/35" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-              <ButtonLink href="/education#intensives" variant="secondary" size="md" className="w-fit">
-                Plan your team training
-              </ButtonLink>
-            </Surface>
-          </div>
-        </Container>
-      </PageSection>
-
-      <ServicesShowcase />
-
-      <PageSection tone="mist" texture="veined">
-        <Container className="space-y-12">
-          <SectionHeading
-            eyebrow="How it works"
-            title="A clear process from start to finish"
-            description="Every service follows a proven approach that combines professional expertise with personalized attention."
-            align="center"
-          />
-          <div className="grid gap-8 lg:grid-cols-4">
-            {processSteps.map((step) => (
-              <Surface key={step.title} variant="card" padding="lg" className="space-y-4">
-                <span className="text-xs uppercase tracking-[0.3em] text-brand-graphite/55">Step {step.step}</span>
-                <h3 className="font-display text-xl text-brand-graphite">{step.title}</h3>
-                <p className="text-sm leading-relaxed text-brand-graphite/75">{step.description}</p>
-                <ul className="space-y-2 text-xs leading-relaxed text-brand-graphite/70">
-                  {step.bullets.map((bullet) => (
-                    <li key={bullet} className="flex gap-2">
-                      <span className="mt-[6px] inline-block h-1.5 w-1.5 flex-none rounded-full bg-brand-salmon/40" />
-                      <span>{bullet}</span>
+              <div className="rounded-xl border border-brand-graphite/8 bg-white p-4 space-y-2">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-graphite/40">Personalised support</p>
+                <ul className="space-y-1.5 text-sm text-brand-graphite/55">
+                  {conciergeAssurances.map((a) => (
+                    <li key={a} className="flex gap-2">
+                      <span className="mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-salmon" />
+                      <span>{a}</span>
                     </li>
                   ))}
                 </ul>
-              </Surface>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* ── Two service tracks ───────────────────────────────────────── */}
+      <section className="py-10 sm:py-12">
+        <Container>
+          <div className="mb-8 text-center">
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-brand-graphite/35">Services</span>
+            <h2 className="mt-1 font-display text-2xl text-brand-graphite">Education &amp; clinical services</h2>
+          </div>
+
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-4 rounded-2xl border border-brand-sage/20 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-sage/15">
+                  <svg className="h-4 w-4 text-brand-sage" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0" /></svg>
+                </span>
+              </div>
+              <h3 className="font-display text-lg text-brand-graphite">Clinical consultations &amp; training</h3>
+              <p className="text-sm leading-relaxed text-brand-graphite/60">One-to-one assessments, team training for salon staff, and hands-on workshops for practitioners.</p>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                {services.map((s) => (
+                  <div key={s.id} className="rounded-xl border border-brand-graphite/6 bg-brand-mist/10 p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-brand-graphite">{s.name}</p>
+                      <span className="text-[10px] text-brand-graphite/40">{s.duration}</span>
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed text-brand-graphite/55">{s.description}</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {s.focus.map((f) => (
+                        <span key={f} className="rounded-full bg-brand-sage/15 px-2 py-0.5 text-[9px] uppercase tracking-[0.15em] text-brand-graphite/50">{f}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-3 mt-auto">
+                <ButtonLink href="/contact?service=clinic" variant="secondary" size="sm" className="w-fit">Book consultation</ButtonLink>
+                <ButtonLink href="/education#intensives" variant="ghost" size="sm" className="w-fit">Plan your training</ButtonLink>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* ── Process steps ─────────────────────────────────────────────── */}
+      <section className="border-y border-brand-graphite/6 bg-gradient-to-br from-brand-mist/15 via-brand-sand/20 to-white py-10 sm:py-12">
+        <Container>
+          <div className="mb-8 text-center">
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-brand-graphite/35">Process</span>
+            <h2 className="mt-1 font-display text-2xl text-brand-graphite">A clear process from start to finish</h2>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {processSteps.map((s) => (
+              <div key={s.title} className="flex flex-col gap-3 rounded-2xl border border-brand-graphite/8 bg-white p-5 shadow-sm">
+                <span className={`flex h-8 w-8 items-center justify-center rounded-full ${s.color} text-xs font-bold text-white shadow-sm`}>{s.n}</span>
+                <h3 className="font-display text-base text-brand-graphite">{s.title}</h3>
+                <p className="text-sm leading-relaxed text-brand-graphite/55">{s.description}</p>
+              </div>
             ))}
           </div>
         </Container>
-      </PageSection>
-
-      <PageSection tone="transparent">
-        <Container className="space-y-12">
-          <SectionHeading
-            eyebrow="Ongoing support"
-            title="Get continuous guidance and results"
-            description="Retainer packages provide priority access, regular check-ins, and ongoing support for long-term success."
-            align="center"
-          />
-          <Surface
-            variant="glass"
-            padding="lg"
-            className="mx-auto flex flex-col gap-6 rounded-glass-lg border border-white/40 bg-white/75 backdrop-blur-sm lg:w-3/4"
-          >
-            <div className="space-y-3 text-brand-graphite/80">
-              <p className="text-sm uppercase tracking-[0.3em] text-brand-graphite/60">What you get</p>
-              <ul className="space-y-2 text-base leading-relaxed">
-                {conciergeAssurances.map((item) => (
-                  <li key={item} className="flex gap-3">
-                    <span className="mt-[6px] inline-block h-1.5 w-1.5 flex-none rounded-full bg-brand-salmon" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="flex flex-wrap gap-4">
-              <ButtonLink href="/contact?service=retainer" variant="secondary" size="md">
-                Inquire about retainers
-              </ButtonLink>
-              <ButtonLink href="/education#video-library" variant="ghost" size="md">
-                View all courses
-              </ButtonLink>
-            </div>
-          </Surface>
-        </Container>
-      </PageSection>
+      </section>
 
       <TestimonialsSection />
       <ConsultationCta />

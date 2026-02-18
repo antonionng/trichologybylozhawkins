@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Bunny at Home growth platform now spans five primary domains:
+The Lorraine Hawkins growth platform now spans five primary domains:
 
 - **CRM**: Contacts, companies, deals, tasks, and activities managed through Prisma models and dashboard views.
 - **CMS**: Collections, entries, media assets, and version history to power public content and course descriptions.

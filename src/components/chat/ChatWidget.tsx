@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { ChatInterface } from "./ChatInterface";
 import clsx from "clsx";
 
@@ -9,16 +10,23 @@ export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [sessionId, setSessionId] = useState<string>("");
   const shouldReduceMotion = useReducedMotion();
+  const pathname = usePathname();
+  const hideWidget = pathname?.startsWith("/dashboard");
 
   // Generate or retrieve session ID
   useEffect(() => {
+    if (hideWidget) return;
     let sid = localStorage.getItem("chat-session-id");
     if (!sid) {
       sid = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
       localStorage.setItem("chat-session-id", sid);
     }
     setSessionId(sid);
-  }, []);
+  }, [hideWidget]);
+
+  if (hideWidget) {
+    return null;
+  }
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
@@ -116,7 +124,7 @@ export function ChatWidget() {
             className={clsx(
               "fixed z-50 flex items-center gap-3 rounded-full shadow-lg transition",
               "bottom-6 right-6",
-              "bg-brand-salmon px-5 py-4 text-white hover:bg-brand-salmon/90",
+              "bg-[#28577F] px-5 py-4 text-white hover:bg-[#28577F]/90",
               "group"
             )}
             aria-label="Open chat"
@@ -141,10 +149,6 @@ export function ChatWidget() {
               <circle cx="17" cy="13" r="1" fill="currentColor" />
             </svg>
 
-            <span className="hidden font-medium sm:inline">
-              Ask me anything
-            </span>
-
             {/* Pulse indicator */}
             <motion.span
               animate={{
@@ -156,7 +160,7 @@ export function ChatWidget() {
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
-              className="absolute inset-0 rounded-full bg-brand-salmon"
+              className="absolute inset-0 rounded-full bg-[#28577F]"
               style={{ zIndex: -1 }}
             />
           </motion.button>

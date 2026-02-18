@@ -2,6 +2,7 @@ import { PageSection } from "@/components/layout/PageSection";
 import { Container } from "@/components/layout/Container";
 import { SectionHeading } from "@/components/typography/SectionHeading";
 import { Surface } from "@/components/layout/Surface";
+import { siteContact, siteContactLinks } from "@/lib/siteContact";
 
 export default function Terms() {
   return (
@@ -74,8 +75,8 @@ export default function Terms() {
               <h2 className="font-display text-xl text-brand-graphite">Contact</h2>
               <p>For questions about these terms, contact:</p>
               <p>
-                <a href="mailto:hello@lorrainehawkins.com" className="underline decoration-brand-salmon/40 underline-offset-4">
-                  hello@lorrainehawkins.com
+                <a href={siteContactLinks.mailto} className="underline decoration-brand-salmon/40 underline-offset-4">
+                  {siteContact.email}
                 </a>
               </p>
             </div>

@@ -192,7 +192,7 @@ export function EnquiryForm({ isOpen, onClose }: EnquiryFormProps) {
               <div className="text-5xl">✓</div>
               <h3 className="font-display text-xl text-brand-graphite">Thank you!</h3>
               <p className="text-sm text-brand-graphite/70">
-                We've received your enquiry and will respond within 24-48 hours. Check your email for confirmation.
+                We&apos;ve received your enquiry and will respond within 24-48 hours. Check your email for confirmation.
               </p>
             </motion.div>
           ) : (

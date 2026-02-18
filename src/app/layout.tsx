@@ -3,7 +3,13 @@ import { DM_Sans, Inter, Gentium_Plus } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/navigation/SiteHeader";
 import { SiteFooter } from "@/components/navigation/SiteFooter";
-import { ChatWidget } from "@/components/chat/ChatWidget";
+import { getCurrentSession } from "@/server/security/auth";
+import dynamic from "next/dynamic";
+
+const ChatWidget = dynamic(
+  () => import("@/components/chat/ChatWidget").then((mod) => ({ default: mod.ChatWidget })),
+  { ssr: false }
+);
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-dm-sans", display: "swap" });
@@ -15,7 +21,9 @@ export const metadata: Metadata = {
     "Clinical trichology consultations, immersive education, and AI-enabled marketing for scalp health leaders.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = await getCurrentSession();
+
   return (
     <html lang="en" className={`${inter.variable} ${dmSans.variable} ${gentium.variable}`}>
       <body>
@@ -25,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
-        <SiteHeader />
+        <SiteHeader session={session} />
         <div id="main-content">{children}</div>
         <SiteFooter />
         <ChatWidget />

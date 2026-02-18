@@ -22,7 +22,15 @@ export function ChatMessage({ message, isStreaming }: ChatMessageProps) {
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
 
-  if (isSystem) return null; // Don't display system messages
+  if (isSystem) {
+    return (
+      <div className="flex w-full justify-center">
+        <div className="max-w-[90%] rounded-full border border-black/10 bg-white/70 px-4 py-2 text-center text-xs text-black/60 backdrop-blur-sm">
+          {message.content}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -33,7 +41,7 @@ export function ChatMessage({ message, isStreaming }: ChatMessageProps) {
     >
       <div className={clsx("max-w-[85%]", isUser ? "items-end" : "items-start")}>
         {!isUser && (
-          <div className="mb-1 text-xs text-black/40">Lorraine's Assistant</div>
+          <div className="mb-1 text-xs text-black/40">Lorraine&apos;s Assistant</div>
         )}
         
         {isUser ? (

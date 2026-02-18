@@ -12,14 +12,14 @@ export function TestimonialsSection() {
 
   return (
     <PageSection tone="sand" texture="veined">
-      <Container className="space-y-12">
+      <Container className="space-y-8">
         <SectionHeading
           eyebrow="Testimonials"
-          title="What people are saying"
-          description="Hear from salon owners, stylists, and trichologists who have experienced Lorraine's science-based, practical approach."
+          title="What learners and professionals say"
+          description="Real feedback from women who have watched Lorraine's video courses and professionals who have trained with her."
           align="center"
         />
-        <div className="grid gap-8 lg:grid-cols-3">
+        <div className="grid gap-5 lg:grid-cols-3">
           {testimonials.map((item, index) => (
             <motion.div
               key={item.id}
@@ -32,8 +32,8 @@ export function TestimonialsSection() {
               }
               viewport={{ once: true, margin: "-10%" }}
             >
-              <Surface variant="card" padding="lg" texture="linen" className="space-y-4">
-                <p className="text-lg italic leading-relaxed text-brand-graphite/80">“{item.quote}”</p>
+              <Surface variant="card" padding="lg" texture="linen" className="space-y-4 h-full">
+                <p className="text-lg italic leading-relaxed text-brand-graphite/80">&ldquo;{item.quote}&rdquo;</p>
                 <div className="space-y-1">
                   <p className="font-semibold text-brand-graphite">{item.author}</p>
                   <p className="text-sm uppercase tracking-[0.3em] text-brand-graphite/60">{item.role}</p>
@@ -46,4 +46,3 @@ export function TestimonialsSection() {
     </PageSection>
   );
 }
-

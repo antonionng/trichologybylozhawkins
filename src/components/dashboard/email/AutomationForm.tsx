@@ -18,10 +18,10 @@ export function AutomationForm({ audiences, onCreated }: AutomationFormProps) {
   const [audienceId, setAudienceId] = useState(audiences[0]?.id ?? "");
   const [waitMinutes, setWaitMinutes] = useState(30);
   const [emailSubject, setEmailSubject] = useState(
-    "Ready to elevate your salon science?"
+    "Your Lorraine Hawkins care plan is ready"
   );
   const [emailPreview, setEmailPreview] = useState(
-    "Inside is your tailored curriculum rundown and next steps."
+    "Here’s the personalised scalp roadmap Lorraine prepared for you."
   );
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);

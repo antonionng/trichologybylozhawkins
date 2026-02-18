@@ -1,0 +1,277 @@
+[
+  {
+    "courseSlug": "trichocare-phase-1",
+    "title": "Trichocare Phase 1 Exam - Days 1-4",
+    "description": "Assessment covering Days Days 1-4 of the Trichocare Phase 1 program.",
+    "passingScore": 70,
+    "questions": [
+      {
+        "questionText": "Which of the following best explains why clients often ask stylists about scalp issues?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "Stylists are medically trained to treat scalp disorders",
+          "Salons are more accessible than clinics",
+          "Hairdressers see the scalp more frequently than GPs",
+          "Clients trust stylists' product recommendations more than doctors'"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 1
+      },
+      {
+        "questionText": "What is the function of the dermal papilla within the hair follicle?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "It produces sebum to coat the hair",
+          "It provides blood supply to support hair growth",
+          "It controls melanin production in the medulla",
+          "It anchors the follicle in the hypodermis"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 1
+      },
+      {
+        "questionText": "Which component of the hair strand contributes most to strength and elasticity?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "Medulla",
+          "Pigment granules",
+          "Cortex",
+          "Cuticle"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 1
+      },
+      {
+        "questionText": "Which of the following would most likely disrupt the scalp microbiome?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "Mild herbal shampoos",
+          "Regular brushing",
+          "Overuse of harsh chemical products",
+          "Warm water rinses"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 1
+      },
+      {
+        "questionText": "What is the typical duration of the anagen phase for scalp hair?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "2–3 weeks",
+          "2–7 years",
+          "1–2 months",
+          "10–15 days"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 1
+      },
+      {
+        "questionText": "What makes Type 4 hair particularly prone to breakage?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "Low density",
+          "Oval follicle shape",
+          "High elasticity",
+          "Tight curl pattern with fewer cuticle layers"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 2
+      },
+      {
+        "questionText": "Which statement is TRUE about follicle miniaturisation?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "It results in stronger, thicker hairs",
+          "It is always caused by trauma",
+          "It leads to shorter, finer regrowth",
+          "It permanently damages the cortex"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 2
+      },
+      {
+        "questionText": "What does high hair porosity usually indicate?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "Cuticles are tightly sealed",
+          "Hair holds moisture for long periods",
+          "Cuticles are lifted or damaged",
+          "The medulla is overactive"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 2
+      },
+      {
+        "questionText": "Which condition is associated with autoimmune causes and patchy hair loss?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "Traction Alopecia",
+          "Alopecia Areata",
+          "Folliculitis",
+          "Tinea Capitis"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 2
+      },
+      {
+        "questionText": "Why should stylists avoid diagnosing scalp conditions?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "It's unnecessary; most conditions resolve on their own",
+          "It could delay the client receiving proper medical care",
+          "Clients prefer home remedies",
+          "Insurance covers stylist diagnoses"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 2
+      },
+      {
+        "questionText": "Salicylic acid is classified as which type of compound?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "Alpha hydroxy acid",
+          "Protein bond relaxer",
+          "Beta hydroxy acid",
+          "Emollient oil"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 3
+      },
+      {
+        "questionText": "What is the role of caffeine in scalp treatments?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "Acts as a cleansing surfactant",
+          "Enhances elasticity of the cortex",
+          "Stimulates circulation to the follicle",
+          "Blocks hormone-related hair loss"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 3
+      },
+      {
+        "questionText": "Which ingredient is best known for barrier support and reducing inflammation?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "Shea butter",
+          "Castor oil",
+          "Niacinamide",
+          "Sulphur"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 3
+      },
+      {
+        "questionText": "Which of the following is NOT a contraindication for scalp therapy?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "Infected lesions",
+          "Scalp psoriasis flare-up",
+          "Recent open wound",
+          "Healthy dandruff-free scalp"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 3
+      },
+      {
+        "questionText": "What distinguishes seborrheic dermatitis from simple dandruff?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "Seborrheic dermatitis causes less irritation",
+          "Dandruff flakes are red and greasy",
+          "Seborrheic dermatitis includes redness and greasy yellow flakes",
+          "Dandruff is contagious"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 3
+      },
+      {
+        "questionText": "Which practice can help maintain a healthy scalp microbiome?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "Frequent bleaching",
+          "Avoiding all hair products",
+          "Using pH-balanced cleansers",
+          "Exfoliating daily"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 4
+      },
+      {
+        "questionText": "What is the safest way to approach a suspected scalp infection in a client?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "Recommend antifungal shampoo immediately",
+          "Provide a deep cleansing mask",
+          "Refer them to a medical professional promptly",
+          "Continue treatment with gloves on"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 4
+      },
+      {
+        "questionText": "Why is massage included in scalp care treatments?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "It removes toxins from the bloodstream",
+          "It stimulates nerves in the medulla",
+          "It promotes relaxation and circulation to the follicle",
+          "It closes open pores after exfoliation"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 4
+      },
+      {
+        "questionText": "What is the correct legal language to use when advising a client about a scalp concern?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "'I think you have eczema'",
+          "'Let me diagnose that for you'",
+          "'I recommend seeing a specialist about this'",
+          "'You have psoriasis for sure'"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 4
+      },
+      {
+        "questionText": "Which therapy is designed to boost scalp cell turnover by removing dead skin layers?",
+        "questionType": "MULTIPLE_CHOICE",
+        "options": [
+          "LED therapy",
+          "Exfoliation",
+          "Steaming",
+          "Tension massage"
+        ],
+        "correctAnswer": "",
+        "explanation": "",
+        "dayNumber": 4
+      }
+    ]
+  },
+  {
+    "courseSlug": "trichocare-phase-1",
+    "title": "Trichocare Phase 1 Exam - Days 5-8",
+    "description": "Assessment covering Days Days 5-8 of the Trichocare Phase 1 program.",
+    "passingScore": 70,
+    "questions": []
+  }
+]

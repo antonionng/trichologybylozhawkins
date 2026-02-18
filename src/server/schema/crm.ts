@@ -20,8 +20,13 @@ export const contactUpsertSchema = z.object({
   notes: z.string().optional(),
 });
 
+export const contactPatchSchema = contactUpsertSchema
+  .partial()
+  .extend({ id: z.string().cuid() });
+
 export const contactQuerySchema = z.object({
   search: z.string().optional(),
+  company: z.string().optional(),
   lifecycleStage: z.nativeEnum(LifecycleStage).optional(),
   ownerId: z.string().optional(),
   companyId: z.string().optional(),
@@ -71,6 +76,16 @@ export const activityLogSchema = z.object({
   dealId: z.string().cuid().optional(),
 });
 
+export const activityQuerySchema = z.object({
+  contactId: z.string().cuid().optional(),
+  companyId: z.string().cuid().optional(),
+  dealId: z.string().cuid().optional(),
+  type: z.nativeEnum(ActivityType).optional(),
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(100).default(20),
+  sort: z.enum(["asc", "desc"]).default("desc"),
+});
+
 export const taskUpsertSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -91,7 +106,9 @@ export const bulkTaskUpdateSchema = z.object({
 });
 
 export type ContactUpsertInput = z.infer<typeof contactUpsertSchema>;
+export type ContactPatchInput = z.infer<typeof contactPatchSchema>;
 export type DealUpsertInput = z.infer<typeof dealUpsertSchema>;
 export type ActivityLogInput = z.infer<typeof activityLogSchema>;
+export type ActivityQueryInput = z.infer<typeof activityQuerySchema>;
 export type TaskUpsertInput = z.infer<typeof taskUpsertSchema>;
 

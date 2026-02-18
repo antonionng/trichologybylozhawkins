@@ -1,12 +1,13 @@
 export const palette = {
-  sand: "#E8EDF2",
-  ivory: "#F5F7FA",
-  salmon: "#28577F",
-  sage: "#B8C8D8",
-  graphite: "#232220",
-  clay: "#9DB0C4",
-  mist: "#D1D9E3",
+  sand: "#FDF8F0",
+  ivory: "#FFF9F2",
+  salmon: "#ED908D",
+  sage: "#C1D780",
+  graphite: "#000000",
+  clay: "#D7ADCC",
+  mist: "#80CCDD",
   night: "#1a1a19",
+  curry: "#FAB826",
 } as const;
 
 export const shadows = {

@@ -10,6 +10,7 @@ import { z } from "zod";
 import { buildSystemPrompt } from "@/lib/chatPrompts";
 import { upsertContact } from "@/server/modules/crm/service";
 import { prisma as db } from "@/server/db/client";
+import { sendNewChatLeadEmail } from "@/server/modules/email/transactional";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -183,6 +184,12 @@ export async function sendMessage(input: z.infer<typeof sendMessageSchema>) {
     data.conversationId || undefined
   );
 
+  // Detect whether this is the first user message in the conversation (before we insert the new one)
+  const existingMessageCount = await prisma.chatMessage.count({
+    where: { conversationId: conversation.id },
+  });
+  const isFirstMessage = existingMessageCount === 0;
+
   // Save user message
   await prisma.chatMessage.create({
     data: {
@@ -192,6 +199,90 @@ export async function sendMessage(input: z.infer<typeof sendMessageSchema>) {
       metadata: data.metadata,
     },
   });
+
+  // On first message: create a CRM lead shell (if needed), link it to the conversation, and log activity.
+  if (isFirstMessage) {
+    let contactId = conversation.contactId ?? null;
+
+    if (!contactId) {
+      const syntheticEmail = `chat+${conversation.id}@example.invalid`;
+      const contact = await upsertContact({
+        firstName: "Chat",
+        lastName: "Visitor",
+        email: syntheticEmail,
+        source: "Lorraine Hawkins AI Chat",
+        lifecycleStage: "LEAD",
+      } as any);
+
+      contactId = contact.id;
+
+      await prisma.chatConversation.update({
+        where: { id: conversation.id },
+        data: { contactId },
+      });
+
+      await prisma.activity.create({
+        data: {
+          contactId,
+          type: "NOTE",
+          subject: "New AI chat started",
+          body: `First message:\n\n${data.message}`,
+          activityAt: new Date(),
+        },
+      });
+    } else {
+      await prisma.activity.create({
+        data: {
+          contactId,
+          type: "NOTE",
+          subject: "New AI chat message",
+          body: `First message:\n\n${data.message}`,
+          activityAt: new Date(),
+        },
+      });
+    }
+
+    // Add an in-chat confirmation note (rendered client-side).
+    await prisma.chatMessage.create({
+      data: {
+        conversationId: conversation.id,
+        role: ChatRole.SYSTEM,
+        content:
+          "Thanks — I’ve notified Lorraine. If you’d like, tell me a bit more about your concern and I’ll help in the meantime.",
+      },
+    });
+
+    // Email admin with context (non-blocking failure)
+    try {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+      const adminTo = process.env.CHAT_ADMIN_NOTIFY_EMAIL || "ag@experrt.com";
+
+      // Pull a small transcript (first user message + system note)
+      const recent = await prisma.chatMessage.findMany({
+        where: { conversationId: conversation.id },
+        orderBy: { createdAt: "asc" },
+        take: 10,
+      });
+
+      await sendNewChatLeadEmail({
+        to: adminTo,
+        appUrl,
+        conversationId: conversation.id,
+        contactId,
+        sessionId: data.sessionId || null,
+        firstMessage: data.message,
+        recentMessages: recent
+          .filter((m) => m.role === ChatRole.USER || m.role === ChatRole.ASSISTANT)
+          .map((m) => ({
+            role: m.role === ChatRole.USER ? "user" : "assistant",
+            content: m.content,
+          })),
+      });
+    } catch (e) {
+      // Intentionally swallow: lead + chat should still be captured even if email fails.
+      console.warn("Admin chat lead email failed:", e);
+    }
+  }
 
   // Build message history for OpenAI
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
@@ -286,7 +377,7 @@ export async function executeFunction(
           lastName: args.lastName,
           email: args.email,
           phone: args.phone,
-          source: "AI Chat",
+          source: "Lorraine Hawkins AI Chat",
           lifecycleStage: "LEAD",
         });
         resourceType = "contact";
@@ -304,8 +395,8 @@ export async function executeFunction(
           data: {
             contactId: contact.id,
             type: "NOTE",
-            subject: "AI Chat Conversation",
-            body: args.notes || "Contact created via AI chat assistant",
+            subject: "Lorraine Hawkins AI Chat Conversation",
+            body: args.notes || "Contact created via the Lorraine Hawkins AI assistant",
             activityAt: new Date(),
           },
         });
@@ -331,7 +422,7 @@ export async function executeFunction(
             lastName,
             email: args.email,
             phone: args.phone,
-            source: "Course Enquiry - AI Chat",
+            source: "Lorraine Hawkins AI Course Enquiry",
             lifecycleStage: "MARKETING_QUALIFIED_LEAD",
           });
         }
@@ -370,7 +461,7 @@ export async function executeFunction(
           lastName,
           email: args.email,
           phone: args.phone,
-          source: "Consultation Booking - AI Chat",
+          source: "Lorraine Hawkins AI Consultation",
           lifecycleStage: "SALES_QUALIFIED_LEAD",
         });
 
@@ -380,7 +471,7 @@ export async function executeFunction(
             contactId: contact.id,
             type: "MEETING",
             subject: "Consultation Booking Request",
-            body: `Concern: ${args.concern}\nPreferred Time: ${args.preferredTime || "Not specified"}\n\nRequested via AI chat assistant`,
+            body: `Concern: ${args.concern}\nPreferred Time: ${args.preferredTime || "Not specified"}\n\nRequested via the Lorraine Hawkins AI assistant`,
             activityAt: new Date(),
           },
         });
