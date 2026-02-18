@@ -54,7 +54,10 @@ async function getVideos(): Promise<VideoCard[]> {
       for (const v of dbVideos) {
         const pp = v.pricing.find((p) => p.isPrimary) || v.pricing[0];
         const pc = v.publicContent as any;
-        const heroUrl = v.heroMedia?.path ? await createSignedDownloadUrl(v.heroMedia.path) : null;
+        let heroUrl: string | null = null;
+        if (v.heroMedia?.path) {
+          try { heroUrl = await createSignedDownloadUrl(v.heroMedia.path); } catch { /* use null */ }
+        }
         cards.push({
           id: v.id,
           slug: v.slug,

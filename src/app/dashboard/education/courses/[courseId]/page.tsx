@@ -18,9 +18,10 @@ export default async function CourseEditorPage({ params }: Props) {
     notFound();
   }
 
-  const heroUrl = (course as any).heroMedia?.path
-    ? await createSignedDownloadUrl((course as any).heroMedia.path)
-    : null;
+  let heroUrl: string | null = null;
+  if ((course as any).heroMedia?.path) {
+    try { heroUrl = await createSignedDownloadUrl((course as any).heroMedia.path); } catch { /* use null */ }
+  }
 
   return <CourseEditor course={course} heroUrl={heroUrl} />;
 }

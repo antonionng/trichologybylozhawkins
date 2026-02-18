@@ -47,7 +47,10 @@ async function getVideos(): Promise<VideoCardData[]> {
         const priceLabel = pp
           ? pp.currency === "GBP" ? `\u00A3${pp.amount}` : `${pp.currency} ${pp.amount}`
           : "Free";
-        const heroUrl = v.heroMedia?.path ? await createSignedDownloadUrl(v.heroMedia.path) : null;
+        let heroUrl: string | null = null;
+        if (v.heroMedia?.path) {
+          try { heroUrl = await createSignedDownloadUrl(v.heroMedia.path); } catch { /* use null */ }
+        }
         const pc = v.publicContent as any;
         cards.push({
           id: v.id, slug: v.slug, title: v.title,

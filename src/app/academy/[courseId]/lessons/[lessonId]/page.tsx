@@ -131,12 +131,14 @@ export default async function LessonPage({
     }
   }
 
-  const videoSignedUrl = lesson.videoUrl
-    ? await createSignedDownloadUrl(lesson.videoUrl)
-    : null;
-  const downloadSignedUrl = lesson.downloadable?.filePath
-    ? await createSignedDownloadUrl(lesson.downloadable.filePath)
-    : null;
+  let videoSignedUrl: string | null = null;
+  if (lesson.videoUrl) {
+    try { videoSignedUrl = await createSignedDownloadUrl(lesson.videoUrl); } catch { /* use null */ }
+  }
+  let downloadSignedUrl: string | null = null;
+  if (lesson.downloadable?.filePath) {
+    try { downloadSignedUrl = await createSignedDownloadUrl(lesson.downloadable.filePath); } catch { /* use null */ }
+  }
 
   const contentJson = lesson.content as ContentJson;
   const contentText = contentJson?.text ?? null;

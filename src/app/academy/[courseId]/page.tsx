@@ -23,10 +23,13 @@ export default async function AcademyCoursePage({ params }: { params: { courseId
   if (!course) notFound();
 
   const downloads = await Promise.all(
-    course.downloads.map(async (asset) => ({
-      ...asset,
-      signedUrl: asset.filePath ? await createSignedDownloadUrl(asset.filePath) : null,
-    }))
+    course.downloads.map(async (asset) => {
+      let signedUrl: string | null = null;
+      if (asset.filePath) {
+        try { signedUrl = await createSignedDownloadUrl(asset.filePath); } catch { /* use null */ }
+      }
+      return { ...asset, signedUrl };
+    })
   );
 
   return (

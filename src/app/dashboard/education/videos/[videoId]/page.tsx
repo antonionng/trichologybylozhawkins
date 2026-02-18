@@ -10,9 +10,10 @@ export default async function VideoEditorPage({ params }: { params: { videoId: s
   if (!video) notFound();
 
   // Generate a signed URL for the hero image preview in the editor
-  const heroUrl = (video as any).heroMedia?.path
-    ? await createSignedDownloadUrl((video as any).heroMedia.path)
-    : null;
+  let heroUrl: string | null = null;
+  if ((video as any).heroMedia?.path) {
+    try { heroUrl = await createSignedDownloadUrl((video as any).heroMedia.path); } catch { /* use null */ }
+  }
 
   return <VideoEditor video={video} heroUrl={heroUrl} />;
 }

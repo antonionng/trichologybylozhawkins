@@ -10,9 +10,10 @@ export default async function CourseList() {
   const courses = await getAdminCourses();
   const rows = await Promise.all(
     (courses as any[]).map(async (course) => {
-      const heroUrl = course.heroMedia?.path
-        ? await createSignedDownloadUrl(course.heroMedia.path)
-        : null;
+      let heroUrl: string | null = null;
+      if (course.heroMedia?.path) {
+        try { heroUrl = await createSignedDownloadUrl(course.heroMedia.path); } catch { /* use null */ }
+      }
       return { ...course, heroUrl };
     }),
   );

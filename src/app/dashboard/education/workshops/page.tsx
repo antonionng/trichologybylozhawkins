@@ -13,9 +13,10 @@ export default async function WorkshopListPage() {
 
   const rows = await Promise.all(
     (workshops as any[]).map(async (w) => {
-      const heroUrl = w.heroMedia?.path
-        ? await createSignedDownloadUrl(w.heroMedia.path)
-        : null;
+      let heroUrl: string | null = null;
+      if (w.heroMedia?.path) {
+        try { heroUrl = await createSignedDownloadUrl(w.heroMedia.path); } catch { /* use null */ }
+      }
       return { ...w, heroUrl };
     })
   );

@@ -74,9 +74,10 @@ async function getWorkshopData(slug: string) {
     });
 
     if (dbWorkshop) {
-      const heroUrl = dbWorkshop.heroMedia?.path
-        ? await createSignedDownloadUrl(dbWorkshop.heroMedia.path)
-        : null;
+      let heroUrl: string | null = null;
+      if (dbWorkshop.heroMedia?.path) {
+        try { heroUrl = await createSignedDownloadUrl(dbWorkshop.heroMedia.path); } catch { /* use null */ }
+      }
 
       return {
         source: "db" as const,

@@ -86,7 +86,10 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
     : "Free";
   const duration = course.durationMinutes ? `${course.durationMinutes} mins` : "Self-paced";
 
-  const heroUrl = course.heroMedia?.path ? await createSignedDownloadUrl(course.heroMedia.path) : null;
+  let heroUrl: string | null = null;
+  if (course.heroMedia?.path) {
+    try { heroUrl = await createSignedDownloadUrl(course.heroMedia.path); } catch { /* use null */ }
+  }
 
   const outcomes = (course as any).learningOutcomes ?? [];
   const requirements = (course as any).requirements ?? [];

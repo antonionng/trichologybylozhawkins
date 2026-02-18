@@ -1141,13 +1141,13 @@ async function main() {
       status: CourseStatus.PUBLISHED,
       videoSourceType: VideoSourceType.LINK,
       publicContent: {
-        headline: "Understand why your hair is changing — and what you can do about it",
+        headline: "Menopausal hair changes — the clinical picture, assessment, and client guidance",
         intro:
-          "Hormonal shifts during menopause can affect your hair in ways that feel alarming. This course gives you clear, honest information so you know what's normal, what helps, and when to talk to your doctor.",
+          "Hormonal shifts during menopause are one of the most common presentations you'll see in practice. This module gives you the clinical framework to assess, explain, and advise your clients with confidence.",
         whoItsFor: [
-          "Women experiencing hair thinning, shedding, or texture changes during perimenopause or menopause",
-          "Anyone feeling anxious or confused about menopausal hair changes",
-          "Clients wanting clear, evidence-based guidance without misinformation",
+          "Practitioners working with clients experiencing menopausal hair thinning or shedding",
+          "Trichologists and stylists wanting a structured clinical framework for hormonal hair changes",
+          "Professionals seeking evidence-based guidance to share with concerned clients",
         ],
         learningOutcomes: [
           "Why hormonal changes affect hair growth and scalp health",
@@ -1162,21 +1162,21 @@ async function main() {
           "A replacement for medical care if symptoms are severe or persistent",
         ],
         benefits: [
-          "Understand the science behind menopausal hair changes",
-          "Know which approaches are evidence-based and which are not",
-          "Feel less anxious about what's happening to your hair",
-          "Have clear next steps and realistic expectations",
+          "Confidently assess menopausal hair presentations",
+          "Explain the clinical picture to clients in clear, reassuring language",
+          "Recommend evidence-based approaches and set realistic expectations",
+          "Know when to refer for further medical investigation",
         ],
         faqs: [
           {
-            question: "Do I need any medical background to understand this?",
+            question: "Is this suitable for stylists without a trichology background?",
             answer:
-              "Not at all. Lorraine explains everything in plain language, designed for anyone experiencing these changes.",
+              "Yes. Lorraine explains the clinical concepts clearly, building from fundamentals so any hair professional can follow and apply the knowledge.",
           },
           {
-            question: "Will this tell me exactly what products to use?",
+            question: "Will this cover specific product recommendations?",
             answer:
-              "This course explains what ingredients and approaches are supported by evidence. It's not a prescription — it's education that helps you make informed choices.",
+              "The module covers evidence-based approaches and active ingredients. You'll be able to make informed recommendations relevant to your practice and product range.",
           },
         ],
       },
@@ -1192,13 +1192,13 @@ async function main() {
       status: CourseStatus.PUBLISHED,
       videoSourceType: VideoSourceType.LINK,
       publicContent: {
-        headline: "Your hair is shedding after pregnancy — here's why, and when it stops",
+        headline: "Postpartum shedding — clinical assessment, recovery timelines, and when to investigate further",
         intro:
-          "Postpartum hair loss is common and usually temporary, but it can feel frightening. This course gives you honest, evidence-based information so you know what to expect and when to seek help.",
+          "Postpartum hair loss is one of the most common concerns clients bring to practitioners. This module equips you with the clinical knowledge to assess, reassure, and advise with authority.",
         whoItsFor: [
-          "Women experiencing hair shedding after pregnancy",
-          "New mothers feeling anxious about visible hair loss",
-          "Anyone wanting reassurance and clear recovery timelines",
+          "Practitioners advising clients experiencing postpartum hair shedding",
+          "Trichologists wanting structured assessment and recovery frameworks",
+          "Hair professionals who want to confidently support new mothers",
         ],
         learningOutcomes: [
           "Why postpartum hair loss happens",
@@ -1212,21 +1212,21 @@ async function main() {
           "A substitute for medical advice if hair loss is prolonged or worsening",
         ],
         benefits: [
-          "Understand exactly why this is happening",
-          "Know what's normal and what isn't",
-          "Feel reassured with clear timelines",
-          "Know when to see a professional",
+          "Explain the mechanism clearly and reassure anxious clients",
+          "Distinguish normal shedding from cases requiring referral",
+          "Provide evidence-based aftercare guidance",
+          "Build trust as the go-to professional for postpartum hair concerns",
         ],
         faqs: [
           {
-            question: "I'm still shedding months after giving birth — is this for me?",
+            question: "Is this relevant for stylists as well as trichologists?",
             answer:
-              "Yes. This course covers typical timelines and also explains when shedding may warrant further investigation.",
+              "Absolutely. Any hair professional who sees new mothers in their chair will benefit from understanding this presentation and knowing how to advise confidently.",
           },
           {
-            question: "Is this suitable while breastfeeding?",
+            question: "Does the module cover when to refer?",
             answer:
-              "This is educational content, not a treatment plan. It gives you information to discuss with your healthcare provider.",
+              "Yes. Clear referral criteria are included so you know when postpartum shedding may need medical investigation.",
           },
         ],
       },
@@ -1242,13 +1242,13 @@ async function main() {
       status: CourseStatus.PUBLISHED,
       videoSourceType: VideoSourceType.LINK,
       publicContent: {
-        headline: "Stress can cause hair loss — here's what's happening and how to recover",
+        headline: "Stress-related hair loss — the cortisol pathway, clinical assessment, and recovery guidance",
         intro:
-          "If you've been through a stressful period and your hair is shedding more than usual, you're not imagining it. This course explains the biology, the timeline, and what actually helps.",
+          "Telogen effluvium triggered by stress is a frequent presentation. This module covers the biological mechanism, how to assess and explain it to clients, and evidence-based recovery support.",
         whoItsFor: [
-          "Individuals experiencing increased shedding during or after stress",
-          "Clients with stress-related scalp symptoms",
-          "Anyone wanting to understand the stress–hair connection",
+          "Practitioners assessing clients with increased shedding during or after stress",
+          "Trichologists wanting a structured TE assessment framework",
+          "Hair professionals advising clients on stress-related scalp and hair symptoms",
         ],
         learningOutcomes: [
           "How stress hormones affect the hair growth cycle",
@@ -1262,21 +1262,21 @@ async function main() {
           "A quick-fix solution for hair loss",
         ],
         benefits: [
-          "Understand the delayed connection between stress and shedding",
-          "Recognise stress-related scalp symptoms",
-          "Know how to support your hair without over-treating",
-          "Set realistic expectations for recovery",
+          "Explain the delayed stress–shedding connection to clients with clarity",
+          "Assess scalp symptoms associated with stress presentation",
+          "Guide recovery without over-treating or creating unrealistic expectations",
+          "Know when TE assessment warrants medical referral",
         ],
         faqs: [
           {
-            question: "My hair started falling out months after a stressful event — is that normal?",
+            question: "Does the module cover chronic TE as well?",
             answer:
-              "Yes, this is actually the most common pattern. The course explains why there's usually a 2–3 month delay between a stressor and the onset of shedding.",
+              "Yes. Both acute and chronic telogen effluvium are covered, including differential assessment and when the presentation may indicate a more complex underlying cause.",
           },
           {
-            question: "Will my hair grow back?",
+            question: "Is this useful for practitioners who don't specialise in trichology?",
             answer:
-              "In most cases of stress-related shedding (telogen effluvium), hair does recover. This course explains what to expect and when to seek further help.",
+              "Very much so. Any hair professional will benefit from understanding this common presentation and being able to have an informed, reassuring conversation with clients.",
           },
         ],
       },
@@ -1292,13 +1292,13 @@ async function main() {
       status: CourseStatus.PUBLISHED,
       videoSourceType: VideoSourceType.LINK,
       publicContent: {
-        headline: "Your scalp is trying to tell you something — here's how to listen",
+        headline: "Sensitive and reactive scalps — barrier function, triggers, and treatment protocols",
         intro:
-          "Scalp redness, itching, and inflammation can be frustrating and confusing. This course helps you understand why your scalp reacts, what triggers to avoid, and how to calm things down.",
+          "Clients with sensitive scalps are increasingly common and often frustrating to manage. This module gives you the clinical framework to assess barrier function, identify triggers, and recommend effective treatment approaches.",
         whoItsFor: [
-          "Individuals with itchy, sore, red, or reactive scalps",
-          "Clients experiencing scalp discomfort without clear dandruff",
-          "Anyone overwhelmed by product reactions or flare-ups",
+          "Practitioners working with clients who have reactive, inflamed, or sensitive scalps",
+          "Trichologists wanting deeper knowledge of scalp barrier function and inflammation",
+          "Stylists who regularly encounter product sensitivity or unexplained scalp irritation",
         ],
         learningOutcomes: [
           "Why scalp sensitivity and inflammation develop",
@@ -1312,21 +1312,21 @@ async function main() {
           "A treatment plan for clinical scalp disease",
         ],
         benefits: [
-          "Understand what's causing your scalp symptoms",
-          "Identify your personal triggers",
-          "Learn how to calm your scalp without making things worse",
-          "Know when to see a specialist",
+          "Assess scalp barrier function and identify inflammation patterns",
+          "Create structured trigger-identification protocols for clients",
+          "Recommend treatment approaches that calm without aggravating",
+          "Confidently refer when the presentation suggests clinical scalp disease",
         ],
         faqs: [
           {
-            question: "I've tried lots of products and nothing works — will this help?",
+            question: "Does this cover specific scalp conditions like psoriasis or seborrheic dermatitis?",
             answer:
-              "This course focuses on understanding why your scalp reacts, not just what product to try next. That understanding is usually the missing piece.",
+              "The module focuses on sensitivity and barrier dysfunction. It covers differential assessment so you can recognise when presentations may indicate specific conditions requiring medical referral.",
           },
           {
-            question: "Could my scalp sensitivity be something more serious?",
+            question: "Is this suitable for someone new to scalp assessment?",
             answer:
-              "The course includes guidance on recognising when scalp symptoms may need medical assessment, so you'll know when to seek further help.",
+              "Yes. Lorraine builds from fundamentals so you can follow the clinical reasoning even without prior trichology training.",
           },
         ],
       },

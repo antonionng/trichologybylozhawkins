@@ -11,9 +11,10 @@ export default async function VideoList() {
   const videos = await getAdminVideos();
   const rows = await Promise.all(
     (videos as any[]).map(async (video) => {
-      const heroUrl = video.heroMedia?.path
-        ? await createSignedDownloadUrl(video.heroMedia.path)
-        : null;
+      let heroUrl: string | null = null;
+      if (video.heroMedia?.path) {
+        try { heroUrl = await createSignedDownloadUrl(video.heroMedia.path); } catch { /* use null */ }
+      }
       return { ...video, heroUrl };
     })
   );

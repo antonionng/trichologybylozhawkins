@@ -31,18 +31,22 @@ async function getWorkshops(): Promise<WorkshopCard[]> {
 
     if (dbWorkshops.length > 0) {
       return Promise.all(
-        dbWorkshops.map(async (w) => ({
-          slug: w.slug,
-          title: w.title,
-          headline: w.headline,
-          summary: w.summary,
-          duration: w.duration,
-          investment: w.investment,
-          location: w.location,
-          heroUrl: w.heroMedia?.path
-            ? await createSignedDownloadUrl(w.heroMedia.path)
-            : null,
-        }))
+        dbWorkshops.map(async (w) => {
+          let heroUrl: string | null = null;
+          if (w.heroMedia?.path) {
+            try { heroUrl = await createSignedDownloadUrl(w.heroMedia.path); } catch { /* use null */ }
+          }
+          return {
+            slug: w.slug,
+            title: w.title,
+            headline: w.headline,
+            summary: w.summary,
+            duration: w.duration,
+            investment: w.investment,
+            location: w.location,
+            heroUrl,
+          };
+        })
       );
     }
   } catch {

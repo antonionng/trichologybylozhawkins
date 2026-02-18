@@ -51,10 +51,10 @@ export default async function AcademyVideoPage({
   const learningOutcomes: string[] = Array.isArray(publicContent.learningOutcomes) ? publicContent.learningOutcomes : [];
   const benefits: string[] = Array.isArray(publicContent.benefits) ? publicContent.benefits : [];
 
-  const uploadedSignedUrl =
-    video.videoSourceType === "UPLOAD" && video.videoPath
-      ? await createSignedDownloadUrl(video.videoPath)
-      : null;
+  let uploadedSignedUrl: string | null = null;
+  if (video.videoSourceType === "UPLOAD" && video.videoPath) {
+    try { uploadedSignedUrl = await createSignedDownloadUrl(video.videoPath); } catch { /* use null */ }
+  }
 
   const linkUrl = video.videoSourceType === "LINK" ? video.videoUrl : null;
   const embedUrl = linkUrl ? toEmbedUrl(linkUrl) : null;

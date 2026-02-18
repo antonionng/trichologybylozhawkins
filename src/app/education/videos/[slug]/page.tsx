@@ -70,9 +70,10 @@ async function getVideoFromDb(slug: string): Promise<VideoDetail | null> {
         ? `£${primaryPrice.amount}`
         : `${primaryPrice.currency} ${primaryPrice.amount}`
       : "Free";
-    const heroUrl = video.heroMedia?.path
-      ? await createSignedDownloadUrl(video.heroMedia.path)
-      : null;
+    let heroUrl: string | null = null;
+    if (video.heroMedia?.path) {
+      try { heroUrl = await createSignedDownloadUrl(video.heroMedia.path); } catch { /* use null */ }
+    }
     const pc = (video.publicContent ?? {}) as any;
 
     return {
@@ -159,9 +160,10 @@ async function getRelatedVideos(
       const results: RelatedVideo[] = [];
       for (const rv of sorted) {
         const p = rv.pricing[0];
-        const heroUrl = rv.heroMedia?.path
-          ? await createSignedDownloadUrl(rv.heroMedia.path)
-          : null;
+        let heroUrl: string | null = null;
+        if (rv.heroMedia?.path) {
+          try { heroUrl = await createSignedDownloadUrl(rv.heroMedia.path); } catch { /* use null */ }
+        }
         results.push({
           id: rv.id,
           slug: rv.slug,

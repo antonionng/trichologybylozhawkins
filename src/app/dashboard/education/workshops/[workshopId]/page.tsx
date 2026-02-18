@@ -13,9 +13,10 @@ export default async function WorkshopEditorPage({ params }: Props) {
   const workshop = await getWorkshopById(params.workshopId);
   if (!workshop) notFound();
 
-  const heroUrl = (workshop as any).heroMedia?.path
-    ? await createSignedDownloadUrl((workshop as any).heroMedia.path)
-    : null;
+  let heroUrl: string | null = null;
+  if ((workshop as any).heroMedia?.path) {
+    try { heroUrl = await createSignedDownloadUrl((workshop as any).heroMedia.path); } catch { /* use null */ }
+  }
 
   return <WorkshopEditor workshop={workshop} heroUrl={heroUrl} />;
 }
