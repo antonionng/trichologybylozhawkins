@@ -9,7 +9,7 @@ import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 import { PageSection } from "@/components/layout/PageSection";
 import { Container } from "@/components/layout/Container";
 import { Surface } from "@/components/layout/Surface";
-import { videoLessons, videoDetailFallbacks, inPersonIntensives } from "@/lib/content";
+import { videoLessons, videoDetailFallbacks, inPersonIntensives, VIDEO_HERO_PLACEHOLDER_BY_SLUG, VIDEO_HERO_PLACEHOLDER_DEFAULT } from "@/lib/content";
 import { getCourses, getPublicQuizzes } from "@/app/actions/education";
 import { PurchaseButton } from "@/components/education/PurchaseButton";
 import { prisma } from "@/server/db/client";
@@ -32,13 +32,6 @@ type VideoCard = {
   fromDb: boolean;
 };
 
-const fallbackCardImages: Record<string, string> = {
-  "menopause-hair-loss": "/images/video-menopause-placeholder.png",
-  "postpartum-hair-loss": "/images/video-postpartum-placeholder.png",
-  "stress-hair-loss": "/images/video-stress-placeholder.png",
-  "sensitive-scalps": "/images/video-scalp-placeholder.png",
-};
-
 async function getVideos(): Promise<VideoCard[]> {
   try {
     const dbVideos = await prisma.videoProduct.findMany({
@@ -58,6 +51,7 @@ async function getVideos(): Promise<VideoCard[]> {
         if (v.heroMedia?.path) {
           try { heroUrl = await createSignedDownloadUrl(v.heroMedia.path); } catch { /* use null */ }
         }
+        if (!heroUrl) heroUrl = VIDEO_HERO_PLACEHOLDER_BY_SLUG[v.slug] ?? VIDEO_HERO_PLACEHOLDER_DEFAULT;
         cards.push({
           id: v.id,
           slug: v.slug,
@@ -89,7 +83,7 @@ async function getVideos(): Promise<VideoCard[]> {
       price: l.investment,
       whoItsFor: detail?.whoItsFor?.[0] || l.summary,
       highlights: detail?.learningOutcomes?.slice(0, 3) || l.highlights,
-      heroUrl: fallbackCardImages[l.slug] || null,
+      heroUrl: VIDEO_HERO_PLACEHOLDER_BY_SLUG[l.slug] ?? VIDEO_HERO_PLACEHOLDER_DEFAULT,
       fromDb: false,
     };
   });

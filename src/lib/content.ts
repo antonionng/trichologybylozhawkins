@@ -77,6 +77,21 @@ export type FaqItem = {
   audience?: "consumer" | "professional";
 };
 
+// ── Video hero placeholder by slug (used when heroMedia is missing or signed URL fails) ───
+
+/** Single placeholder used until you add slug-specific PNGs under public/images/ */
+const VIDEO_PLACEHOLDER_ASSET = "/images/video-placeholder.svg";
+
+export const VIDEO_HERO_PLACEHOLDER_BY_SLUG: Record<string, string> = {
+  "menopause-hair-loss": VIDEO_PLACEHOLDER_ASSET,
+  "postpartum-hair-loss": VIDEO_PLACEHOLDER_ASSET,
+  "stress-hair-loss": VIDEO_PLACEHOLDER_ASSET,
+  "sensitive-scalps": VIDEO_PLACEHOLDER_ASSET,
+};
+
+/** Fallback when no hero image and slug not in VIDEO_HERO_PLACEHOLDER_BY_SLUG */
+export const VIDEO_HERO_PLACEHOLDER_DEFAULT = VIDEO_PLACEHOLDER_ASSET;
+
 // ── Video Lessons (condition-specific clinical training modules) ────────────
 
 export const videoLessons: VideoLesson[] = [

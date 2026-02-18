@@ -7,6 +7,7 @@ import { BlogHighlightsSection } from "@/components/sections/BlogHighlightsSecti
 import { FaqSection } from "@/components/sections/FaqSection";
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
+import { VIDEO_HERO_PLACEHOLDER_BY_SLUG, VIDEO_HERO_PLACEHOLDER_DEFAULT } from "@/lib/content";
 
 async function getShowcaseData() {
   try {
@@ -40,7 +41,7 @@ async function getShowcaseData() {
         catch { /* fall through */ }
       }
       if (!heroUrl) {
-        heroUrl = (v.meta as any)?.heroImage ?? null;
+        heroUrl = (v.meta as any)?.heroImage ?? VIDEO_HERO_PLACEHOLDER_BY_SLUG[v.slug] ?? VIDEO_HERO_PLACEHOLDER_DEFAULT;
       }
       videoRows.push({
         id: v.id,

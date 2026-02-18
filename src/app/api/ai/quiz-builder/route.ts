@@ -122,7 +122,13 @@ Return JSON only that matches the provided schema.`;
     const response = await client.responses.create({
       model: "gpt-4.1-mini",
       input: prompt,
-      response_format: { type: "json_schema", json_schema: responseSchema as any },
+      text: {
+        format: {
+          type: "json_schema",
+          name: responseSchema.name,
+          schema: responseSchema.schema,
+        },
+      } as any,
     });
 
     const outputText = extractResponseText(response) || JSON.stringify(response.output ?? {});

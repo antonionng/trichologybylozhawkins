@@ -6,14 +6,12 @@ import { Container } from "@/components/layout/Container";
 import { PageSection } from "@/components/layout/PageSection";
 import { SectionHeading } from "@/components/typography/SectionHeading";
 import { getCourseBySlug } from "@/app/actions/education";
-import { PurchaseButton } from "@/components/education/PurchaseButton";
 import { CurriculumAccordion } from "@/components/education/CurriculumAccordion";
 import { ArticleCta } from "@/components/sections/ArticleCta";
 import { photography } from "@/lib/visualAssets";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
 import { prisma } from "@/server/db/client";
 import { Prisma } from "@prisma/client";
-import { getCurrentSession } from "@/server/security/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -72,10 +70,9 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
   const course = await getCourseBySlug(params.slug);
   if (!course) notFound();
 
-  const [quizzes, enrollmentCount, session] = await Promise.all([
+  const [quizzes, enrollmentCount] = await Promise.all([
     getCourseQuizzes(course.id),
     prisma.enrollment.count({ where: { courseId: course.id, status: "ACTIVE" } }),
-    getCurrentSession(),
   ]);
 
   const primaryPrice = course.pricing.find((p: any) => p.isPrimary) || course.pricing[0];
@@ -280,18 +277,12 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
               </div>
 
               <div className="space-y-4">
-                {primaryPrice ? (
-                  <PurchaseButton
-                    courseId={course.id}
-                    priceId={primaryPrice.id}
-                    amount={Number(primaryPrice.amount)}
-                    currency={primaryPrice.currency}
-                    courseSlug={course.slug}
-                    isLoggedIn={!!session}
-                  />
-                ) : (
-                  <p className="text-center text-sm text-black/40 italic">Pricing not configured yet.</p>
-                )}
+                <Link
+                  href={`/academy/${course.id}`}
+                  className="inline-flex w-full items-center justify-center rounded-xl bg-[#fab826] px-6 py-3 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-sm transition hover:bg-[#e5a820]"
+                >
+                  Start Course
+                </Link>
               </div>
 
               {/* What's Included */}
@@ -354,24 +345,19 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
       <ArticleCta category="Professional Development" />
 
       {/* Mobile sticky CTA */}
-      {primaryPrice && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white/95 px-4 py-3 backdrop-blur-lg lg:hidden">
-          <div className="mx-auto flex max-w-lg items-center justify-between gap-4">
-            <div>
-              <p className="text-xs text-black/50 leading-tight">{course.title}</p>
-              <p className="text-lg font-bold text-black">{priceLabel}</p>
-            </div>
-            <PurchaseButton
-              courseId={course.id}
-              priceId={primaryPrice.id}
-              amount={Number(primaryPrice.amount)}
-              currency={primaryPrice.currency}
-              courseSlug={course.slug}
-              isLoggedIn={!!session}
-            />
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white/95 px-4 py-3 backdrop-blur-lg lg:hidden">
+        <div className="mx-auto flex max-w-lg items-center justify-between gap-4">
+          <div>
+            <p className="text-xs text-black/50 leading-tight">{course.title}</p>
           </div>
+          <Link
+            href={`/academy/${course.id}`}
+            className="inline-flex items-center justify-center rounded-xl bg-[#fab826] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-sm transition hover:bg-[#e5a820]"
+          >
+            Start Course
+          </Link>
         </div>
-      )}
+      </div>
     </main>
   );
 }

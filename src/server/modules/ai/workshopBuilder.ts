@@ -217,10 +217,13 @@ Return JSON only.`.trim();
   const response = await client.responses.create({
     model: "gpt-4.1-mini",
     input: basePrompt,
-    response_format: {
-      type: "json_schema",
-      json_schema: WORKSHOP_BUILDER_JSON_SCHEMA as any,
-    },
+    text: {
+      format: {
+        type: "json_schema",
+        name: WORKSHOP_BUILDER_JSON_SCHEMA.name,
+        schema: WORKSHOP_BUILDER_JSON_SCHEMA.schema,
+      },
+    } as any,
   });
 
   const outputText =

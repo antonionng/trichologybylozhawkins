@@ -7,7 +7,7 @@ import { PageSection } from "@/components/layout/PageSection";
 import { Container } from "@/components/layout/Container";
 import { SectionHeading } from "@/components/typography/SectionHeading";
 import { ButtonLink } from "@/components/ui/Button";
-import { videoLessons, inPersonIntensives } from "@/lib/content";
+import { videoLessons, inPersonIntensives, VIDEO_HERO_PLACEHOLDER_BY_SLUG, VIDEO_HERO_PLACEHOLDER_DEFAULT } from "@/lib/content";
 import { getTopicAccent } from "@/lib/topicAccents";
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -44,13 +44,6 @@ type Props = {
   courses?: CourseRow[];
 };
 
-const fallbackCardImages: Record<string, string> = {
-  "menopause-hair-loss": "/images/video-menopause-placeholder.png",
-  "postpartum-hair-loss": "/images/video-postpartum-placeholder.png",
-  "stress-hair-loss": "/images/video-stress-placeholder.png",
-  "sensitive-scalps": "/images/video-scalp-placeholder.png",
-};
-
 const cardVariants = {
   hidden: { opacity: 0, y: 28 },
   visible: (index: number) => ({
@@ -80,7 +73,7 @@ export function EducationShowcase({ videos, courses }: Props) {
             "Short, focused video course by Lorraine.",
           href: `/education/videos/${v.slug}`,
           badge: v.category || "Video Course",
-          heroUrl: v.heroUrl || null,
+          heroUrl: v.heroUrl || VIDEO_HERO_PLACEHOLDER_BY_SLUG[v.slug] || VIDEO_HERO_PLACEHOLDER_DEFAULT,
         }))
       : videoLessons.slice(0, 3).map((l) => ({
           id: l.id,
@@ -89,7 +82,7 @@ export function EducationShowcase({ videos, courses }: Props) {
           summary: l.summary,
           href: `/education/videos/${l.slug}`,
           badge: l.category,
-          heroUrl: fallbackCardImages[l.slug] || null,
+          heroUrl: VIDEO_HERO_PLACEHOLDER_BY_SLUG[l.slug] || VIDEO_HERO_PLACEHOLDER_DEFAULT,
         }));
 
   const courseCards =

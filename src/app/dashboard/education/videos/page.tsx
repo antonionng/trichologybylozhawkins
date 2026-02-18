@@ -6,6 +6,7 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminButton } from "@/components/admin/AdminButton";
 import { GenerateAllNotesButton } from "@/components/dashboard/education/GenerateAllNotesButton";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
+import { VIDEO_HERO_PLACEHOLDER_BY_SLUG, VIDEO_HERO_PLACEHOLDER_DEFAULT } from "@/lib/content";
 
 export default async function VideoList() {
   const videos = await getAdminVideos();
@@ -15,6 +16,7 @@ export default async function VideoList() {
       if (video.heroMedia?.path) {
         try { heroUrl = await createSignedDownloadUrl(video.heroMedia.path); } catch { /* use null */ }
       }
+      if (!heroUrl) heroUrl = VIDEO_HERO_PLACEHOLDER_BY_SLUG[video.slug] ?? VIDEO_HERO_PLACEHOLDER_DEFAULT;
       return { ...video, heroUrl };
     })
   );

@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { listContacts } from "@/server/modules/crm/service";
-import { Surface } from "@/components/layout/Surface";
+import { Panel } from "@/components/admin/Panel";
 import { ContactsIndexClient } from "@/components/dashboard/crm/ContactsIndexClient";
 import type { LifecycleStage } from "@prisma/client";
 
@@ -38,13 +38,13 @@ export default async function CrmContactsPage({
 
   return (
     <div className="space-y-6">
-      <Surface variant="glass" padding="lg" className="space-y-2">
-        <p className="text-xs uppercase tracking-[0.3em] text-black/40">CRM</p>
-        <h1 className="text-2xl font-semibold text-black">Contacts</h1>
-        <p className="text-sm text-black/60">
+      <Panel variant="elevated" padding="lg" className="space-y-2">
+        <p className="text-xs uppercase tracking-[0.3em] text-admin-text-muted">CRM</p>
+        <h1 className="text-2xl font-semibold text-admin-text">Contacts</h1>
+        <p className="text-sm text-admin-text-secondary">
           Search, filter, and open a full HubSpot-style record for every contact.
         </p>
-      </Surface>
+      </Panel>
 
       <ContactsIndexClient
         initialResult={safeResult}

@@ -12,7 +12,7 @@ import { createSignedDownloadUrl } from "@/server/storage/supabase";
 import { getCurrentSession } from "@/server/security/auth";
 import { VideoPurchaseButton } from "@/components/education/VideoPurchaseButton";
 import { VideoEnrollButton } from "@/components/education/VideoEnrollButton";
-import { videoDetailFallbacks, videoLessons } from "@/lib/content";
+import { videoDetailFallbacks, videoLessons, VIDEO_HERO_PLACEHOLDER_BY_SLUG, VIDEO_HERO_PLACEHOLDER_DEFAULT } from "@/lib/content";
 import { getTopicAccent } from "@/lib/topicAccents";
 import { ArticleCta } from "@/components/sections/ArticleCta";
 
@@ -74,6 +74,7 @@ async function getVideoFromDb(slug: string): Promise<VideoDetail | null> {
     if (video.heroMedia?.path) {
       try { heroUrl = await createSignedDownloadUrl(video.heroMedia.path); } catch { /* use null */ }
     }
+    if (!heroUrl) heroUrl = VIDEO_HERO_PLACEHOLDER_BY_SLUG[video.slug] ?? VIDEO_HERO_PLACEHOLDER_DEFAULT;
     const pc = (video.publicContent ?? {}) as any;
 
     return {
@@ -120,16 +121,9 @@ function getVideoFromFallback(slug: string): VideoDetail | null {
     benefits: fb.benefits,
     whatItsNot: fb.whatItsNot,
     faqs: fb.faqs,
-    heroUrl: null,
+    heroUrl: VIDEO_HERO_PLACEHOLDER_BY_SLUG[slug] ?? VIDEO_HERO_PLACEHOLDER_DEFAULT,
   };
 }
-
-const fallbackCardImages: Record<string, string> = {
-  "menopause-hair-loss": "/images/video-menopause-placeholder.png",
-  "postpartum-hair-loss": "/images/video-postpartum-placeholder.png",
-  "stress-hair-loss": "/images/video-stress-placeholder.png",
-  "sensitive-scalps": "/images/video-scalp-placeholder.png",
-};
 
 async function getRelatedVideos(
   currentSlug: string,
@@ -164,6 +158,7 @@ async function getRelatedVideos(
         if (rv.heroMedia?.path) {
           try { heroUrl = await createSignedDownloadUrl(rv.heroMedia.path); } catch { /* use null */ }
         }
+        if (!heroUrl) heroUrl = VIDEO_HERO_PLACEHOLDER_BY_SLUG[rv.slug] ?? VIDEO_HERO_PLACEHOLDER_DEFAULT;
         results.push({
           id: rv.id,
           slug: rv.slug,
@@ -195,7 +190,7 @@ async function getRelatedVideos(
       category: l.category,
       duration: l.duration,
       priceLabel: l.investment,
-      heroUrl: fallbackCardImages[l.slug] || null,
+      heroUrl: VIDEO_HERO_PLACEHOLDER_BY_SLUG[l.slug] ?? VIDEO_HERO_PLACEHOLDER_DEFAULT,
     }));
 }
 

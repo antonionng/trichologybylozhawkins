@@ -74,7 +74,7 @@ export function AdminTable<T>({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-admin-border">
+    <div className="overflow-x-auto rounded-lg border border-admin-border bg-admin-panel">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-admin-border bg-admin-panel">

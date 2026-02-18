@@ -7,7 +7,7 @@ import { Container } from "@/components/layout/Container";
 import { ButtonLink } from "@/components/ui/Button";
 import { VideoPurchaseButton } from "@/components/education/VideoPurchaseButton";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
-import { videoLessons, videoDetailFallbacks } from "@/lib/content";
+import { videoLessons, videoDetailFallbacks, VIDEO_HERO_PLACEHOLDER_BY_SLUG, VIDEO_HERO_PLACEHOLDER_DEFAULT } from "@/lib/content";
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { getTopicAccent } from "@/lib/topicAccents";
 import { photography } from "@/lib/visualAssets";
@@ -51,6 +51,7 @@ async function getVideos(): Promise<VideoCardData[]> {
         if (v.heroMedia?.path) {
           try { heroUrl = await createSignedDownloadUrl(v.heroMedia.path); } catch { /* use null */ }
         }
+        if (!heroUrl) heroUrl = VIDEO_HERO_PLACEHOLDER_BY_SLUG[v.slug] ?? VIDEO_HERO_PLACEHOLDER_DEFAULT;
         const pc = v.publicContent as any;
         cards.push({
           id: v.id, slug: v.slug, title: v.title,
@@ -68,13 +69,6 @@ async function getVideos(): Promise<VideoCardData[]> {
     }
   } catch { /* fall through */ }
 
-  const fallbackImages: Record<string, string> = {
-    "menopause-hair-loss": "/images/video-menopause-placeholder.png",
-    "postpartum-hair-loss": "/images/video-postpartum-placeholder.png",
-    "stress-hair-loss": "/images/video-stress-placeholder.png",
-    "sensitive-scalps": "/images/video-scalp-placeholder.png",
-  };
-
   return videoLessons.map((l) => {
     const detail = videoDetailFallbacks.find((d) => d.slug === l.slug);
     return {
@@ -82,7 +76,7 @@ async function getVideos(): Promise<VideoCardData[]> {
       duration: l.duration, price: l.investment,
       whoItsFor: detail?.whoItsFor?.[0] || l.summary,
       highlights: detail?.learningOutcomes?.slice(0, 3) || l.highlights,
-      heroUrl: fallbackImages[l.slug] || null,
+      heroUrl: VIDEO_HERO_PLACEHOLDER_BY_SLUG[l.slug] ?? VIDEO_HERO_PLACEHOLDER_DEFAULT,
     };
   });
 }

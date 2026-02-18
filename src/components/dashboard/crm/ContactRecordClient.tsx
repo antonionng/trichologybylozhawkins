@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { Panel } from "@/components/admin/Panel";
 import { AdminTabs, AdminTab } from "@/components/admin/AdminTabs";
 import { AdminButton } from "@/components/admin/AdminButton";
@@ -22,6 +21,7 @@ type ContactRecord = {
   phone: string | null; jobTitle: string | null; source: string | null;
   ownerId: string | null; lifecycleStage: string; notes?: string | null;
   companyId: string | null; company: { id: string; name: string } | null;
+  createdAt: string | Date;
   deals: Deal[]; tasks: Task[]; activities: Activity[];
   courseEnquiries: { id: string; createdAt: string | Date; status: string; email: string; name: string }[];
   orders: { id: string; createdAt: string | Date; status: string; totalAmount: unknown; currency: string }[];
@@ -280,6 +280,12 @@ export function ContactRecordClient({ initialContact }: { initialContact: Contac
                 <p className="text-sm font-medium text-admin-text mt-0.5">{initialContact.company?.name ?? "—"}</p>
               </div>
               <div className="rounded-md border border-admin-border bg-admin-panel p-3">
+                <p className="text-[10px] text-admin-text-muted uppercase tracking-wider">Email</p>
+                <a href={`mailto:${initialContact.email}`} className="text-sm text-admin-accent hover:underline mt-0.5 block truncate">
+                  {initialContact.email}
+                </a>
+              </div>
+              <div className="rounded-md border border-admin-border bg-admin-panel p-3">
                 <p className="text-[10px] text-admin-text-muted uppercase tracking-wider">Phone</p>
                 <p className="text-sm text-admin-text mt-0.5">{initialContact.phone ?? "—"}</p>
               </div>
@@ -287,6 +293,40 @@ export function ContactRecordClient({ initialContact }: { initialContact: Contac
                 <p className="text-[10px] text-admin-text-muted uppercase tracking-wider">Job Title</p>
                 <p className="text-sm text-admin-text mt-0.5">{initialContact.jobTitle ?? "—"}</p>
               </div>
+              {initialContact.source && (
+                <div className="rounded-md border border-admin-border bg-admin-panel p-3">
+                  <p className="text-[10px] text-admin-text-muted uppercase tracking-wider">Source</p>
+                  <p className="text-sm text-admin-text mt-0.5">{initialContact.source}</p>
+                </div>
+              )}
+              <div className="rounded-md border border-admin-border bg-admin-panel p-3">
+                <p className="text-[10px] text-admin-text-muted uppercase tracking-wider">Created</p>
+                <p className="text-sm text-admin-text-secondary mt-0.5">{fmtDate(initialContact.createdAt)}</p>
+              </div>
+            </div>
+          </Panel>
+
+          {initialContact.notes && (
+            <Panel variant="elevated" padding="md" className="space-y-2">
+              <h3 className="text-xs font-medium text-admin-text-muted uppercase tracking-wider">Notes</h3>
+              <p className="text-xs text-admin-text-secondary leading-relaxed line-clamp-4">
+                {initialContact.notes}
+              </p>
+            </Panel>
+          )}
+
+          <Panel variant="elevated" padding="md" className="space-y-2">
+            <h3 className="text-xs font-medium text-admin-text-muted uppercase tracking-wider">Quick Actions</h3>
+            <div className="flex flex-col gap-1.5">
+              <AdminButton variant="secondary" size="sm" onClick={() => { setTab("activity"); }}>
+                Log Activity
+              </AdminButton>
+              <AdminButton variant="secondary" size="sm" href="/dashboard/crm">
+                View Pipeline
+              </AdminButton>
+              <AdminButton variant="secondary" size="sm" href={`mailto:${initialContact.email}`}>
+                Send Email
+              </AdminButton>
             </div>
           </Panel>
         </div>

@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
-import { Surface } from "@/components/layout/Surface";
+import { Panel } from "@/components/admin/Panel";
 import { ContactRecordClient } from "@/components/dashboard/crm/ContactRecordClient";
 import { getContactById } from "@/server/modules/crm/service";
 
@@ -19,13 +19,13 @@ export default async function ContactRecordPage({
 
   return (
     <div className="space-y-6">
-      <Surface variant="glass" padding="lg" className="space-y-2">
-        <p className="text-xs uppercase tracking-[0.3em] text-black/40">CRM</p>
-        <h1 className="text-2xl font-semibold text-black">
+      <Panel variant="elevated" padding="lg" className="space-y-2">
+        <p className="text-xs uppercase tracking-[0.3em] text-admin-text-muted">CRM</p>
+        <h1 className="text-2xl font-semibold text-admin-text">
           {contact.firstName} {contact.lastName}
         </h1>
-        <p className="text-sm text-black/60">{contact.email}</p>
-      </Surface>
+        <p className="text-sm text-admin-text-secondary">{contact.email}</p>
+      </Panel>
 
       <ContactRecordClient initialContact={safeContact} />
     </div>

@@ -2,6 +2,10 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { AdminInput } from "@/components/admin/AdminInput";
+import { AdminSelect } from "@/components/admin/AdminSelect";
+import { AdminTextarea } from "@/components/admin/AdminTextarea";
+import { AdminButton } from "@/components/admin/AdminButton";
 
 type Mode = "create" | "edit";
 
@@ -28,6 +32,16 @@ const LIFECYCLE_OPTIONS = [
   { value: "OTHER", label: "Other" },
 ];
 
+const SOURCE_OPTIONS = [
+  { value: "", label: "Select source..." },
+  { value: "WEBSITE", label: "Website" },
+  { value: "REFERRAL", label: "Referral" },
+  { value: "SOCIAL_MEDIA", label: "Social Media" },
+  { value: "EVENT", label: "Event" },
+  { value: "DIRECT", label: "Direct" },
+  { value: "OTHER", label: "Other" },
+];
+
 async function saveContact(input: ContactInput) {
   const res = await fetch("/api/crm/contacts", {
     method: "POST",
@@ -37,6 +51,17 @@ async function saveContact(input: ContactInput) {
   const json = await res.json();
   if (!res.ok) throw new Error(json?.error ?? "Failed to save contact");
   return json as { id: string };
+}
+
+function SectionDivider({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3 pt-2">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-admin-text-muted">
+        {label}
+      </span>
+      <div className="h-px flex-1 bg-admin-border" />
+    </div>
+  );
 }
 
 export function ContactUpsertForm({
@@ -102,139 +127,101 @@ export function ContactUpsertForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
+      {/* ── Contact Info ── */}
+      <SectionDivider label="Contact Info" />
       <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label className="text-[11px] uppercase tracking-[0.35em] text-black/40">
-            First name
-          </label>
-          <input
-            value={form.firstName}
-            onChange={(e) => onChange("firstName", e.target.value)}
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-2 text-sm text-black/70 focus:border-[#fab826] focus:outline-none focus:ring-2 focus:ring-[#fab826]/20"
-            required
-          />
-        </div>
-        <div>
-          <label className="text-[11px] uppercase tracking-[0.35em] text-black/40">
-            Last name
-          </label>
-          <input
-            value={form.lastName}
-            onChange={(e) => onChange("lastName", e.target.value)}
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-2 text-sm text-black/70 focus:border-[#fab826] focus:outline-none focus:ring-2 focus:ring-[#fab826]/20"
-            required
-          />
-        </div>
+        <AdminInput
+          label="First name"
+          value={form.firstName}
+          onChange={(e) => onChange("firstName", e.target.value)}
+          required
+        />
+        <AdminInput
+          label="Last name"
+          value={form.lastName}
+          onChange={(e) => onChange("lastName", e.target.value)}
+          required
+        />
       </div>
-
       <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label className="text-[11px] uppercase tracking-[0.35em] text-black/40">
-            Email
-          </label>
-          <input
-            type="email"
-            value={form.email}
-            onChange={(e) => onChange("email", e.target.value)}
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-2 text-sm text-black/70 focus:border-[#fab826] focus:outline-none focus:ring-2 focus:ring-[#fab826]/20"
-            required
-          />
-        </div>
-        <div>
-          <label className="text-[11px] uppercase tracking-[0.35em] text-black/40">
-            Phone
-          </label>
-          <input
-            value={form.phone}
-            onChange={(e) => onChange("phone", e.target.value)}
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-2 text-sm text-black/70 focus:border-[#fab826] focus:outline-none focus:ring-2 focus:ring-[#fab826]/20"
-          />
-        </div>
+        <AdminInput
+          label="Email"
+          type="email"
+          value={form.email}
+          onChange={(e) => onChange("email", e.target.value)}
+          required
+        />
+        <AdminInput
+          label="Phone"
+          value={form.phone}
+          onChange={(e) => onChange("phone", e.target.value)}
+          placeholder="+44 7700 900000"
+        />
       </div>
-
       <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label className="text-[11px] uppercase tracking-[0.35em] text-black/40">
-            Job title
-          </label>
-          <input
-            value={form.jobTitle}
-            onChange={(e) => onChange("jobTitle", e.target.value)}
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-2 text-sm text-black/70 focus:border-[#fab826] focus:outline-none focus:ring-2 focus:ring-[#fab826]/20"
-          />
-        </div>
-        <div>
-          <label className="text-[11px] uppercase tracking-[0.35em] text-black/40">
-            Lifecycle stage
-          </label>
-          <select
-            value={form.lifecycleStage}
-            onChange={(e) => onChange("lifecycleStage", e.target.value)}
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-2 text-sm text-black/70 focus:border-[#fab826] focus:outline-none focus:ring-2 focus:ring-[#fab826]/20"
-          >
-            {LIFECYCLE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label className="text-[11px] uppercase tracking-[0.35em] text-black/40">
-            Source
-          </label>
-          <input
-            value={form.source}
-            onChange={(e) => onChange("source", e.target.value)}
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-2 text-sm text-black/70 focus:border-[#fab826] focus:outline-none focus:ring-2 focus:ring-[#fab826]/20"
-          />
-        </div>
-        <div>
-          <label className="text-[11px] uppercase tracking-[0.35em] text-black/40">
-            Owner ID
-          </label>
-          <input
-            value={form.ownerId}
-            onChange={(e) => onChange("ownerId", e.target.value)}
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-2 text-sm text-black/70 focus:border-[#fab826] focus:outline-none focus:ring-2 focus:ring-[#fab826]/20"
-            placeholder="(optional)"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="text-[11px] uppercase tracking-[0.35em] text-black/40">
-          Notes
-        </label>
-        <textarea
-          value={form.notes}
-          onChange={(e) => onChange("notes", e.target.value)}
-          className="mt-2 min-h-[120px] w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-black/70 focus:border-[#fab826] focus:outline-none focus:ring-2 focus:ring-[#fab826]/20"
-          placeholder="Profile notes (history, preferences, context)..."
+        <AdminInput
+          label="Job title"
+          value={form.jobTitle}
+          onChange={(e) => onChange("jobTitle", e.target.value)}
+        />
+        <AdminInput
+          label="Company"
+          value={form.companyId}
+          onChange={(e) => onChange("companyId", e.target.value)}
+          placeholder="Company ID"
         />
       </div>
 
+      {/* ── Classification ── */}
+      <SectionDivider label="Classification" />
+      <div className="grid gap-4 md:grid-cols-2">
+        <AdminSelect
+          label="Lifecycle stage"
+          value={form.lifecycleStage}
+          onChange={(e) => onChange("lifecycleStage", e.target.value)}
+          options={LIFECYCLE_OPTIONS}
+        />
+        <AdminSelect
+          label="Source"
+          value={form.source}
+          onChange={(e) => onChange("source", e.target.value)}
+          options={SOURCE_OPTIONS}
+        />
+      </div>
+
+      {/* ── Internal ── */}
+      <SectionDivider label="Internal" />
+      <AdminInput
+        label="Owner"
+        value={form.ownerId}
+        onChange={(e) => onChange("ownerId", e.target.value)}
+        placeholder="Assign an owner (optional)"
+      />
+      <AdminTextarea
+        label="Notes"
+        value={form.notes}
+        onChange={(e) => onChange("notes", e.target.value)}
+        rows={4}
+        placeholder="Profile notes (history, preferences, context)..."
+      />
+
       {error ? (
-        <div className="rounded-xl border border-brand-salmon/40 bg-brand-salmon/10 px-4 py-3 text-sm text-brand-graphite">
+        <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           {error}
         </div>
       ) : null}
 
       <div className="flex items-center justify-end gap-3">
-        <button
+        <AdminButton
           type="submit"
+          variant="primary"
+          size="lg"
           disabled={saving}
-          className="rounded-xl border border-[#fab826]/40 bg-[#fab826]/10 px-5 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-[#b67400] transition hover:border-[#fab826] hover:bg-[#fab826]/20 disabled:opacity-40"
+          loading={saving}
         >
-          {saving ? "Saving..." : mode === "create" ? "Create contact" : "Save changes"}
-        </button>
+          {mode === "create" ? "Create contact" : "Save changes"}
+        </AdminButton>
       </div>
     </form>
   );
 }
-
-
-

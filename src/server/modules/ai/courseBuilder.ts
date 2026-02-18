@@ -189,6 +189,13 @@ const downloadBytes = async (url: string) => {
   return { bytes: buf, contentType };
 };
 
+const updateProgress = async (generationId: string, stage: string, detail?: string) => {
+  await prisma.generatedContent.update({
+    where: { id: generationId },
+    data: { output: { progress: { stage, detail, ts: Date.now() } } as any },
+  });
+};
+
 export const runCourseBuilder = async (input: {
   generationId: string;
   courseId: string;
@@ -201,6 +208,8 @@ export const runCourseBuilder = async (input: {
   if (!course) {
     throw new Error("Course not found for AI builder");
   }
+
+  await updateProgress(input.generationId, "analysing_brief", "Preparing your brief and course context...");
 
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -255,10 +264,18 @@ Course context:
 User brief:
 ${input.prompt}`.trim();
 
+  await updateProgress(input.generationId, "designing_curriculum", "Writing modules, lessons, and theory content...");
+
   const response = await client.responses.create({
     model: "gpt-4.1-mini",
     input: basePrompt,
-    response_format: { type: "json_schema", json_schema: COURSE_BUILDER_JSON_SCHEMA as any },
+    text: {
+      format: {
+        type: "json_schema",
+        name: COURSE_BUILDER_JSON_SCHEMA.name,
+        schema: COURSE_BUILDER_JSON_SCHEMA.schema,
+      },
+    } as any,
   });
 
   const outputText = extractResponseText(response) || JSON.stringify(response.output ?? {});
@@ -266,6 +283,8 @@ ${input.prompt}`.trim();
   if (!structured) {
     throw new Error("AI builder returned invalid JSON");
   }
+
+  await updateProgress(input.generationId, "structuring_modules", "Validating AI response...");
 
   await prisma.generatedContent.update({
     where: { id: input.generationId },
@@ -300,7 +319,13 @@ ${input.prompt}`.trim();
       await tx.courseModule.deleteMany({ where: { courseId: input.courseId } });
     }
 
-    for (let m = 0; m < structured.modules.length; m += 1) {
+    const totalModules = structured.modules.length;
+    for (let m = 0; m < totalModules; m += 1) {
+      await updateProgress(
+        input.generationId,
+        "building_lessons",
+        `Creating Module ${m + 1} of ${totalModules}...`
+      );
       const mod = structured.modules[m];
       const createdModule = await tx.courseModule.create({
         data: {
@@ -334,6 +359,7 @@ ${input.prompt}`.trim();
 
   if (structured.heroImagePrompt) {
     try {
+      await updateProgress(input.generationId, "generating_image", "Creating clinical hero image...");
       const imageResponse = await (client.images as any)?.generate({
         model: process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1",
         prompt: structured.heroImagePrompt,

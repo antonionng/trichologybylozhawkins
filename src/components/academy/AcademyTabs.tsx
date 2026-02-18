@@ -5,8 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { Surface } from "@/components/layout/Surface";
-import { PurchaseButton } from "@/components/education/PurchaseButton";
-import { VideoEnrollButton } from "@/components/education/VideoEnrollButton";
 import { photography } from "@/lib/visualAssets";
 import { ProgressRing } from "./ProgressRing";
 import { ContinueLearningCard } from "./ContinueLearningCard";
@@ -106,24 +104,9 @@ type Props = {
 
 type TabKey = "library" | "browse" | "videos" | "quizzes";
 
-function getPrimaryPrice(item: {
-  pricing?: Array<{
-    id: string;
-    amount: any;
-    currency: string;
-    isPrimary: boolean;
-  }>;
-}) {
-  return item.pricing?.find((x) => x.isPrimary) ?? item.pricing?.[0] ?? null;
-}
-
 function formatLevel(level?: string | null) {
   if (!level) return null;
   return level.charAt(0) + level.slice(1).toLowerCase();
-}
-
-function formatPrice(amount: number, currency: string) {
-  return currency === "GBP" ? `£${amount}` : `${currency} ${amount}`;
 }
 
 const GRADIENTS = [
@@ -164,13 +147,6 @@ export function AcademyTabs({
     rawTab && VALID_TABS.includes(rawTab) ? rawTab : "library";
 
   const featuredQuizHref = "/quiz/trichology-knowledge-check";
-
-  const browseWithPrice = useMemo(() => {
-    return browseCourses.map((c) => ({
-      course: c,
-      price: getPrimaryPrice(c),
-    }));
-  }, [browseCourses]);
 
   const quote = useMemo(
     () =>
@@ -562,7 +538,7 @@ export function AcademyTabs({
       {tab === "browse" ? (
         <div className="space-y-8">
           <div className="grid gap-6 lg:grid-cols-2">
-            {browseWithPrice.map(({ course, price }, i) => (
+            {browseCourses.map((course, i) => (
               <div
                 key={course.id}
                 className="group relative flex flex-col overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition hover:shadow-card"
@@ -588,13 +564,6 @@ export function AcademyTabs({
                       </span>
                     )}
                   </div>
-                  {price && (
-                    <div className="absolute bottom-3 right-3">
-                      <span className="rounded-full bg-white px-3 py-1.5 text-sm font-bold text-brand-graphite shadow-sm">
-                        {formatPrice(Number(price.amount), price.currency)}
-                      </span>
-                    </div>
-                  )}
                 </div>
 
                 <div className="flex flex-1 flex-col p-5">
@@ -690,21 +659,12 @@ export function AcademyTabs({
                   </div>
 
                   <div className="mt-auto pt-5">
-                    {price ? (
-                      <PurchaseButton
-                        courseId={course.id}
-                        priceId={price.id}
-                        amount={Number(price.amount)}
-                        currency={price.currency}
-                      />
-                    ) : (
-                      <Link
-                        href="/contact"
-                        className="inline-flex w-full items-center justify-center rounded-xl border border-black/10 bg-white px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-black/70 hover:border-black/30"
-                      >
-                        Enquire
-                      </Link>
-                    )}
+                    <Link
+                      href={`/academy/${course.id}`}
+                      className="inline-flex w-full items-center justify-center rounded-xl bg-[#fab826] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-sm transition hover:bg-[#e5a820]"
+                    >
+                      Start Course
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -818,7 +778,12 @@ export function AcademyTabs({
                         {video.subtitle ?? video.description ?? ""}
                       </p>
                       <div className="mt-auto pt-4">
-                        <VideoEnrollButton videoProductId={video.id} />
+                        <Link
+                          href={`/academy/videos/${video.id}`}
+                          className="inline-flex w-full items-center justify-center rounded-xl bg-brand-graphite px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-brand-graphite/85"
+                        >
+                          Watch
+                        </Link>
                       </div>
                     </div>
                   </div>
