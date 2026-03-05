@@ -15,6 +15,9 @@ export const getRedisConnection = () => {
   
   if (!redis) {
     const env = getServerEnv();
+    if (!env.REDIS_URL) {
+      return null as any;
+    }
     redis = new IORedis(env.REDIS_URL, {
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
@@ -63,8 +66,11 @@ const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number): Promise<T
  * Cached briefly to avoid hammering when Redis is down.
  */
 export const isRedisHealthy = async (options: RedisHealthOptions = {}): Promise<boolean> => {
-  if (isBuildTime()) return false;  const now = Date.now();
-  const timeoutMs = options.timeoutMs ?? 500;  if (!options.force && now - lastHealthAt < HEALTH_TTL_MS) {
+  if (isBuildTime()) return false;
+
+  const now = Date.now();
+  const timeoutMs = options.timeoutMs ?? 500;
+  if (!options.force && now - lastHealthAt < HEALTH_TTL_MS) {
     return lastHealthy;
   }
 
@@ -81,10 +87,11 @@ export const isRedisHealthy = async (options: RedisHealthOptions = {}): Promise<
       return false;
     } finally {
       lastHealthAt = Date.now();
-      lastHealthy = await Promise.resolve(lastHealthy).catch(() => false);
       inflightHealthCheck = null;
     }
-  })();  const healthy = await inflightHealthCheck;
+  })();
+
+  const healthy = await inflightHealthCheck;
   lastHealthy = healthy;
   return healthy;
 };

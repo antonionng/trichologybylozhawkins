@@ -39,6 +39,7 @@ model Contact {
   courseEnquiries    CourseEnquiry[]
   chatConversations  ChatConversation[]
   quizAttempts       QuizAttempt[]
+  shopOrders         ShopOrder[]
 }
 
 /// AUTH MODELS
@@ -230,6 +231,8 @@ model MediaAsset {
   heroCourses Course[]      @relation("CourseHeroMedia")
   heroVideoProducts VideoProduct[] @relation("VideoProductHeroMedia")
   heroWorkshops Workshop[]  @relation("WorkshopHeroMedia")
+  shopHeroProducts ShopProduct[] @relation("ShopProductHeroMedia")
+  shopProductImages ShopProductImage[] @relation("ShopProductImageMedia")
   downloadableAssets DownloadableAsset[] @relation("AssetMedia")
 }
 
@@ -281,6 +284,25 @@ model Course {
   requirements         String[]      @default([])
   targetAudience       String[]      @default([])
   faqs                 Json?         @default("[]")
+
+  // Prerequisites: courses that must be completed before this one
+  prerequisites        CoursePrerequisite[] @relation("CoursePrerequisites")
+  requiredBy          CoursePrerequisite[] @relation("CourseRequiredBy")
+}
+
+model CoursePrerequisite {
+  id                String   @id @default(cuid())
+  createdAt         DateTime @default(now())
+  courseId          String   // course that has this prerequisite
+  requiredCourseId  String   // course that must be completed first
+  order             Int      @default(0)
+
+  course            Course   @relation("CoursePrerequisites", fields: [courseId], references: [id], onDelete: Cascade)
+  requiredCourse    Course   @relation("CourseRequiredBy", fields: [requiredCourseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, requiredCourseId])
+  @@index([courseId])
+  @@index([requiredCourseId])
 }
 
 model CourseModule {
@@ -492,6 +514,125 @@ model Order {
   videoAccesses  VideoAccess[]
   payments       PaymentEvent[]
   entitlements   Entitlement[]
+}
+
+model ShopCategory {
+  id          String       @id @default(cuid())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  name        String
+  slug        String       @unique
+  description String?
+  position    Int          @default(0)
+  imageUrl    String?
+  status      ShopCategoryStatus @default(ACTIVE)
+  products    ShopProduct[]
+}
+
+model ShopProduct {
+  id              String           @id @default(cuid())
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  slug            String           @unique
+  name            String
+  shortDescription String?
+  description     String?
+  categoryId      String?
+  price           Decimal          @db.Decimal(14, 2)
+  compareAtPrice  Decimal?         @db.Decimal(14, 2)
+  currency        String           @default("GBP")
+  sku             String?
+  stockQuantity   Int              @default(0)
+  trackInventory  Boolean          @default(true)
+  status          ShopProductStatus @default(DRAFT)
+  weightGrams     Int?
+  ingredients     String?
+  perfectFor      String?
+  keyIngredients  String[]         @default([])
+  heroMediaId     String?
+  meta            Json?
+  category        ShopCategory?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  heroMedia       MediaAsset?      @relation("ShopProductHeroMedia", fields: [heroMediaId], references: [id])
+  images          ShopProductImage[]
+  orderItems      ShopOrderItem[]
+
+  @@index([status])
+  @@index([categoryId, status])
+}
+
+model ShopProductImage {
+  id         String      @id @default(cuid())
+  createdAt  DateTime    @default(now())
+  productId  String
+  mediaId    String
+  position   Int         @default(0)
+  alt        String?
+  product    ShopProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  media      MediaAsset  @relation("ShopProductImageMedia", fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, mediaId])
+  @@index([productId, position])
+}
+
+model ShopOrder {
+  id                      String          @id @default(cuid())
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  contactId               String?
+  email                   String
+  firstName               String
+  lastName                String
+  phone                   String?
+  shippingAddress         Json
+  billingAddress          Json?
+  subtotalAmount          Decimal         @db.Decimal(14, 2)
+  shippingAmount          Decimal         @default(0) @db.Decimal(14, 2)
+  totalAmount             Decimal         @db.Decimal(14, 2)
+  currency                String          @default("GBP")
+  status                  ShopOrderStatus @default(PENDING)
+  paymentProvider         PaymentProvider @default(STRIPE)
+  providerSessionId       String?
+  providerPaymentIntentId String?
+  trackingNumber          String?
+  trackingUrl             String?
+  notes                   String?
+  metadata                Json?
+  contact                 Contact?        @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  items                   ShopOrderItem[]
+  events                  ShopOrderEvent[]
+
+  @@index([status, createdAt])
+  @@index([providerSessionId])
+}
+
+model ShopOrderItem {
+  id          String     @id @default(cuid())
+  createdAt   DateTime   @default(now())
+  orderId     String
+  productId   String?
+  productName String
+  quantity    Int        @default(1)
+  unitPrice   Decimal    @db.Decimal(14, 2)
+  currency    String     @default("GBP")
+  metadata    Json?
+  order       ShopOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     ShopProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model ShopOrderEvent {
+  id          String             @id @default(cuid())
+  createdAt   DateTime           @default(now())
+  orderId     String
+  type        ShopOrderEventType
+  description String?
+  payload     Json?
+  createdBy   String?
+  order       ShopOrder          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, createdAt])
 }
 
 model OrderItem {
@@ -910,6 +1051,34 @@ enum OrderStatus {
   PAID
   REFUNDED
   CANCELLED
+}
+
+enum ShopCategoryStatus {
+  ACTIVE
+  HIDDEN
+}
+
+enum ShopProductStatus {
+  DRAFT
+  PUBLISHED
+  OUT_OF_STOCK
+  ARCHIVED
+}
+
+enum ShopOrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum ShopOrderEventType {
+  STATUS_CHANGE
+  NOTE
+  TRACKING_UPDATED
 }
 
 enum PaymentProvider {

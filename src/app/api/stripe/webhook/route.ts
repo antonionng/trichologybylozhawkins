@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getServerEnv } from "@/server/schema";
 import { handleCheckoutFulfillment } from "@/server/modules/education/service";
+import { handleShopCheckoutFulfillment } from "@/server/modules/shop/service";
 
 export const dynamic = "force-dynamic";
 
@@ -37,21 +38,44 @@ export async function POST(request: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        await handleCheckoutFulfillment({
-          providerSessionId: session.id,
-          paymentIntentId: (session.payment_intent as string | null) ?? undefined,
-          status: "succeeded",
-          payload: event as unknown as Record<string, unknown>,
-        });
+        const isShopCheckout =
+          session.metadata?.orderScope === "SHOP" ||
+          session.metadata?.shopCheckout === "true";
+        if (isShopCheckout) {
+          await handleShopCheckoutFulfillment({
+            providerSessionId: session.id,
+            paymentIntentId: (session.payment_intent as string | null) ?? undefined,
+            status: "succeeded",
+            payload: event as unknown as Record<string, unknown>,
+          });
+        } else {
+          await handleCheckoutFulfillment({
+            providerSessionId: session.id,
+            paymentIntentId: (session.payment_intent as string | null) ?? undefined,
+            status: "succeeded",
+            payload: event as unknown as Record<string, unknown>,
+          });
+        }
         break;
       }
       case "checkout.session.expired": {
         const session = event.data.object as Stripe.Checkout.Session;
-        await handleCheckoutFulfillment({
-          providerSessionId: session.id,
-          status: "failed",
-          payload: event as unknown as Record<string, unknown>,
-        });
+        const isShopCheckout =
+          session.metadata?.orderScope === "SHOP" ||
+          session.metadata?.shopCheckout === "true";
+        if (isShopCheckout) {
+          await handleShopCheckoutFulfillment({
+            providerSessionId: session.id,
+            status: "failed",
+            payload: event as unknown as Record<string, unknown>,
+          });
+        } else {
+          await handleCheckoutFulfillment({
+            providerSessionId: session.id,
+            status: "failed",
+            payload: event as unknown as Record<string, unknown>,
+          });
+        }
         break;
       }
       default:
@@ -60,9 +84,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (err) {
+    console.error("[stripe:webhook] fulfillment failed", err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Webhook handler failed" },
-      { status: 400 }
+      { status: 500 }
     );
   }
 }

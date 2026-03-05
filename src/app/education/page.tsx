@@ -384,6 +384,12 @@ export default async function Education() {
                     : `${primaryPrice.currency} ${primaryPrice.amount}`
                   : "Enquire";
                 const duration = course.durationMinutes ? `${course.durationMinutes} mins` : "Self-paced";
+                const targetAudience = (course as { targetAudience?: string[] }).targetAudience ?? [];
+                const prereqs = (course as { prerequisites?: Array<{ requiredCourse: { title: string } }> }).prerequisites ?? [];
+                const forLabel = targetAudience.length > 0 ? targetAudience[0] : null;
+                const requiresLabel = prereqs.length > 0 ? prereqs.map((p) => p.requiredCourse.title).join(", ") : null;
+                const courseMeta = (course.meta ?? {}) as Record<string, unknown>;
+                const hasLaunchOffer = !!courseMeta?.launchOffer;
 
                 return (
                   <Link
@@ -414,9 +420,16 @@ export default async function Education() {
                             </div>
                           </div>
                         )}
-                        {/* Price badge */}
-                        <span className="absolute right-3 top-3 rounded-full bg-white/95 px-2.5 py-0.5 text-xs font-bold text-brand-graphite shadow-sm">
-                          {priceLabel}
+                        {/* Price badge + optional Launch offer */}
+                        <span className="absolute right-3 top-3 flex items-center gap-1.5">
+                          {hasLaunchOffer && (
+                            <span className="rounded-full bg-brand-salmon/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                              Launch offer
+                            </span>
+                          )}
+                          <span className="rounded-full bg-white/95 px-2.5 py-0.5 text-xs font-bold text-brand-graphite shadow-sm">
+                            {priceLabel}
+                          </span>
                         </span>
                         <span className="absolute left-3 top-3 rounded-full bg-brand-sage/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-graphite/60 backdrop-blur-sm">
                           {course.level || "Course"}
@@ -431,6 +444,16 @@ export default async function Education() {
                         <h3 className="font-display text-lg leading-snug text-brand-graphite group-hover:text-brand-sage transition-colors">
                           {course.title}
                         </h3>
+                        {forLabel && (
+                          <p className="text-xs text-brand-graphite/55 line-clamp-1">
+                            <span className="font-semibold text-brand-graphite/70">For:</span> {forLabel}
+                          </p>
+                        )}
+                        {requiresLabel && (
+                          <p className="text-xs text-brand-graphite/50 line-clamp-1">
+                            <span className="font-semibold text-brand-graphite/60">Requires:</span> {requiresLabel}
+                          </p>
+                        )}
                         <p className="flex-1 text-sm leading-relaxed text-brand-graphite/60 line-clamp-2">
                           {course.subtitle || course.description}
                         </p>

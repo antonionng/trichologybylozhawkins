@@ -12,6 +12,8 @@ type UploadKind =
   | "lesson-download"
   | "video-product-hero"
   | "video-product-video"
+  | "shop-product-hero"
+  | "shop-product-image"
   | "workshop-hero"
   | "blog-hero";
 
@@ -30,6 +32,7 @@ export async function POST(request: Request) {
     const courseId = String(form.get("courseId") ?? "").trim();
     const lessonId = String(form.get("lessonId") ?? "").trim();
     const videoProductId = String(form.get("videoProductId") ?? "").trim();
+    const shopProductId = String(form.get("shopProductId") ?? "").trim();
     const title = String(form.get("title") ?? "").trim() || undefined;
 
     const file = form.get("file");
@@ -48,6 +51,8 @@ export async function POST(request: Request) {
         "lesson-download",
         "video-product-hero",
         "video-product-video",
+        "shop-product-hero",
+        "shop-product-image",
         "workshop-hero",
         "blog-hero",
       ].includes(kind)
@@ -61,6 +66,7 @@ export async function POST(request: Request) {
       kind === "lesson-video" ||
       kind === "lesson-download";
     const isVideoProductUpload = kind === "video-product-hero" || kind === "video-product-video";
+    const isShopProductUpload = kind === "shop-product-hero" || kind === "shop-product-image";
     const isWorkshopUpload = kind === "workshop-hero";
     const isBlogUpload = kind === "blog-hero";
 
@@ -70,6 +76,10 @@ export async function POST(request: Request) {
 
     if (isVideoProductUpload && !videoProductId) {
       return NextResponse.json({ error: "videoProductId is required" }, { status: 400 });
+    }
+
+    if (isShopProductUpload && !shopProductId) {
+      return NextResponse.json({ error: "shopProductId is required" }, { status: 400 });
     }
 
     if (isWorkshopUpload && !workshopId) {
@@ -98,6 +108,10 @@ export async function POST(request: Request) {
             ? `courses/${courseId}/lessons/${lessonId}`
             : kind === "video-product-hero"
               ? `videos/${videoProductId}/hero`
+              : kind === "shop-product-hero"
+                ? `products/${shopProductId}/hero`
+                : kind === "shop-product-image"
+                  ? `products/${shopProductId}/gallery`
               : kind === "workshop-hero"
                 ? `workshops/${workshopId}/hero`
                 : kind === "blog-hero"
@@ -215,6 +229,49 @@ export async function POST(request: Request) {
       });
 
       return NextResponse.json({ ok: true, kind, video });
+    }
+
+    if (kind === "shop-product-hero") {
+      const media = await prisma.mediaAsset.create({
+        data: {
+          title: title ?? "Shop product hero image",
+          path,
+          mimeType: contentType,
+          sizeBytes: bytes.length,
+        },
+      });
+
+      await prisma.shopProduct.update({
+        where: { id: shopProductId },
+        data: { heroMediaId: media.id },
+      });
+
+      return NextResponse.json({ ok: true, kind, media });
+    }
+
+    if (kind === "shop-product-image") {
+      const media = await prisma.mediaAsset.create({
+        data: {
+          title: title ?? "Shop product gallery image",
+          path,
+          mimeType: contentType,
+          sizeBytes: bytes.length,
+        },
+      });
+
+      const existingCount = await prisma.shopProductImage.count({
+        where: { productId: shopProductId },
+      });
+
+      const image = await prisma.shopProductImage.create({
+        data: {
+          productId: shopProductId,
+          mediaId: media.id,
+          position: existingCount,
+        },
+      });
+
+      return NextResponse.json({ ok: true, kind, media, image });
     }
 
     // lesson-download

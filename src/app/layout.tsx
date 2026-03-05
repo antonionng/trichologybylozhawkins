@@ -5,6 +5,8 @@ import { SiteHeader } from "@/components/navigation/SiteHeader";
 import { SiteFooter } from "@/components/navigation/SiteFooter";
 import { getCurrentSession } from "@/server/security/auth";
 import dynamic from "next/dynamic";
+import { CartProvider } from "@/components/shop/CartProvider";
+import { CartDrawer } from "@/components/shop/CartDrawer";
 
 const ChatWidget = dynamic(
   () => import("@/components/chat/ChatWidget").then((mod) => ({ default: mod.ChatWidget })),
@@ -33,10 +35,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         >
           Skip to content
         </a>
-        <SiteHeader session={session} />
-        <div id="main-content">{children}</div>
-        <SiteFooter />
-        <ChatWidget />
+        <CartProvider>
+          <SiteHeader session={session} />
+          <div id="main-content">{children}</div>
+          <SiteFooter />
+          <CartDrawer />
+          <ChatWidget />
+        </CartProvider>
       </body>
     </html>
   );

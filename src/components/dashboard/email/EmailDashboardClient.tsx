@@ -74,7 +74,12 @@ export function EmailDashboardClient({
         actions={
           <>
             {tab === "campaigns" && (
-              <AdminButton variant="primary" size="md" onClick={() => setShowCampaignForm(!showCampaignForm)}>
+              <AdminButton
+                variant="primary"
+                size="md"
+                onClick={() => setShowCampaignForm(!showCampaignForm)}
+                disabled={audiences.length === 0}
+              >
                 {showCampaignForm ? "Close" : "+ New Campaign"}
               </AdminButton>
             )}
@@ -107,6 +112,13 @@ export function EmailDashboardClient({
       {/* ── Campaigns ── */}
       {tab === "campaigns" && (
         <div className="space-y-4">
+          {audiences.length === 0 && (
+            <Panel variant="default" padding="md">
+              <p className="text-xs text-admin-text-muted">
+                Create an audience before launching campaigns.
+              </p>
+            </Panel>
+          )}
           {showCampaignForm && (
             <Panel variant="elevated" padding="lg" className="space-y-3">
               <h2 className="text-sm font-semibold text-admin-text">New Campaign</h2>

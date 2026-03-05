@@ -68,7 +68,7 @@ export default async function ConditionLibraryPage() {
                           <div className="flex flex-1 flex-col gap-3 p-5">
                             <h3 className="font-display text-base text-brand-graphite group-hover:text-brand-salmon transition-colors">{condition.name}</h3>
                             <p className="text-sm leading-relaxed text-brand-graphite/55 line-clamp-2">
-                              {condition.description || (condition.whatIsIt ? condition.whatIsIt.substring(0, 140) + "..." : "Information coming soon.")}
+                              {condition.description || (condition.whatIsIt ? condition.whatIsIt.substring(0, 140) + "..." : "Clinical overview available inside this entry.")}
                             </p>
 
                             {condition.symptoms && Array.isArray(condition.symptoms) && (condition.symptoms as string[]).length > 0 && (
@@ -98,8 +98,26 @@ export default async function ConditionLibraryPage() {
 
           {conditions.length === 0 && (
             <div className="rounded-2xl border border-dashed border-brand-graphite/15 bg-white/50 px-8 py-16 text-center">
-              <p className="text-sm text-brand-graphite/50">Condition reference library coming soon.</p>
-              <p className="mt-1 text-xs text-brand-graphite/35">Check back later for detailed information.</p>
+              <p className="text-sm text-brand-graphite/60">
+                No condition references are published yet.
+              </p>
+              <p className="mt-1 text-xs text-brand-graphite/40">
+                Explore our courses and workshops, or contact Lorraine for tailored guidance.
+              </p>
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                <Link
+                  href="/education"
+                  className="rounded-full border border-brand-graphite/10 bg-white px-3 py-1.5 text-xs font-semibold text-brand-graphite/70 hover:text-brand-graphite"
+                >
+                  Browse Education
+                </Link>
+                <Link
+                  href="/contact"
+                  className="rounded-full border border-brand-graphite/10 bg-white px-3 py-1.5 text-xs font-semibold text-brand-graphite/70 hover:text-brand-graphite"
+                >
+                  Contact Lorraine
+                </Link>
+              </div>
             </div>
           )}
         </Container>

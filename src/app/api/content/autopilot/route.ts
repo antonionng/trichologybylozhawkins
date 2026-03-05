@@ -4,6 +4,7 @@ import { monthlyAutopilotRequestSchema } from "@/server/schema";
 import OpenAI from "openai";
 import { ContentChannel, ContentSlotStatus } from "@prisma/client";
 import { queueContentGeneration } from "@/server/modules/ai/service";
+import { apiErrorResponse } from "@/server/http/errors";
 
 type AutopilotItem = {
   date: string; // YYYY-MM-DD
@@ -211,12 +212,7 @@ ${tone}
       slots,
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to generate monthly autopilot plan",
-      },
-      { status: 400 }
-    );
+    return apiErrorResponse(error, "Failed to generate monthly autopilot plan");
   }
 }
 

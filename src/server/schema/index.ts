@@ -6,4 +6,5 @@ export * from "./crm";
 export * from "./education";
 export * from "./email";
 export * from "./env";
+export * from "./shop";
 

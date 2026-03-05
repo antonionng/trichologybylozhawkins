@@ -102,7 +102,7 @@ type Props = {
   nextMilestone: string | null;
 };
 
-type TabKey = "library" | "browse" | "videos" | "quizzes";
+type TabKey = "library" | "browse" | "videos" | "quizzes" | "shop";
 
 function formatLevel(level?: string | null) {
   if (!level) return null;
@@ -117,7 +117,7 @@ const GRADIENTS = [
   "from-brand-sage/20 to-brand-salmon/15",
 ];
 
-const VALID_TABS: TabKey[] = ["library", "browse", "videos", "quizzes"];
+const VALID_TABS: TabKey[] = ["library", "browse", "videos", "quizzes", "shop"];
 
 const MOTIVATIONAL_QUOTES = [
   "Every lesson brings you closer to the practitioner your clients need.",
@@ -270,6 +270,26 @@ export function AcademyTabs({
         </div>
 
         <div className="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-[#fab826]/5" />
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {([
+          { id: "library", label: "My Library" },
+          { id: "browse", label: "Browse Courses" },
+          { id: "videos", label: "Videos" },
+          { id: "quizzes", label: "Quizzes" },
+          { id: "shop", label: "Shop" },
+        ] as const).map((tabItem) => (
+          <Link
+            key={tabItem.id}
+            href={`/academy?tab=${tabItem.id}`}
+            className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] ${
+              tab === tabItem.id ? "bg-brand-graphite text-white" : "bg-black/5 text-black/65"
+            }`}
+          >
+            {tabItem.label}
+          </Link>
+        ))}
       </div>
 
       {/* ── MY LIBRARY (Dashboard) ── */}
@@ -877,6 +897,24 @@ export function AcademyTabs({
               </div>
             ) : null}
           </div>
+        </div>
+      ) : null}
+
+      {tab === "shop" ? (
+        <div className="space-y-6">
+          <Surface variant="glass" padding="lg" className="space-y-3">
+            <p className="text-xs uppercase tracking-[0.3em] text-black/40">Academy Shop</p>
+            <h2 className="text-2xl font-semibold text-black">Saco Supernature Product Store</h2>
+            <p className="max-w-2xl text-sm text-black/60">
+              Purchase the same professional products Lorraine recommends in education. Browse shampoos, conditioners, masks, and styling essentials.
+            </p>
+            <Link
+              href="/shop"
+              className="inline-flex rounded-xl bg-brand-graphite px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white"
+            >
+              Open full shop
+            </Link>
+          </Surface>
         </div>
       ) : null}
     </div>

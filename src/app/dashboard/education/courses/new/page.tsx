@@ -53,10 +53,12 @@ export default function NewCoursePage() {
     setError(null);
 
     try {
-      const slug = title
+      const slugFromTitle = title
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)+/g, "");
+      const slug =
+        slugFromTitle.length > 0 ? slugFromTitle : `course-${Date.now()}`;
 
       const course = await upsertCourse({
         title,
@@ -103,7 +105,17 @@ export default function NewCoursePage() {
 
       router.push(`/dashboard/education/courses/${course.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create course");
+      const raw = err instanceof Error ? err.message : "Failed to create course";
+      const isSlugConflict =
+        typeof raw === "string" &&
+        (raw.includes("Unique constraint") ||
+          raw.includes("slug") ||
+          raw.includes("P2002"));
+      setError(
+        isSlugConflict
+          ? "A program with this title already exists. Try a different title or edit the existing program from the course list."
+          : raw
+      );
       setIsCreating(false);
     }
   };

@@ -23,6 +23,7 @@ const serverEnvironmentSchemaBase = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   SUPABASE_STORAGE_BUCKET: z.string().min(1),
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
+  DEV_SKIP_CHECKOUT: z.enum(["true", "false"]).optional(),
 });
 
 export const serverEnvironmentSchema = serverEnvironmentSchemaBase
@@ -44,6 +45,38 @@ export const serverEnvironmentSchema = serverEnvironmentSchemaBase
         code: z.ZodIssueCode.custom,
         path: ["AUTH_SECRET"],
         message: "Missing AUTH_SECRET (or NEXTAUTH_SECRET).",
+      });
+    }
+
+    if (isProd && value.DEV_SKIP_CHECKOUT === "true") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["DEV_SKIP_CHECKOUT"],
+        message: "DEV_SKIP_CHECKOUT must be false in production.",
+      });
+    }
+
+    if (isProd && !value.STRIPE_SECRET_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["STRIPE_SECRET_KEY"],
+        message: "Missing STRIPE_SECRET_KEY in production.",
+      });
+    }
+
+    if (isProd && !value.STRIPE_WEBHOOK_SECRET) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["STRIPE_WEBHOOK_SECRET"],
+        message: "Missing STRIPE_WEBHOOK_SECRET in production.",
+      });
+    }
+
+    if (isProd && !value.RESEND_API_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["RESEND_API_KEY"],
+        message: "Missing RESEND_API_KEY in production.",
       });
     }
   })

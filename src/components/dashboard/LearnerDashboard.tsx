@@ -68,15 +68,10 @@ export function LearnerDashboard({ user, courses }: LearnerDashboardProps) {
                     {course.subtitle ?? course.description ?? "Access your course materials and lessons."}
                   </p>
 
-                  {/* Progress bar placeholder */}
                   <div className="pt-2">
-                    <div className="flex items-center justify-between text-[10px] text-admin-text-muted mb-1">
-                      <span>Progress</span>
-                      <span>In progress</span>
-                    </div>
-                    <div className="h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden">
-                      <div className="h-full w-1/4 rounded-full bg-admin-accent/60 transition-all" />
-                    </div>
+                    <p className="text-[11px] text-admin-text-muted">
+                      Open this course to continue lessons and track completion.
+                    </p>
                   </div>
                 </div>
                 <div className="border-t border-admin-border px-4 py-2.5 flex items-center justify-end">
@@ -107,10 +102,19 @@ export function LearnerDashboard({ user, courses }: LearnerDashboardProps) {
           <p className="text-xs text-admin-text-secondary">
             Follow your structured curriculum and track your progress through trichology fundamentals and clinical practice.
           </p>
-          <div className="rounded-md border border-dashed border-admin-border-strong p-4 text-center">
-            <p className="text-[10px] uppercase tracking-wider text-admin-text-muted">
-              Detailed progress tracking coming soon
+          <div className="rounded-md border border-admin-border bg-admin-elevated p-3 text-xs text-admin-text-secondary">
+            <p>
+              You currently have <span className="font-semibold text-admin-text">{courses.length}</span>{" "}
+              active {courses.length === 1 ? "course" : "courses"}.
             </p>
+            <div className="mt-2 flex items-center gap-2">
+              <AdminButton href="/academy" variant="ghost" size="sm">
+                Open Academy
+              </AdminButton>
+              <AdminButton href="/education" variant="ghost" size="sm">
+                Explore more courses
+              </AdminButton>
+            </div>
           </div>
         </Panel>
         <Panel variant="default" padding="md" className="space-y-3">

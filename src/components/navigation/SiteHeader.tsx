@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import clsx from "clsx";
 import { ButtonLink } from "@/components/ui/Button";
 import { usePathname } from "next/navigation";
+import { useShopCart } from "@/components/shop/CartProvider";
 
 interface Session {
   uid: string;
@@ -20,6 +21,7 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
+  { href: "/shop", label: "Shop" },
   {
     href: "/education",
     label: "Education",
@@ -37,6 +39,7 @@ const navItems: NavItem[] = [
 // Flatten for mobile
 const mobileLinks = [
   { href: "/", label: "Home" },
+  { href: "/shop", label: "Shop" },
   { href: "/education", label: "Education" },
   { href: "/education/videos", label: "Video Courses" },
   { href: "/education#courses", label: "Training Courses" },
@@ -49,6 +52,7 @@ const mobileLinks = [
 export function SiteHeader({ session }: { session: Session | null }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const { itemCount, open } = useShopCart();
 
   if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/academy")) {
     return null;
@@ -89,6 +93,7 @@ export function SiteHeader({ session }: { session: Session | null }) {
 
         {/* Right side */}
         <div className="hidden items-center gap-3 lg:flex">
+          <CartHeaderButton itemCount={itemCount} onClick={open} />
           {session ? (
             <>
               {session.role === "ADMIN" && (
@@ -124,15 +129,18 @@ export function SiteHeader({ session }: { session: Session | null }) {
         </div>
 
         {/* Mobile toggle */}
-        <button
-          type="button"
-          onClick={() => setMobileOpen((prev) => !prev)}
-          className="inline-flex items-center rounded-full border border-brand-graphite/20 px-3 py-2 text-sm text-brand-graphite/75 lg:hidden"
-          aria-expanded={mobileOpen}
-          aria-controls="mobile-nav"
-        >
-          {mobileOpen ? "Close" : "Menu"}
-        </button>
+        <div className="flex items-center gap-2 lg:hidden">
+          <CartHeaderButton itemCount={itemCount} onClick={open} compact />
+          <button
+            type="button"
+            onClick={() => setMobileOpen((prev) => !prev)}
+            className="inline-flex items-center rounded-full border border-brand-graphite/20 px-3 py-2 text-sm text-brand-graphite/75"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav"
+          >
+            {mobileOpen ? "Close" : "Menu"}
+          </button>
+        </div>
       </div>
 
       {/* Mobile nav */}
@@ -165,6 +173,17 @@ export function SiteHeader({ session }: { session: Session | null }) {
               ))}
             </ul>
             <div className="mt-6 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileOpen(false);
+                  open();
+                }}
+                className="flex h-11 items-center justify-center gap-2 rounded-xl border border-brand-graphite/10 text-sm font-medium text-brand-graphite"
+              >
+                <CartIcon />
+                <span>Cart{itemCount > 0 ? ` (${itemCount})` : ""}</span>
+              </button>
               {session ? (
                 <>
                   {session.role === "ADMIN" && (
@@ -213,6 +232,46 @@ export function SiteHeader({ session }: { session: Session | null }) {
         )}
       </AnimatePresence>
     </header>
+  );
+}
+
+function CartHeaderButton({
+  itemCount,
+  onClick,
+  compact = false,
+}: {
+  itemCount: number;
+  onClick: () => void;
+  compact?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={clsx(
+        "inline-flex items-center rounded-full border border-brand-graphite/20 text-brand-graphite/75 transition-colors hover:bg-brand-graphite/5 hover:text-brand-graphite",
+        compact ? "px-3 py-2" : "gap-2 px-3.5 py-2 text-sm"
+      )}
+      aria-label={`Open cart${itemCount > 0 ? ` with ${itemCount} item${itemCount === 1 ? "" : "s"}` : ""}`}
+    >
+      <span className="relative inline-flex">
+        <CartIcon />
+        {itemCount > 0 ? (
+          <span className="absolute -right-2 -top-2 inline-flex min-w-5 items-center justify-center rounded-full bg-brand-salmon px-1.5 py-0.5 text-[10px] font-semibold text-white">
+            {itemCount}
+          </span>
+        ) : null}
+      </span>
+      {!compact ? <span>Cart</span> : null}
+    </button>
+  );
+}
+
+function CartIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h2l2.2 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.7L22 7H7.4M10 20a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm9 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
+    </svg>
   );
 }
 

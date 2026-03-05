@@ -82,6 +82,15 @@ const stripeClient = () => {
   });
 };
 
+const MAX_SLUG_RETRIES = 20;
+
+function isSlugUniqueConstraintError(err: unknown): boolean {
+  if (err && typeof err === "object" && "code" in err) {
+    return (err as { code?: string }).code === "P2002";
+  }
+  return false;
+}
+
 export const upsertCourse = async (input: z.infer<typeof courseMutationSchema>) => {
   const data = courseMutationSchema.parse(input);
   const { id, ...payload } = data;
@@ -93,9 +102,22 @@ export const upsertCourse = async (input: z.infer<typeof courseMutationSchema>) 
     });
   }
 
-  return prisma.course.create({
-    data: payload,
-  });
+  let slug = payload.slug;
+  for (let attempt = 0; attempt <= MAX_SLUG_RETRIES; attempt++) {
+    try {
+      return await prisma.course.create({
+        data: { ...payload, slug },
+      });
+    } catch (err) {
+      if (isSlugUniqueConstraintError(err) && attempt < MAX_SLUG_RETRIES) {
+        slug = `${payload.slug}-${attempt + 2}`;
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw new Error("Could not generate a unique course slug. Please try a different title.");
 };
 
 export const upsertVideoProduct = async (
@@ -365,6 +387,12 @@ export const getCourseCatalog = async (slug?: string) => {
       },
       downloads: true,
       heroMedia: true,
+      prerequisites: {
+        orderBy: { order: "asc" },
+        include: {
+          requiredCourse: { select: { id: true, slug: true, title: true } },
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -602,6 +630,104 @@ export const createCheckoutSession = async (
                 videoPriceId: selectedPrice.id,
               },
         ],
+      },
+    },
+  });
+
+  return session;
+};
+
+// Bundle: Phase 1 + Trichology in Clinical Practice for £700
+const BUNDLE_CONFIG: Record<
+  string,
+  { name: string; amount: number; currency: string; courseSlugs: string[] }
+> = {
+  "phase-1-clinical-practice": {
+    name: "Trichocare Phase 1 + Trichology in Clinical Practice",
+    amount: 700,
+    currency: "GBP",
+    courseSlugs: ["trichocare-phase-1", "trichology-clinical-practice"],
+  },
+};
+
+export const getBundleBySlug = async (slug: string) => {
+  const config = BUNDLE_CONFIG[slug];
+  if (!config) return null;
+  const courses = await prisma.course.findMany({
+    where: { slug: { in: config.courseSlugs }, status: "PUBLISHED" },
+    select: { id: true, slug: true, title: true },
+  });
+  if (courses.length !== config.courseSlugs.length) return null;
+  return {
+    slug,
+    name: config.name,
+    amount: config.amount,
+    currency: config.currency,
+    courses: courses.sort(
+      (a, b) =>
+        config.courseSlugs.indexOf(a.slug) - config.courseSlugs.indexOf(b.slug)
+    ),
+  };
+};
+
+export const createBundleCheckoutSession = async (options: {
+  bundleSlug: string;
+  contactId?: string;
+  successUrl: string;
+  cancelUrl: string;
+  metadata?: Record<string, string>;
+}) => {
+  const bundle = await getBundleBySlug(options.bundleSlug);
+  if (!bundle) throw new Error("Bundle not found.");
+  const env = getServerEnv();
+  const client = stripeClient();
+
+  const customerEmail = options.metadata?.userEmail;
+
+  const session = await client.checkout.sessions.create({
+    mode: "payment",
+    success_url: options.successUrl,
+    cancel_url: options.cancelUrl,
+    ...(customerEmail ? { customer_email: customerEmail } : {}),
+    line_items: [
+      {
+        price_data: {
+          currency: bundle.currency.toLowerCase(),
+          unit_amount: bundle.amount * 100,
+          product_data: {
+            name: bundle.name,
+            description: `Bundle includes: ${bundle.courses.map((c) => c.title).join(" and ")}. Lifetime access to both courses.`,
+          },
+        },
+        quantity: 1,
+      },
+    ],
+    metadata: {
+      productType: "BUNDLE",
+      bundleSlug: options.bundleSlug,
+      ...options.metadata,
+    },
+  });
+
+  const contactId =
+    options.contactId ??
+    (await ensureAnonymousContact(session.customer_details)).id;
+
+  await prisma.order.create({
+    data: {
+      contactId,
+      totalAmount: bundle.amount,
+      currency: bundle.currency,
+      status: "PENDING",
+      paymentProvider: "STRIPE",
+      providerSessionId: session.id,
+      metadata: { bundleSlug: options.bundleSlug, ...options.metadata },
+      items: {
+        create: bundle.courses.map((c) => ({
+          courseId: c.id,
+          unitAmount: Math.round(bundle.amount / bundle.courses.length),
+          currency: bundle.currency,
+        })),
       },
     },
   });

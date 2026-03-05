@@ -76,11 +76,16 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
   ]);
 
   const primaryPrice = course.pricing.find((p: any) => p.isPrimary) || course.pricing[0];
+  const courseMeta = (course.meta ?? {}) as Record<string, unknown>;
+  const launchOffer = courseMeta.launchOffer as { amount?: number; standardAmount?: number } | undefined;
   const priceLabel = primaryPrice
     ? primaryPrice.currency === "GBP"
       ? `£${primaryPrice.amount}`
       : `${primaryPrice.currency} ${primaryPrice.amount}`
     : "Free";
+  const priceSubline = launchOffer?.standardAmount != null
+    ? `Usually £${launchOffer.standardAmount}`
+    : null;
   const duration = course.durationMinutes ? `${course.durationMinutes} mins` : "Self-paced";
 
   let heroUrl: string | null = null;
@@ -93,6 +98,8 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
   const audience = (course as any).targetAudience ?? [];
   const faqs = (course as any).faqs ?? [];
   const hasLiveCohorts = (course.sessions?.length ?? 0) > 0;
+  const prerequisites: Array<{ requiredCourse: { id: string; slug: string; title: string } }> = (course as any).prerequisites ?? [];
+  const hasRightForYou = prerequisites.length > 0 || audience.length > 0 || requirements.length > 0;
 
   const totalLessons = (course.modules ?? []).reduce(
     (sum: number, m: any) => sum + (m.lessons?.length ?? 0),
@@ -133,6 +140,57 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
                 </p>
               ) : null}
             </div>
+
+            {/* Is this course right for you? — prerequisites, who it's for, requirements */}
+            {hasRightForYou && (
+              <Surface variant="card" padding="lg" className="space-y-6 border-l-4 border-[#fab826]">
+                <h2 className="text-xs uppercase tracking-[0.3em] text-black/40 font-bold">Is this course right for you?</h2>
+                {prerequisites.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-black/80">Before enrolling, you should have completed</h3>
+                    <ul className="flex flex-wrap gap-2">
+                      {prerequisites.map((p: { requiredCourse: { slug: string; title: string } }) => (
+                        <li key={p.requiredCourse.slug}>
+                          <Link
+                            href={`/education/${p.requiredCourse.slug}`}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-[#fab826]/15 px-3 py-1.5 text-sm font-medium text-[#b67400] transition hover:bg-[#fab826]/25"
+                          >
+                            {p.requiredCourse.title}
+                            <span aria-hidden>→</span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {audience.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-black/80">Who this is for</h3>
+                    <ul className="space-y-1.5">
+                      {audience.map((item: string, i: number) => (
+                        <li key={i} className="flex items-center gap-2 text-sm text-black/70">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#fab826]" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {requirements.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-black/80">What you need</h3>
+                    <ul className="space-y-1.5">
+                      {requirements.map((item: string, i: number) => (
+                        <li key={i} className="flex items-center gap-2 text-sm text-black/70">
+                          <span className="h-1.5 w-1.5 rounded-full bg-black/20" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </Surface>
+            )}
 
             {/* Learning Outcomes */}
             {outcomes.length > 0 && (
@@ -175,36 +233,6 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
                 <p className="py-8 text-center text-sm text-black/50 italic">Curriculum content is being updated.</p>
               )}
             </Surface>
-
-            {/* Audience & Requirements */}
-            <div className="grid gap-6 sm:grid-cols-2">
-              {audience.length > 0 && (
-                <Surface variant="glass" padding="lg" className="space-y-3">
-                  <h3 className="text-xs uppercase tracking-[0.2em] font-bold text-black/40">Who is this for?</h3>
-                  <ul className="space-y-2">
-                    {audience.map((item: string, i: number) => (
-                      <li key={i} className="flex items-center gap-2 text-sm text-black/70">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#fab826]" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </Surface>
-              )}
-              {requirements.length > 0 && (
-                <Surface variant="glass" padding="lg" className="space-y-3">
-                  <h3 className="text-xs uppercase tracking-[0.2em] font-bold text-black/40">Requirements</h3>
-                  <ul className="space-y-2">
-                    {requirements.map((item: string, i: number) => (
-                      <li key={i} className="flex items-center gap-2 text-sm text-black/70">
-                        <span className="h-1.5 w-1.5 rounded-full bg-black/20" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </Surface>
-              )}
-            </div>
 
             {/* Quizzes */}
             {quizzes.length > 0 && (
@@ -267,8 +295,15 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
 
             <Surface variant="card" padding="lg" className="space-y-6 border-t-4 border-[#fab826]">
               <div className="space-y-2 text-center">
-                <p className="text-[10px] uppercase tracking-[0.4em] text-black/40 font-bold">Instant Enrollment</p>
+                {priceSubline ? (
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-[#b67400] font-bold">Launch offer</p>
+                ) : (
+                  <p className="text-[10px] uppercase tracking-[0.4em] text-black/40 font-bold">Instant Enrollment</p>
+                )}
                 <div className="text-3xl font-bold text-black">{priceLabel}</div>
+                {priceSubline && (
+                  <p className="text-sm text-black/50">{priceSubline}</p>
+                )}
                 {enrollmentCount > 0 && (
                   <p className="text-xs text-black/50">
                     {enrollmentCount} {enrollmentCount === 1 ? "learner" : "learners"} enrolled
@@ -324,6 +359,24 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
                 30-day money-back guarantee. No questions asked.
               </p>
             </Surface>
+
+            {/* Bundle CTA for Phase 1 + Clinical Practice */}
+            {(course.slug === "trichocare-phase-1" || course.slug === "trichology-clinical-practice") && (
+              <Link
+                href="/education/checkout/bundle/phase-1-clinical-practice"
+                className="block rounded-2xl border-2 border-[#b67400]/30 bg-[#fab826]/10 px-5 py-4 text-center transition hover:border-[#b67400]/50 hover:bg-[#fab826]/15"
+              >
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#b67400]">
+                  Bundle and save
+                </p>
+                <p className="mt-1 text-sm font-semibold text-black">
+                  {course.slug === "trichocare-phase-1"
+                    ? "Add Trichology in Clinical Practice"
+                    : "Add Trichocare Phase 1"}
+                  {" "}— £700 for both
+                </p>
+              </Link>
+            )}
 
             <MeetLorraine />
 

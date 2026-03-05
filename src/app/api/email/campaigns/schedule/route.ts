@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { scheduleCampaignSend } from "@/server/modules/email/service";
+import { apiErrorResponse } from "@/server/http/errors";
 
 export async function POST(request: Request) {
   try {
@@ -7,13 +8,7 @@ export async function POST(request: Request) {
     const campaign = await scheduleCampaignSend(body.campaignId);
     return NextResponse.json(campaign);
   } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to schedule campaign",
-      },
-      { status: 400 }
-    );
+    return apiErrorResponse(error, "Failed to schedule campaign");
   }
 }
 

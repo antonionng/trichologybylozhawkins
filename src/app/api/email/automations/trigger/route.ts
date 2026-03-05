@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { triggerAutomation } from "@/server/modules/email/service";
+import { apiErrorResponse } from "@/server/http/errors";
 
 export async function POST(request: Request) {
   try {
@@ -7,13 +8,7 @@ export async function POST(request: Request) {
     const run = await triggerAutomation(body.automationId, body.contactId);
     return NextResponse.json(run);
   } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to trigger automation",
-      },
-      { status: 400 }
-    );
+    return apiErrorResponse(error, "Failed to trigger automation");
   }
 }
 

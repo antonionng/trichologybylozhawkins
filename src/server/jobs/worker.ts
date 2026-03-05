@@ -10,12 +10,24 @@ import {
 import { prisma } from "@/server/db/client";
 import { handleCheckoutFulfillment } from "@/server/modules/education/service";
 import { runGeneration, triggerPostImageGeneration } from "@/server/modules/ai/service";
+import { Resend } from "resend";
 
 const queuePrefix = process.env.QUEUE_PREFIX ?? "lorraine-platform";
 const connection = getRedisConnection();
 
+const resendClient = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
+const defaultFrom =
+  process.env.RESEND_FROM_EMAIL ||
+  "Lorraine Hawkins <no-reply@trichologybylorrainehawkins.co.uk>";
+
 const emailHandler = async (job: Job<EmailJobData>) => {
   if (job.name === "send-campaign") {
+    if (!resendClient) {
+      throw new Error("RESEND_API_KEY is not configured. Campaign sending cannot run.");
+    }
+
     const campaign = await prisma.emailCampaign.findUnique({
       where: { id: job.data.campaignId },
       include: {
@@ -36,32 +48,82 @@ const emailHandler = async (job: Job<EmailJobData>) => {
       data: { status: "SENDING", sentAt: new Date() },
     });
 
+    const fromHeader = campaign.fromEmail
+      ? `${campaign.fromName ?? "Lorraine Hawkins"} <${campaign.fromEmail}>`
+      : defaultFrom;
+
+    let failed = 0;
     for (const member of campaign.audience.members) {
-      await prisma.emailSend.upsert({
-        where: {
-          campaignId_audienceMemberId: {
+      try {
+        const result = await resendClient.emails.send({
+          from: fromHeader,
+          to: member.email,
+          subject: campaign.subject,
+          html:
+            campaign.contentHtml ??
+            `<p>${escapeHtml(campaign.subject)}</p><p>${escapeHtml(campaign.name)}</p>`,
+          text:
+            campaign.contentText ??
+            `${campaign.subject}\n\n${campaign.name}\n\nLorraine Hawkins`,
+          ...(campaign.replyTo ? { reply_to: campaign.replyTo } : {}),
+        });
+
+        await prisma.emailSend.upsert({
+          where: {
+            campaignId_audienceMemberId: {
+              campaignId: campaign.id,
+              audienceMemberId: member.id,
+            },
+          },
+          update: {
+            status: "SENT",
+            sentAt: new Date(),
+            email: member.email,
+            metadata: { provider: "resend", messageId: result.data?.id ?? null } as any,
+          },
+          create: {
             campaignId: campaign.id,
             audienceMemberId: member.id,
+            email: member.email,
+            status: "SENT",
+            sentAt: new Date(),
+            metadata: { provider: "resend", messageId: result.data?.id ?? null } as any,
           },
-        },
-        update: {
-          status: "SENT",
-          sentAt: new Date(),
-          email: member.email,
-        },
-        create: {
-          campaignId: campaign.id,
-          audienceMemberId: member.id,
-          email: member.email,
-          status: "SENT",
-          sentAt: new Date(),
-        },
-      });
+        });
+      } catch (error) {
+        failed += 1;
+        await prisma.emailSend.upsert({
+          where: {
+            campaignId_audienceMemberId: {
+              campaignId: campaign.id,
+              audienceMemberId: member.id,
+            },
+          },
+          update: {
+            status: "FAILED",
+            email: member.email,
+            metadata: {
+              provider: "resend",
+              error: error instanceof Error ? error.message : "send_failed",
+            } as any,
+          },
+          create: {
+            campaignId: campaign.id,
+            audienceMemberId: member.id,
+            email: member.email,
+            status: "FAILED",
+            metadata: {
+              provider: "resend",
+              error: error instanceof Error ? error.message : "send_failed",
+            } as any,
+          },
+        });
+      }
     }
 
     await prisma.emailCampaign.update({
       where: { id: campaign.id },
-      data: { status: "SENT" },
+      data: { status: failed > 0 ? "CANCELLED" : "SENT" },
     });
   }
 };
@@ -151,4 +213,13 @@ const handleWorkerError = (worker: Worker) => {
 };
 
 [emailWorker, automationWorker, aiWorker, fulfillmentWorker].forEach(handleWorkerError);
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 

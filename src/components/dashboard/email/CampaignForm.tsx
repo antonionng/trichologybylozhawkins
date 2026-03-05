@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/admin/Toast";
 
 type AudienceOption = {
   id: string;
@@ -13,6 +14,12 @@ type CampaignFormProps = {
   onCreated?: () => void;
 };
 
+const inputClass =
+  "mt-1 w-full rounded-md border border-admin-border-strong bg-admin-elevated px-3 py-2 text-sm text-admin-text placeholder:text-admin-text-muted focus:border-admin-accent focus:outline-none focus:ring-1 focus:ring-admin-accent";
+const labelClass = "block text-xs font-medium uppercase tracking-wider text-admin-text-secondary";
+const btnPrimary =
+  "rounded-md bg-admin-accent px-4 py-2 text-xs font-semibold text-black hover:bg-admin-accent-hover disabled:opacity-50 disabled:pointer-events-none";
+
 export function CampaignForm({ audiences, onCreated }: CampaignFormProps) {
   const [audienceId, setAudienceId] = useState(audiences[0]?.id ?? "");
   const [name, setName] = useState("");
@@ -23,6 +30,7 @@ export function CampaignForm({ audiences, onCreated }: CampaignFormProps) {
   const [aiLoading, setAiLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
+  const { toast } = useToast();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -44,26 +52,37 @@ export function CampaignForm({ audiences, onCreated }: CampaignFormProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create campaign");
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error ?? "Failed to create campaign");
       }
 
       const created = await response.json();
 
       if (scheduledFor) {
-        await fetch("/api/email/campaigns/schedule", {
+        const scheduleRes = await fetch("/api/email/campaigns/schedule", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ campaignId: created.id }),
         });
+        if (!scheduleRes.ok) {
+          const err = await scheduleRes.json().catch(() => ({}));
+          toast(err.error ?? "Campaign saved but scheduling failed", "error");
+        } else {
+          toast("Campaign saved and scheduled", "success");
+        }
+      } else {
+        toast("Campaign saved as draft", "success");
       }
 
       setName("");
       setSubject("");
-      setMessage("Campaign saved and queued.");
+      setMessage(null);
       router.refresh();
       onCreated?.();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unexpected error");
+      const msg = error instanceof Error ? error.message : "Unexpected error";
+      setMessage(msg);
+      toast(msg, "error");
     } finally {
       setLoading(false);
     }
@@ -87,25 +106,25 @@ export function CampaignForm({ audiences, onCreated }: CampaignFormProps) {
       const suggestion = typeof data.output === "string" ? data.output.trim() : "";
       if (suggestion) {
         setSubject(suggestion.replace(/["']/g, ""));
-        setMessage("Subject generated via AI Studio.");
+        toast("Subject generated", "success");
       }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Failed to generate subject");
+      const msg = error instanceof Error ? error.message : "Failed to generate subject";
+      setMessage(msg);
+      toast(msg, "error");
     } finally {
       setAiLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 text-sm text-black/70">
+    <form onSubmit={handleSubmit} className="space-y-3 text-sm text-admin-text-secondary">
       <div>
-        <label className="block text-xs uppercase tracking-[0.2em] text-black/40">
-          Audience
-        </label>
+        <label className={labelClass}>Audience</label>
         <select
           value={audienceId}
-          onChange={(event) => setAudienceId(event.target.value)}
-          className="mt-1 w-full rounded-lg border border-black/10 bg-white/80 px-3 py-2 focus:border-[#fab826] focus:outline-none"
+          onChange={(e) => setAudienceId(e.target.value)}
+          className={inputClass}
         >
           {audiences.map((audience) => (
             <option key={audience.id} value={audience.id}>
@@ -115,71 +134,59 @@ export function CampaignForm({ audiences, onCreated }: CampaignFormProps) {
         </select>
       </div>
       <div>
-        <label className="block text-xs uppercase tracking-[0.2em] text-black/40">
-          Campaign Name
-        </label>
+        <label className={labelClass}>Campaign Name</label>
         <input
           required
           value={name}
-          onChange={(event) => setName(event.target.value)}
-          className="mt-1 w-full rounded-lg border border-black/10 bg-white/80 px-3 py-2 focus:border-[#fab826] focus:outline-none"
+          onChange={(e) => setName(e.target.value)}
+          className={inputClass}
           placeholder="Bootcamp Orientation"
         />
       </div>
       <div>
-        <label className="block text-xs uppercase tracking-[0.2em] text-black/40">
-          Subject line
-        </label>
+        <label className={labelClass}>Subject line</label>
         <input
           required
           value={subject}
-          onChange={(event) => setSubject(event.target.value)}
-          className="mt-1 w-full rounded-lg border border-black/10 bg-white/80 px-3 py-2 focus:border-[#fab826] focus:outline-none"
+          onChange={(e) => setSubject(e.target.value)}
+          className={inputClass}
           placeholder="Ready to access your salon growth playbook?"
         />
         <button
           type="button"
           onClick={handleSuggestSubject}
           disabled={aiLoading}
-          className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#bf7c00] transition hover:text-[#fab826]"
+          className="mt-2 text-xs font-medium text-admin-accent hover:underline"
         >
           {aiLoading ? "Generating..." : "Suggest subject with AI"}
         </button>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <label className="block text-xs uppercase tracking-[0.2em] text-black/40">
-            From Name
-          </label>
+          <label className={labelClass}>From Name</label>
           <input
             value={fromName}
-            onChange={(event) => setFromName(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-black/10 bg-white/80 px-3 py-2 focus:border-[#fab826] focus:outline-none"
+            onChange={(e) => setFromName(e.target.value)}
+            className={inputClass}
           />
         </div>
         <div>
-          <label className="block text-xs uppercase tracking-[0.2em] text-black/40">
-            Schedule (optional)
-          </label>
+          <label className={labelClass}>Schedule (optional)</label>
           <input
             type="datetime-local"
             value={scheduledFor}
-            onChange={(event) => setScheduledFor(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-black/10 bg-white/80 px-3 py-2 focus:border-[#fab826] focus:outline-none"
+            onChange={(e) => setScheduledFor(e.target.value)}
+            className={inputClass}
           />
         </div>
       </div>
-      <button
-        type="submit"
-        disabled={loading || audiences.length === 0}
-        className="rounded-full border border-[#fab826]/50 bg-[#fab826]/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#bf7c00] transition hover:border-[#fab826] hover:bg-[#fab826]/30 disabled:cursor-not-allowed disabled:opacity-60"
-      >
+      <button type="submit" disabled={loading || audiences.length === 0} className={btnPrimary}>
         {loading ? "Saving..." : "Save Campaign"}
       </button>
-      {audiences.length === 0 ? (
-        <p className="text-xs text-black/50">Create an audience first to target your campaign.</p>
-      ) : null}
-      {message ? <p className="text-xs text-black/50">{message}</p> : null}
+      {audiences.length === 0 && (
+        <p className="text-xs text-admin-text-muted">Create an audience first to target your campaign.</p>
+      )}
+      {message && <p className="text-xs text-admin-danger">{message}</p>}
     </form>
   );
 }

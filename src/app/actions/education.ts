@@ -282,6 +282,65 @@ export async function startCheckout(courseId: string, priceId?: string) {
   }
 }
 
+export async function startBundleCheckout(bundleSlug: string) {
+  const bundle = await educationService.getBundleBySlug(bundleSlug);
+  if (!bundle) throw new Error("Bundle not found");
+
+  const { getCurrentSession } = await import("@/server/security/auth");
+  const userSession = await getCurrentSession();
+
+  let contactId: string | undefined;
+  let metadata: Record<string, string> | undefined;
+
+  if (userSession) {
+    const user = await prisma.user.findUnique({
+      where: { id: userSession.uid },
+      select: { id: true, email: true, contactId: true },
+    });
+
+    if (user) {
+      metadata = { userId: user.id, userEmail: user.email };
+      if (user.contactId) contactId = user.contactId;
+    }
+  }
+
+  if (!contactId) {
+    throw new Error("Please sign in or create an account to purchase the bundle.");
+  }
+
+  if (process.env.DEV_SKIP_CHECKOUT === "true") {
+    for (const course of bundle.courses) {
+      const existing = await prisma.enrollment.findFirst({
+        where: { contactId, courseId: course.id },
+        select: { id: true },
+      });
+      if (!existing) {
+        await prisma.enrollment.create({
+          data: {
+            contactId,
+            courseId: course.id,
+            status: "ACTIVE",
+            activatedAt: new Date(),
+          },
+        });
+      }
+    }
+    redirect(`/academy/${bundle.courses[0].id}`);
+  }
+
+  const session = await educationService.createBundleCheckoutSession({
+    bundleSlug,
+    contactId,
+    successUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/education/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/education`,
+    metadata,
+  });
+
+  if (session.url) {
+    redirect(session.url);
+  }
+}
+
 export async function startVideoCheckout(videoProductId: string, priceId?: string) {
   const video = await prisma.videoProduct.findUnique({ where: { id: videoProductId } });
   if (!video) throw new Error("Video not found");

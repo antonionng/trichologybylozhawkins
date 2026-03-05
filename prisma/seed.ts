@@ -182,6 +182,12 @@ async function main() {
   await prisma.paymentEvent.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
+  await prisma.shopOrderEvent.deleteMany();
+  await prisma.shopOrderItem.deleteMany();
+  await prisma.shopOrder.deleteMany();
+  await prisma.shopProductImage.deleteMany();
+  await prisma.shopProduct.deleteMany();
+  await prisma.shopCategory.deleteMany();
   await prisma.courseEnquiry.deleteMany();
   await prisma.coursePrice.deleteMany();
   await prisma.courseLesson.deleteMany();
@@ -380,8 +386,74 @@ async function main() {
     "trichocare-phase-1": "The gold-standard professional certification. 8 days of intensive training covering everything from hair biology to complex case management.",
   };
 
+  // Single source of truth: who each course is for, requirements, prerequisites, pricing (Lorraine's spec)
+  const courseMarketing: Record<
+    string,
+    {
+      targetAudience: string[];
+      requirements: string[];
+      requiredCourseSlugs: string[];
+      price: number;
+      launchOffer?: { amount: number; standardAmount: number };
+    }
+  > = {
+    "trichology-clinical-practice": {
+      targetAudience: [
+        "Newly qualified trichologists",
+        "Anyone who has completed Trichocare Phase 1",
+      ],
+      requirements: [],
+      requiredCourseSlugs: ["trichocare-phase-1"],
+      price: 295,
+    },
+    "hair-loss-assessment-communication": {
+      targetAudience: [
+        "Salon Scalp Specialists looking to study further",
+        "Newly qualified Trichologists",
+      ],
+      requirements: [],
+      requiredCourseSlugs: [],
+      price: 250,
+    },
+    "salon-trichology-essentials": {
+      targetAudience: [
+        "Stylists in salon looking to further their hair and scalp knowledge",
+      ],
+      requirements: [],
+      requiredCourseSlugs: [],
+      price: 99,
+      launchOffer: { amount: 99, standardAmount: 150 },
+    },
+    "advanced-scalp-analysis": {
+      targetAudience: [
+        "All hair & scalp specialists who have completed Trichocare Phase 1",
+      ],
+      requirements: [],
+      requiredCourseSlugs: ["trichocare-phase-1", "trichology-clinical-practice"],
+      price: 295,
+    },
+    "trichocare-phase-1": {
+      targetAudience: [
+        "Anyone wanting to become a Hair and scalp specialist",
+      ],
+      requirements: [],
+      requiredCourseSlugs: [],
+      price: 495,
+    },
+  };
+
   if (coursesData && coursesData.length > 0) {
     for (const courseData of coursesData) {
+      const marketing = courseMarketing[courseData.slug];
+      const price = marketing?.price ?? 35;
+      const meta: Record<string, unknown> = {
+        heroImage: courseHeroImages[courseData.slug] ?? null,
+        tagline: courseTaglines[courseData.slug] ?? null,
+      };
+      if (marketing?.launchOffer) {
+        meta.launchOffer = marketing.launchOffer;
+      }
+
       const course = await prisma.course.create({
         data: {
           slug: courseData.slug,
@@ -390,13 +462,12 @@ async function main() {
           description: courseData.description,
           category: courseData.category,
           level: mapLevel(courseData.level),
-          enrollmentType: mapEnrollmentType(courseData.enrollmentType),
+          enrollmentType: EnrollmentType.ON_DEMAND,
           durationMinutes: courseData.durationMinutes,
           status: CourseStatus.PUBLISHED,
-          meta: {
-            heroImage: courseHeroImages[courseData.slug] ?? null,
-            tagline: courseTaglines[courseData.slug] ?? null,
-          },
+          meta,
+          targetAudience: marketing?.targetAudience ?? [],
+          requirements: marketing?.requirements ?? [],
           learningOutcomes:
             courseData.slug === "hair-loss-assessment-communication"
               ? ["Structured consultation framework", "Client communication techniques", "Evidence-based assessment", "Care plan development", "Emotional intelligence in practice", "Professional referral protocols"]
@@ -411,13 +482,7 @@ async function main() {
               : [],
           pricing: {
             create: {
-              amount:
-                courseData.enrollmentType === "COHORT"
-                  ? courseData.slug === "trichology-clinical-practice" ? 1795 : 1495
-                  : courseData.slug === "advanced-scalp-analysis" ? 295
-                  : courseData.slug === "hair-loss-assessment-communication" ? 195
-                  : courseData.slug === "salon-trichology-essentials" ? 149
-                  : 35,
+              amount: price,
               currency: "GBP",
               isPrimary: true,
             },
@@ -486,6 +551,27 @@ async function main() {
 
       console.log(`✓ Created course: ${course.title} (${courseData.modules.length} modules)`);
     }
+
+    // Create prerequisite links (Course B requires Course A)
+    for (const courseData of coursesData) {
+      const marketing = courseMarketing[courseData.slug];
+      const requiredSlugs = marketing?.requiredCourseSlugs ?? [];
+      const courseId = courseMap[courseData.slug];
+      if (!courseId) continue;
+      for (let order = 0; order < requiredSlugs.length; order++) {
+        const requiredId = courseMap[requiredSlugs[order]];
+        if (requiredId && requiredId !== courseId) {
+          await prisma.coursePrerequisite.create({
+            data: {
+              courseId,
+              requiredCourseId: requiredId,
+              order,
+            },
+          });
+        }
+      }
+    }
+    console.log("✓ Course prerequisites linked");
   } else {
     console.log("⚠️  No courses data found, creating placeholder courses...");
     // Fallback to original seed data
@@ -1367,6 +1453,204 @@ async function main() {
       },
     });
     console.log(`✓ Upserted video product: ${created.title}`);
+  }
+
+  // --- SHOP PRODUCT SEEDING ---
+  console.log("\nCreating Saco Supernature shop catalog...");
+
+  const shopCategories = await Promise.all([
+    prisma.shopCategory.create({
+      data: { name: "Shampoo", slug: "shampoo", position: 0, status: "ACTIVE" },
+    }),
+    prisma.shopCategory.create({
+      data: { name: "Conditioner", slug: "conditioner", position: 1, status: "ACTIVE" },
+    }),
+    prisma.shopCategory.create({
+      data: { name: "Masks", slug: "masks", position: 2, status: "ACTIVE" },
+    }),
+    prisma.shopCategory.create({
+      data: { name: "Treatment Styling", slug: "treatment-styling", position: 3, status: "ACTIVE" },
+    }),
+  ]);
+  const categoryBySlug = new Map(shopCategories.map((category) => [category.slug, category.id]));
+
+  const shopProducts = [
+    {
+      slug: "revitalize-shampoo",
+      name: "Revitalize Shampoo",
+      categorySlug: "shampoo",
+      size: "250ml",
+      price: 19,
+      shortDescription: "Gently cleanses and revitalizes scalp and hair.",
+      description:
+        "This advanced Superfood formula gently cleanses and stimulates the scalp, leaving it feeling both refreshed and soothed.",
+      perfectFor: "all hair types",
+      keyIngredients: ["Amla Fruit Extract", "Wheatgrass Extract", "Horsetail Extract"],
+    },
+    {
+      slug: "color-shampoo",
+      name: "Color Shampoo",
+      categorySlug: "shampoo",
+      size: "250ml",
+      price: 20,
+      shortDescription: "Protects color depth and vibrancy.",
+      description:
+        "This unique blend of Quinoa seed extract, Sunflower seed oil and Amla fruit extract helps shield hair from color fade.",
+      perfectFor: "bleached and coloured hair",
+      keyIngredients: ["Amla Fruit Extract", "Hydrolysed Quinoa Protein", "Zinc Gloconate"],
+    },
+    {
+      slug: "densifying-shampoo",
+      name: "Densifying Shampoo",
+      categorySlug: "shampoo",
+      size: "250ml",
+      price: 22,
+      shortDescription: "Deep-cleansing support for fine and thinning hair.",
+      description:
+        "An advanced technology complex deeply cleanses both hair and scalp to promote growth and stronger-feeling hair.",
+      perfectFor: "fine, limp and thinning hair",
+      keyIngredients: ["Amla", "Biotin", "Saw Palmetto"],
+    },
+    {
+      slug: "hydrating-shampoo",
+      name: "Hydrating Shampoo",
+      categorySlug: "shampoo",
+      size: "250ml",
+      price: 21,
+      shortDescription: "Rich moisture for dry, course or brittle hair.",
+      description:
+        "Richly infused with Certified Organic Samoa and Babassu Oils for instant moisture and daily gentle cleansing.",
+      perfectFor: "dry and course hair",
+      keyIngredients: ["Hydrolysed Pea Protein", "Organic Samoa Oil", "Organic Babassu Oil"],
+    },
+    {
+      slug: "revitalize-conditioner",
+      name: "Revitalize Conditioner",
+      categorySlug: "conditioner",
+      size: "250ml",
+      price: 19,
+      shortDescription: "Refreshing partner to Revitalize Shampoo.",
+      description:
+        "Designed to further refresh the scalp using nourishing combinations of Amla Horsetail and Wheatgrass.",
+      perfectFor: "all hair types",
+      keyIngredients: ["Amla Fruit Extract", "Wheatgrass Extract", "Horsetail Extract"],
+    },
+    {
+      slug: "color-conditioner",
+      name: "Color Conditioner",
+      categorySlug: "conditioner",
+      size: "250ml",
+      price: 20,
+      shortDescription: "Nourishes while helping protect color vibrancy.",
+      description:
+        "Contains Amla fruit and Quinoa seed extracts combined with Sunflower seed oil to help preserve color depth.",
+      perfectFor: "bleached and coloured hair",
+      keyIngredients: ["Amla Fruit Extract", "Hydrolysed Quinoa Protein", "Zinc Gloconate"],
+    },
+    {
+      slug: "densifying-conditioner",
+      name: "Densifying Conditioner",
+      categorySlug: "conditioner",
+      size: "250ml",
+      price: 22,
+      shortDescription: "Light nourishment for fine and thinning hair.",
+      description:
+        "Superfood complex with Amla, Biotin and Saw Palmetto to densify hair while nourishing scalp and strands.",
+      perfectFor: "fine, limp and thinning hair",
+      keyIngredients: ["Amla", "Biotin", "Saw Palmetto"],
+    },
+    {
+      slug: "hydrating-conditioner",
+      name: "Hydrating Conditioner",
+      categorySlug: "conditioner",
+      size: "250ml",
+      price: 21,
+      shortDescription: "Moisture-rich conditioner for dry lengths.",
+      description:
+        "A superfood conditioner with Certified Organic Samoa and Babassu Oils for dry, course and brittle hair.",
+      perfectFor: "dry, course and brittle hair",
+      keyIngredients: ["Hydrolysed Pea Protein", "Organic Samoa Oil", "Organic Babassu Oil"],
+    },
+    {
+      slug: "intense-repair-mask",
+      name: "Intense Repair Mask",
+      categorySlug: "masks",
+      size: "250ml",
+      price: 38,
+      shortDescription: "Deep treatment for very damaged hair.",
+      description:
+        "A richly deep and luxurious conditioning treatment in need of repair, creating sleek and luminous hair.",
+      perfectFor: "hair in need of rescue",
+      keyIngredients: ["Silk Amino Acid", "Horsetail Extract", "Wheatgrass Extract"],
+    },
+    {
+      slug: "intense-hydrating-mask",
+      name: "Intense Hydrating Mask",
+      categorySlug: "masks",
+      size: "250ml",
+      price: 39,
+      shortDescription: "Superfood hydration with botanical oils.",
+      description:
+        "Infused with Organic Samoa and Babassu Oils to restore elasticity and improve texture and shine.",
+      perfectFor: "dry and thirsty hair",
+      keyIngredients: ["Organic Samoa (Coconut) Oil", "Hydrolysed Pea Protein", "Pineapple Enzyme Extract"],
+    },
+    {
+      slug: "primer-treatment-styling",
+      name: "Primer",
+      categorySlug: "treatment-styling",
+      size: "150ml",
+      price: 24,
+      shortDescription: "Pre-styling prep for manageability and protection.",
+      description:
+        "Primer supports styling performance while preparing hair for smooth, controlled finishes.",
+      perfectFor: "all hair types",
+      keyIngredients: [],
+    },
+    {
+      slug: "silk-smooth-treatment-styling",
+      name: "Silk Smooth",
+      categorySlug: "treatment-styling",
+      size: "110ml",
+      price: 26,
+      shortDescription: "Silkening treatment for frizz control and shine.",
+      description: "Lightweight finishing treatment to smooth the fibre surface and add softness.",
+      perfectFor: "unruly or frizz-prone hair",
+      keyIngredients: [],
+    },
+    {
+      slug: "rebuild-treatment-styling",
+      name: "Rebuild",
+      categorySlug: "treatment-styling",
+      size: "110ml",
+      price: 28,
+      shortDescription: "Bond-supporting treatment for weakened strands.",
+      description: "Targeted treatment styling formula to improve resilience and support stronger-looking hair.",
+      perfectFor: "damaged and weakened hair",
+      keyIngredients: [],
+    },
+  ];
+
+  for (const product of shopProducts) {
+    await prisma.shopProduct.create({
+      data: {
+        slug: product.slug,
+        name: product.name,
+        shortDescription: product.shortDescription,
+        description: product.description,
+        categoryId: categoryBySlug.get(product.categorySlug),
+        price: product.price,
+        currency: "GBP",
+        sku: `SACO-${product.slug.toUpperCase().replace(/-/g, "_")}`,
+        stockQuantity: 100,
+        trackInventory: true,
+        status: "PUBLISHED",
+        perfectFor: product.perfectFor,
+        keyIngredients: product.keyIngredients,
+        meta: { size: product.size },
+      },
+    });
+    console.log(`✓ Created shop product: ${product.name}`);
   }
 
   // --- EMAIL SEEDING ---

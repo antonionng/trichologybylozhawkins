@@ -1,5 +1,6 @@
 import { Queue } from "bullmq";
 import { getRedisConnection, isRedisHealthy } from "./connection";
+import { QueueUnavailableError } from "./errors";
 
 const QUEUE_PREFIX = process.env.QUEUE_PREFIX ?? "lorraine-platform";
 
@@ -7,10 +8,18 @@ const disabledQueue = (name: string) =>
   ({
     name,
     add: async () => {
-      throw new Error(`Queue '${name}' is disabled (Redis unavailable during build).`);
+      throw new QueueUnavailableError(
+        name,
+        "build_time_disabled",
+        `Queue '${name}' is disabled during build or pre-render.`
+      );
     },
     addBulk: async () => {
-      throw new Error(`Queue '${name}' is disabled (Redis unavailable during build).`);
+      throw new QueueUnavailableError(
+        name,
+        "build_time_disabled",
+        `Queue '${name}' is disabled during build or pre-render.`
+      );
     },
     close: async () => {},
   }) as unknown as Queue;
@@ -32,7 +41,11 @@ const lazyQueue = (name: string) => {
 
       const healthy = await isRedisHealthy({ timeoutMs: 500 });
       if (!healthy) {
-        throw new Error(`Queue '${name}' unavailable (Redis not reachable).`);
+        throw new QueueUnavailableError(
+          name,
+          "redis_unreachable",
+          `Queue '${name}' is unavailable because Redis is not reachable.`
+        );
       }
 
       realQueue = new Queue(name, { connection, prefix: QUEUE_PREFIX });

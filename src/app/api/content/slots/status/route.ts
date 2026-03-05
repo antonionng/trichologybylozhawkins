@@ -4,6 +4,7 @@ import { contentSlotStatusSchema } from "@/server/schema";
 import { updateContentSlotStatus } from "@/server/modules/contentFactory/service";
 import { requireUser } from "@/server/security/auth";
 import { aiQueue } from "@/server/jobs/queues";
+import { apiErrorResponse } from "@/server/http/errors";
 
 export async function PATCH(request: Request) {
   try {
@@ -23,12 +24,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ slot });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to update slot status",
-      },
-      { status: 400 }
-    );
+    return apiErrorResponse(error, "Failed to update slot status");
   }
 }
 

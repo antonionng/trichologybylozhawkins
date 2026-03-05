@@ -56,6 +56,15 @@ const ADMIN_NAV: NavGroup[] = [
         ),
       },
       {
+        href: "/dashboard/education/workshops",
+        label: "Workshops",
+        icon: (
+          <svg viewBox="0 0 24 24" className={ic} fill="none">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m14-6v2m0-4v2m-4-4h.01M17 17h2a2 2 0 002-2v-2a2 2 0 00-2-2h-2" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ),
+      },
+      {
         href: "/dashboard/education/videos",
         label: "Videos",
         icon: (
@@ -143,6 +152,47 @@ const ADMIN_NAV: NavGroup[] = [
           <svg viewBox="0 0 24 24" className={ic} fill="none">
             <rect x="3" y="5" width="18" height="14" rx="2" strokeWidth="1.6" />
             <path d="M3 8l9 6 9-6" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ),
+      },
+    ],
+  },
+  {
+    title: "Shop",
+    items: [
+      {
+        href: "/dashboard/shop",
+        label: "Overview",
+        icon: (
+          <svg viewBox="0 0 24 24" className={ic} fill="none">
+            <path d="M6 7h15l-1.5 9h-12zM6 7L4.5 3H2m6 16a1 1 0 100 2 1 1 0 000-2zm9 0a1 1 0 100 2 1 1 0 000-2z" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ),
+      },
+      {
+        href: "/dashboard/shop/products",
+        label: "Products",
+        icon: (
+          <svg viewBox="0 0 24 24" className={ic} fill="none">
+            <path d="M20 7l-8-4-8 4m16 0v10l-8 4m8-14l-8 4m0 10L4 17V7m8 14V11M4 7l8 4" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ),
+      },
+      {
+        href: "/dashboard/shop/categories",
+        label: "Categories",
+        icon: (
+          <svg viewBox="0 0 24 24" className={ic} fill="none">
+            <path d="M7 7h10v10H7zM3 3h4v4H3zm14 0h4v4h-4zM3 17h4v4H3zm14 0h4v4h-4z" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ),
+      },
+      {
+        href: "/dashboard/shop/orders",
+        label: "Orders",
+        icon: (
+          <svg viewBox="0 0 24 24" className={ic} fill="none">
+            <path d="M9 12h6m-6 4h6M7 3h10l4 4v14H3V3h4z" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         ),
       },

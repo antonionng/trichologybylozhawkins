@@ -162,7 +162,7 @@ export default async function KnowledgeHubList() {
                 const editHref =
                   article.source === "entry"
                     ? `/dashboard/knowledge-hub/${article.id}`
-                    : `/dashboard/content-factory`;
+                    : `/dashboard/content`;
                 return (
                   <tr
                     key={article.id}

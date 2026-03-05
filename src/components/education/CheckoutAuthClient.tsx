@@ -1,20 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { startCheckout } from "@/app/actions/education";
+import { startCheckout, startBundleCheckout } from "@/app/actions/education";
 import { Button } from "@/components/ui/Button";
 
 type Tab = "login" | "signup";
+
+type CheckoutAuthClientProps =
+  | {
+      courseId: string;
+      priceId?: string;
+      courseSlug: string;
+      bundleSlug?: never;
+    }
+  | {
+      courseId?: never;
+      priceId?: never;
+      courseSlug?: never;
+      bundleSlug: string;
+    };
 
 export function CheckoutAuthClient({
   courseId,
   priceId,
   courseSlug,
-}: {
-  courseId: string;
-  priceId?: string;
-  courseSlug: string;
-}) {
+  bundleSlug,
+}: CheckoutAuthClientProps) {
   const [tab, setTab] = useState<Tab>("signup");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +34,16 @@ export function CheckoutAuthClient({
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+
+  const proceedAfterAuth = async () => {
+    if (bundleSlug) {
+      await startBundleCheckout(bundleSlug);
+    } else if (courseId) {
+      await startCheckout(courseId, priceId);
+    } else {
+      throw new Error("Missing course or bundle");
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +60,7 @@ export function CheckoutAuthClient({
         setError(json.error ?? "Login failed");
         return;
       }
-      await startCheckout(courseId, priceId);
+      await proceedAfterAuth();
     } catch (err) {
       if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
       setError(err instanceof Error ? err.message : "Login failed");
@@ -63,7 +84,7 @@ export function CheckoutAuthClient({
         setError(json.error ?? "Signup failed");
         return;
       }
-      await startCheckout(courseId, priceId);
+      await proceedAfterAuth();
     } catch (err) {
       if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
       setError(err instanceof Error ? err.message : "Signup failed");

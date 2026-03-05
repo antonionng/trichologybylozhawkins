@@ -7,6 +7,7 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminButton } from "@/components/admin/AdminButton";
 import { Panel } from "@/components/admin/Panel";
 import { StatusBadge } from "@/components/admin/AdminBadge";
+import { EducationSubNav } from "@/components/dashboard/education/EducationSubNav";
 
 export default async function EducationDashboard() {
   const [stats, enrollments] = await Promise.all([
@@ -38,28 +39,7 @@ export default async function EducationDashboard() {
         }
       />
 
-      {/* Sub-nav tabs */}
-      <div className="flex items-center gap-1 border-b border-admin-border pb-0">
-        {[
-          { label: "Overview", href: "/dashboard/education", exact: true },
-          { label: "Courses", href: "/dashboard/education/courses" },
-          { label: "Workshops", href: "/dashboard/education/workshops" },
-          { label: "Videos", href: "/dashboard/education/videos" },
-          { label: "Quizzes", href: "/dashboard/education/quizzes" },
-          { label: "Conditions", href: "/dashboard/education/conditions" },
-        ].map((tab) => (
-          <Link
-            key={tab.label}
-            href={tab.href}
-            className="relative px-3 py-2 text-sm font-medium text-admin-text-muted hover:text-admin-text-secondary transition-colors"
-          >
-            {tab.label}
-            {tab.exact && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-admin-accent rounded-full" />
-            )}
-          </Link>
-        ))}
-      </div>
+      <EducationSubNav />
 
       {/* Metrics strip */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

@@ -21,16 +21,20 @@ const defaultCommands: CommandItem[] = [
   { id: "dash", label: "Dashboard", href: "/dashboard", group: "Navigation" },
   { id: "edu", label: "Education", href: "/dashboard/education", group: "Navigation" },
   { id: "courses", label: "Courses", href: "/dashboard/education/courses", group: "Education" },
+  { id: "workshops", label: "Workshops", href: "/dashboard/education/workshops", group: "Education" },
   { id: "videos", label: "Videos", href: "/dashboard/education/videos", group: "Education" },
   { id: "quizzes", label: "Quizzes", href: "/dashboard/education/quizzes", group: "Education" },
   { id: "conditions", label: "Conditions", href: "/dashboard/education/conditions", group: "Education" },
   { id: "crm", label: "CRM Pipeline", href: "/dashboard/crm", group: "CRM" },
   { id: "contacts", label: "Contacts", href: "/dashboard/crm/contacts", group: "CRM" },
+  { id: "knowledge-hub", label: "Knowledge Hub", href: "/dashboard/knowledge-hub", group: "Marketing" },
   { id: "content", label: "Content Factory", href: "/dashboard/content", group: "Marketing" },
   { id: "email", label: "Email", href: "/dashboard/email", group: "Marketing" },
   { id: "new-course", label: "New Course", href: "/dashboard/education/courses/new", group: "Quick Actions" },
+  { id: "new-workshop", label: "New Workshop", href: "/dashboard/education/workshops/new", group: "Quick Actions" },
   { id: "new-video", label: "New Video", href: "/dashboard/education/videos/new", group: "Quick Actions" },
   { id: "new-contact", label: "New Contact", href: "/dashboard/crm/contacts/new", group: "Quick Actions" },
+  { id: "new-article", label: "New Article", href: "/dashboard/knowledge-hub/new", group: "Quick Actions" },
 ];
 
 /* ───────── Component ───────── */

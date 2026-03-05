@@ -67,6 +67,7 @@ const QuoteIcon = () => (
 );
 
 async function getWorkshopData(slug: string) {
+  let dbUnavailable = false;
   try {
     const dbWorkshop = await prisma.workshop.findUnique({
       where: { slug, status: "PUBLISHED" },
@@ -111,7 +112,7 @@ async function getWorkshopData(slug: string) {
       };
     }
   } catch {
-    // DB unavailable — fall through to static data
+    dbUnavailable = true;
   }
 
   const staticWorkshop = inPersonIntensives.find((w) => w.slug === slug);
@@ -119,6 +120,9 @@ async function getWorkshopData(slug: string) {
 
   return {
     source: "static" as const,
+    sourceNote: dbUnavailable
+      ? "Showing fallback workshop details while live workshop data is temporarily unavailable."
+      : "Showing workshop details from our published brochure profile.",
     title: staticWorkshop.title,
     headline: staticWorkshop.headline,
     summary: staticWorkshop.summary,
@@ -161,6 +165,11 @@ export default async function WorkshopDetailPage({
         <Container className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.6fr)] lg:items-start">
           <div className="space-y-8">
             <div className="space-y-5">
+              {workshop.source === "static" && (
+                <div className="inline-flex rounded-full border border-brand-graphite/10 bg-white/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-graphite/50">
+                  {workshop.sourceNote}
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <span className="rounded-full bg-brand-sage/15 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-brand-graphite/60">
                   In-Person Training

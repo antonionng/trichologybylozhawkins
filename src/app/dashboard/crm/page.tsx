@@ -85,26 +85,36 @@ export default async function CrmDashboard() {
                     </p>
                   )}
                   <div className="space-y-1.5 mt-2">
-                    {stage.deals.map((deal: any) => (
-                      <div
-                        key={deal.id}
-                        className="rounded-md border border-admin-border bg-admin-elevated p-2.5 hover:border-admin-border-strong transition-colors"
-                      >
-                        <p className="text-xs font-medium text-admin-text truncate">
-                          {deal.name}
-                        </p>
-                        {deal.amount ? (
-                          <p className="text-[10px] text-admin-accent mt-0.5">
-                            £{Number(deal.amount).toLocaleString()}
-                          </p>
-                        ) : null}
-                        {deal.contact && (
-                          <p className="text-[10px] text-admin-text-muted mt-0.5 truncate">
-                            {deal.contact.firstName} {deal.contact.lastName}
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                    {stage.deals.map((deal: any) => {
+                      const contactId = deal.contactId ?? deal.contact?.id;
+                      const cardContent = (
+                        <>
+                          <p className="text-xs font-medium text-admin-text truncate">{deal.name}</p>
+                          {deal.amount ? (
+                            <p className="text-[10px] text-admin-accent mt-0.5">
+                              £{Number(deal.amount).toLocaleString()}
+                            </p>
+                          ) : null}
+                          {deal.contact && (
+                            <p className="text-[10px] text-admin-text-muted mt-0.5 truncate">
+                              {deal.contact.firstName} {deal.contact.lastName}
+                            </p>
+                          )}
+                        </>
+                      );
+                      const className = "rounded-md border border-admin-border bg-admin-elevated p-2.5 hover:border-admin-border-strong transition-colors";
+                      return (
+                        <div key={deal.id} className={className}>
+                          {contactId ? (
+                            <Link href={`/dashboard/crm/contacts/${contactId}`} className="block text-inherit hover:text-admin-accent">
+                              {cardContent}
+                            </Link>
+                          ) : (
+                            cardContent
+                          )}
+                        </div>
+                      );
+                    })}
                     {stage.deals.length === 0 && (
                       <p className="text-[10px] text-admin-text-muted text-center py-3 italic">
                         Empty
@@ -172,6 +182,24 @@ export default async function CrmDashboard() {
                     ? `${activity.contact.firstName} ${activity.contact.lastName}`
                     : "Unassigned"}
                 </p>
+                <div className="mt-1.5 flex items-center gap-2">
+                  {activity.contactId ? (
+                    <Link
+                      href={`/dashboard/crm/contacts/${activity.contactId}`}
+                      className="text-[11px] text-admin-accent hover:underline"
+                    >
+                      View contact
+                    </Link>
+                  ) : null}
+                  {activity.dealId && activity.deal?.contactId ? (
+                    <Link
+                      href={`/dashboard/crm/contacts/${activity.deal.contactId}`}
+                      className="text-[11px] text-admin-accent hover:underline"
+                    >
+                      Open deal contact
+                    </Link>
+                  ) : null}
+                </div>
               </div>
             ))}
             {activities.length === 0 && (

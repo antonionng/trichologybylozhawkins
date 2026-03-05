@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/admin/Toast";
 
 type AudienceOption = {
   id: string;
@@ -24,13 +25,12 @@ export function AutomationForm({ audiences, onCreated }: AutomationFormProps) {
     "Here’s the personalised scalp roadmap Lorraine prepared for you."
   );
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
+  const { toast } = useToast();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
-    setMessage(null);
 
     try {
       const response = await fetch("/api/email/automations", {
@@ -63,40 +63,44 @@ export function AutomationForm({ audiences, onCreated }: AutomationFormProps) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create automation");
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error ?? "Failed to create automation");
       }
 
-      setMessage("Automation activated.");
+      toast("Automation activated", "success");
       router.refresh();
       onCreated?.();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unexpected error");
+      const msg = error instanceof Error ? error.message : "Unexpected error";
+      toast(msg, "error");
     } finally {
       setLoading(false);
     }
   };
 
+  const inputClass =
+    "mt-1 w-full rounded-md border border-admin-border-strong bg-admin-elevated px-3 py-2 text-sm text-admin-text placeholder:text-admin-text-muted focus:border-admin-accent focus:outline-none focus:ring-1 focus:ring-admin-accent";
+  const labelClass = "block text-xs font-medium uppercase tracking-wider text-admin-text-secondary";
+  const btnPrimary =
+    "rounded-md bg-admin-accent px-4 py-2 text-xs font-semibold text-black hover:bg-admin-accent-hover disabled:opacity-50 disabled:pointer-events-none";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 text-sm text-black/70">
+    <form onSubmit={handleSubmit} className="space-y-3 text-sm text-admin-text-secondary">
       <div>
-        <label className="block text-xs uppercase tracking-[0.2em] text-black/40">
-          Automation Name
-        </label>
+        <label className={labelClass}>Automation Name</label>
         <input
           required
           value={name}
-          onChange={(event) => setName(event.target.value)}
-          className="mt-1 w-full rounded-lg border border-black/10 bg-white/80 px-3 py-2 focus:border-[#fab826] focus:outline-none"
+          onChange={(e) => setName(e.target.value)}
+          className={inputClass}
         />
       </div>
       <div>
-        <label className="block text-xs uppercase tracking-[0.2em] text-black/40">
-          Target Audience (optional)
-        </label>
+        <label className={labelClass}>Target Audience (optional)</label>
         <select
           value={audienceId}
-          onChange={(event) => setAudienceId(event.target.value)}
-          className="mt-1 w-full rounded-lg border border-black/10 bg-white/80 px-3 py-2 focus:border-[#fab826] focus:outline-none"
+          onChange={(e) => setAudienceId(e.target.value)}
+          className={inputClass}
         >
           <option value="">All contacts</option>
           {audiences.map((audience) => (
@@ -108,47 +112,36 @@ export function AutomationForm({ audiences, onCreated }: AutomationFormProps) {
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <label className="block text-xs uppercase tracking-[0.2em] text-black/40">
-            Wait Time (minutes)
-          </label>
+          <label className={labelClass}>Wait Time (minutes)</label>
           <input
             type="number"
             min={0}
             value={waitMinutes}
-            onChange={(event) => setWaitMinutes(Number(event.target.value))}
-            className="mt-1 w-full rounded-lg border border-black/10 bg-white/80 px-3 py-2 focus:border-[#fab826] focus:outline-none"
+            onChange={(e) => setWaitMinutes(Number(e.target.value))}
+            className={inputClass}
           />
         </div>
         <div>
-          <label className="block text-xs uppercase tracking-[0.2em] text-black/40">
-            Nurture Subject
-          </label>
+          <label className={labelClass}>Nurture Subject</label>
           <input
             value={emailSubject}
-            onChange={(event) => setEmailSubject(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-black/10 bg-white/80 px-3 py-2 focus:border-[#fab826] focus:outline-none"
+            onChange={(e) => setEmailSubject(e.target.value)}
+            className={inputClass}
           />
         </div>
       </div>
       <div>
-        <label className="block text-xs uppercase tracking-[0.2em] text-black/40">
-          Preview Text
-        </label>
+        <label className={labelClass}>Preview Text</label>
         <textarea
           value={emailPreview}
-          onChange={(event) => setEmailPreview(event.target.value)}
-          className="mt-1 w-full rounded-lg border border-black/10 bg-white/80 px-3 py-2 focus:border-[#fab826] focus:outline-none"
+          onChange={(e) => setEmailPreview(e.target.value)}
+          className={inputClass}
           rows={3}
         />
       </div>
-      <button
-        type="submit"
-        disabled={loading}
-        className="rounded-full border border-[#fab826]/50 bg-[#fab826]/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#bf7c00] transition hover:border-[#fab826] hover:bg-[#fab826]/30 disabled:cursor-not-allowed disabled:opacity-60"
-      >
+      <button type="submit" disabled={loading} className={btnPrimary}>
         {loading ? "Deploying..." : "Activate Automation"}
       </button>
-      {message ? <p className="text-xs text-black/50">{message}</p> : null}
     </form>
   );
 }

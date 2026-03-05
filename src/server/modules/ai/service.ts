@@ -1,4 +1,5 @@
 import { aiQueue } from "@/server/jobs/queues";
+import { isQueueUnavailableError } from "@/server/jobs/errors";
 import { prisma } from "@/server/db/client";
 import {
   attachGenerationToSlot,
@@ -25,6 +26,7 @@ type ContentBrief = {
   mode?: string;
   slotId?: string;
   courseId?: string;
+  workshopId?: string;
   videoProductId?: string;
   replaceExisting?: boolean;
   persona?: string;
@@ -324,13 +326,23 @@ export const queueContentGeneration = async (
       { removeOnComplete: true, attempts: 2 }
     );
   } catch (err) {
-    const raw = err instanceof Error ? err.message : String(err);
-    const isConnRefused =
-      raw.includes("ECONNREFUSED") ||
-      raw.includes("connect ECONNREFUSED") ||
-      raw.toLowerCase().includes("redis");
+    if (isQueueUnavailableError(err)) {
+      if (process.env.NODE_ENV !== "production") {
+        throw new Error(
+          [
+            "AI queue is unavailable (Redis is not reachable).",
+            "Start Redis and try again:",
+            "  docker compose up -d redis",
+            "",
+            `Details: ${err.message}`,
+          ].join("\n")
+        );
+      }
+      throw err;
+    }
 
-    if (process.env.NODE_ENV !== "production" && isConnRefused) {
+    const raw = err instanceof Error ? err.message : String(err);
+    if (process.env.NODE_ENV !== "production" && raw.toLowerCase().includes("redis")) {
       throw new Error(
         [
           "AI queue is unavailable (Redis is not reachable).",
@@ -464,8 +476,10 @@ export const runGeneration = async (generationId: string) => {
       where: { id: generationId },
       data: {
         status: GenerationStatus.COMPLETED,
-        output: (structuredContentFactory ?? structuredVideoPages) ?? { text: outputText },
-        usage: response.usage as unknown as Record<string, unknown>,
+        output:
+          (((structuredContentFactory ?? structuredVideoPages) ??
+            { text: outputText }) as Record<string, unknown>) as any,
+        usage: (response.usage as unknown as Record<string, unknown>) as any,
       },
     });
 
@@ -522,6 +536,7 @@ export const runGeneration = async (generationId: string) => {
       }
 
       if (brief.media?.kind === "image" && structuredContentFactory.imagePrompts?.length) {
+        const slotId = brief.slotId;
         await Promise.all(
           structuredContentFactory.imagePrompts.map(async (imagePrompt) => {
             try {
@@ -541,7 +556,7 @@ export const runGeneration = async (generationId: string) => {
 
               await prisma.contentAsset.create({
                 data: {
-                  slotId: brief.slotId,
+                  slotId,
                   generationId,
                   type: ContentAssetType.IMAGE,
                   mediaUrl: url,
@@ -610,10 +625,7 @@ export const executeTemplatePreview = async (input: {
     input: promptText,
   });
 
-  const output =
-    response.output?.[0]?.type === "output_text"
-      ? response.output[0].text
-      : JSON.stringify(response);
+  const output = extractResponseText(response) || JSON.stringify(response);
 
   return {
     output,

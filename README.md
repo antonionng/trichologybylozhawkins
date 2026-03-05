@@ -45,6 +45,9 @@ cp env.local.template .env.local
 Make sure these are correct for your machine:
 - `DATABASE_URL` (Postgres)
 - `REDIS_URL` (Redis, default: `redis://localhost:6379`)
+- `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` (required in production)
+- `RESEND_API_KEY` (required in production for campaign delivery)
+- `DEV_SKIP_CHECKOUT=false` (must stay false in production)
 
 ### Install + DB setup
 
@@ -53,6 +56,7 @@ cd /Users/ant/Documents/LorraineHawkin/trichology
 npm install
 npm run prisma:generate
 npm run prisma:migrate
+npm run env:check
 ```
 
 ### Run the app (2 terminals)
@@ -70,6 +74,16 @@ npm run worker
 ```
 
 Open `http://localhost:3000`.
+
+## Production preflight
+
+Before deploy, run:
+
+```bash
+npm run env:check
+```
+
+This validates required env vars and ensures Prisma includes VideoProduct delegates.
 
 ## Why Redis if we use Supabase?
 

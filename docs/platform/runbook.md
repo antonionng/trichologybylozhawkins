@@ -6,12 +6,15 @@
    - `DATABASE_URL` to Supabase Postgres (or local Postgres)
    - `REDIS_URL` for BullMQ queues
    - `STRIPE_SECRET_KEY` & `STRIPE_WEBHOOK_SECRET`
+   - `DEV_SKIP_CHECKOUT=false`
+   - `RESEND_API_KEY` & `RESEND_FROM_EMAIL`
    - `OPENAI_API_KEY`
    - `SUPABASE_*` for secure media delivery
 2. Install dependencies and generate Prisma client:
    ```bash
    npm install
    npm run prisma:generate
+   npm run env:check
    npm run dev
    ```
    
@@ -46,12 +49,12 @@
 ## Stripe Integration
 
 - Checkout sessions are created through `POST /api/education/checkout`.
-- Configure Stripe webhook to `POST /api/education/fulfillment`.
+- Configure Stripe webhook to `POST /api/stripe/webhook`.
 - Fulfillment handler updates order status and enrolments; extend to grant download entitlements as needed.
 
 ## Email Providers
 
-- Campaign sending is currently stubbed to mark sends as `SENT`. Integrate with Postmark, SendGrid, or Resend by modifying the email worker.
+- Campaign sending uses Resend from the `email` worker queue. Ensure `RESEND_API_KEY` is configured.
 - Webhook ingestion expects JSON payloads with `event` and `email`. Map provider payloads accordingly.
 
 ## AI Usage
@@ -71,4 +74,13 @@
 - Run schema/unit tests with `npm test`.
 - Lint with `npm run lint` (set `SKIP_ENV_VALIDATION=true` when env not present).
 - Add integration and Playwright tests before automating deployments.
+
+## Launch Preflight Checklist
+
+- `npm run env:check` passes in the deploy environment.
+- Stripe webhook endpoint `/api/stripe/webhook` is configured and verified.
+- Redis is reachable and the worker process is running.
+- Resend API key and sender identity are configured and a test campaign is delivered.
+- Admin smoke flows pass: create/edit course, workshop, video, campaign, automation, CRM updates.
+- User smoke flows pass: sign in, checkout, webhook fulfillment, academy access, quiz submission.
 

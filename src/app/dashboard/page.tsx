@@ -128,7 +128,7 @@ export default async function DashboardHome() {
                   </p>
                   <p className="text-xs text-admin-text-muted">{formatDate(eq.createdAt)}</p>
                 </div>
-                <Link href="/dashboard/education" className="text-xs text-admin-accent hover:underline shrink-0">
+                <Link href="/dashboard/education?tab=enquiries" className="text-xs text-admin-accent hover:underline shrink-0">
                   Review
                 </Link>
               </div>
@@ -146,23 +146,37 @@ export default async function DashboardHome() {
             <span className="text-xs text-admin-text-muted">{tasks.length} items</span>
           </div>
           <div className="divide-y divide-admin-border max-h-80 overflow-y-auto">
-            {tasks.map((task: any) => (
-              <div key={task.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.02] transition-colors">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-400 text-[10px]">
-                  !
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-admin-text truncate">{task.title}</p>
-                  <p className="text-xs text-admin-text-muted">
-                    {task.contact ? `${task.contact.firstName} ${task.contact.lastName}` : task.deal?.name ?? "Unassigned"}
-                    {" · "}Due {formatDate(task.dueAt)}
-                  </p>
+            {tasks.map((task: any) => {
+              const contactId = task.contactId ?? task.contact?.id;
+              const row = (
+                <>
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-400 text-[10px]">
+                    !
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-admin-text truncate">{task.title}</p>
+                    <p className="text-xs text-admin-text-muted">
+                      {task.contact ? `${task.contact.firstName} ${task.contact.lastName}` : task.deal?.name ?? "Unassigned"}
+                      {" · "}Due {formatDate(task.dueAt)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <StatusBadge status={task.priority} />
+                  </div>
+                </>
+              );
+              return (
+                <div key={task.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.02] transition-colors">
+                  {contactId ? (
+                    <Link href={`/dashboard/crm/contacts/${contactId}`} className="flex flex-1 items-center gap-3 min-w-0 text-inherit hover:text-admin-accent">
+                      {row}
+                    </Link>
+                  ) : (
+                    row
+                  )}
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <StatusBadge status={task.priority} />
-                </div>
-              </div>
-            ))}
+              );
+            })}
             {enquiries.filter((eq: any) => !eq.repliedAt).slice(0, 3).map((eq: any) => (
               <div key={`enq-${eq.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.02] transition-colors">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-400 text-[10px]">
@@ -174,7 +188,7 @@ export default async function DashboardHome() {
                   </p>
                   <p className="text-xs text-admin-text-muted">{eq.email}</p>
                 </div>
-                <AdminButton href="/dashboard/education" variant="ghost" size="sm">
+                <AdminButton href="/dashboard/education?tab=enquiries" variant="ghost" size="sm">
                   Follow up
                 </AdminButton>
               </div>
