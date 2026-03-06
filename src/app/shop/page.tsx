@@ -2,14 +2,17 @@ import { CategoryFilter } from "@/components/shop/CategoryFilter";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { ShopHero } from "@/components/shop/ShopHero";
 import { listCategories, listPublishedProducts } from "@/server/modules/shop/service";
-import { createSignedDownloadUrl } from "@/server/storage/supabase";
+import { createSignedDownloadUrl, getPublicUrl } from "@/server/storage/supabase";
 
 export const dynamic = "force-dynamic";
 
 async function resolveImage(product: any) {
+  const tryPath = (path: string) =>
+    createSignedDownloadUrl(path).catch(() => getPublicUrl(path));
+
   if (product.heroMedia?.path) {
     try {
-      return await createSignedDownloadUrl(product.heroMedia.path);
+      return await tryPath(product.heroMedia.path);
     } catch {
       // ignore
     }
@@ -17,7 +20,7 @@ async function resolveImage(product: any) {
   const firstImagePath = product.images?.[0]?.media?.path;
   if (firstImagePath) {
     try {
-      return await createSignedDownloadUrl(firstImagePath);
+      return await tryPath(firstImagePath);
     } catch {
       // ignore
     }

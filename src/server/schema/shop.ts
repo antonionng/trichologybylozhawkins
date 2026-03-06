@@ -46,22 +46,32 @@ export const shopCheckoutItemSchema = z.object({
   quantity: z.number().int().positive().default(1),
 });
 
-export const shopCheckoutSchema = z.object({
-  items: z.array(shopCheckoutItemSchema).min(1),
-  customer: z.object({
-    email: z.string().email(),
-    firstName: z.string().min(1),
-    lastName: z.string().min(1),
-    phone: z.string().optional(),
-  }),
-  shippingAddress: shopOrderAddressSchema,
-  billingAddress: shopOrderAddressSchema.optional(),
-  successUrl: z.string().url(),
-  cancelUrl: z.string().url(),
-  contactId: z.string().cuid().optional(),
-  paymentProvider: z.nativeEnum(PaymentProvider).default(PaymentProvider.STRIPE),
-  metadata: z.record(z.string()).optional(),
-});
+export const shopCheckoutSchema = z
+  .object({
+    items: z.array(shopCheckoutItemSchema).min(1),
+    customer: z.object({
+      email: z.string().email(),
+      firstName: z.string().min(1),
+      lastName: z.string().min(1),
+      phone: z.string().optional(),
+    }),
+    shippingAddress: shopOrderAddressSchema.optional(),
+    billingAddress: shopOrderAddressSchema.optional(),
+    successUrl: z.string().url(),
+    cancelUrl: z.string().url(),
+    contactId: z.string().cuid().optional(),
+    paymentProvider: z.nativeEnum(PaymentProvider).default(PaymentProvider.STRIPE),
+    metadata: z.record(z.string()).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.paymentProvider !== PaymentProvider.STRIPE && !value.shippingAddress) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["shippingAddress"],
+        message: "Shipping address is required for non-Stripe checkout providers.",
+      });
+    }
+  });
 
 export const shopOrderStatusSchema = z.object({
   status: z.nativeEnum(ShopOrderStatus),

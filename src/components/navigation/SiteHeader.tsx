@@ -254,11 +254,14 @@ function CartHeaderButton({
       )}
       aria-label={`Open cart${itemCount > 0 ? ` with ${itemCount} item${itemCount === 1 ? "" : "s"}` : ""}`}
     >
-      <span className="relative inline-flex">
+      <span className="relative inline-flex shrink-0">
         <CartIcon />
         {itemCount > 0 ? (
-          <span className="absolute -right-2 -top-2 inline-flex min-w-5 items-center justify-center rounded-full bg-brand-salmon px-1.5 py-0.5 text-[10px] font-semibold text-white">
-            {itemCount}
+          <span
+            className="absolute -top-1 -right-1 flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-brand-salmon px-1 text-[10px] font-semibold leading-none text-white shadow-sm"
+            aria-hidden
+          >
+            {itemCount > 99 ? "99+" : itemCount}
           </span>
         ) : null}
       </span>

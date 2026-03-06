@@ -358,7 +358,7 @@ export const inPersonIntensives: IntensiveProgramme[] = [
       "Use diagnostic tools and scalp imaging effectively",
     ],
     image: {
-      src: "/images/intensive-foundations-placeholder.png",
+      src: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=800&q=80",
       alt: "Complete Trichology Training — in-person intensive with Lorraine Hawkins.",
     },
     slug: "trichocare-foundations-intensive",
@@ -453,7 +453,7 @@ export const inPersonIntensives: IntensiveProgramme[] = [
       "Speak about scalp health in a way clients understand and value",
     ],
     image: {
-      src: "/images/intensive-salon-placeholder.png",
+      src: "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=800&q=80",
       alt: "Salon Team Training Day — Lorraine Hawkins visits your salon.",
     },
     slug: "salon-scalp-health-consultancy",
@@ -548,7 +548,7 @@ export const inPersonIntensives: IntensiveProgramme[] = [
       "Build premium treatment packages that command higher prices",
     ],
     image: {
-      src: "/images/intensive-detox-placeholder.png",
+      src: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80",
       alt: "Advanced Scalp Treatment Workshop — hands-on training with Lorraine Hawkins.",
     },
     slug: "regenerative-scalp-detox-lab",

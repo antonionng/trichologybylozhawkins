@@ -207,6 +207,8 @@ export async function createShopCheckoutSession(input: z.infer<typeof shopChecko
   const subtotalAmount = lineItems.reduce((sum, item) => sum + item.subtotal, 0);
   const shippingAmount = 0;
   const totalAmount = subtotalAmount + shippingAmount;
+  const shippingAddress = data.shippingAddress ?? {};
+  const billingAddress = data.billingAddress ?? data.shippingAddress ?? {};
   const contact = data.contactId
     ? await prisma.contact.findUnique({ where: { id: data.contactId } })
     : await ensureContact(data.customer);
@@ -223,8 +225,8 @@ export async function createShopCheckoutSession(input: z.infer<typeof shopChecko
         firstName: data.customer.firstName,
         lastName: data.customer.lastName,
         phone: data.customer.phone,
-        shippingAddress: data.shippingAddress,
-        billingAddress: data.billingAddress ?? data.shippingAddress,
+        shippingAddress,
+        billingAddress,
         subtotalAmount,
         shippingAmount,
         totalAmount,
@@ -280,8 +282,8 @@ export async function createShopCheckoutSession(input: z.infer<typeof shopChecko
       customerFirstName: data.customer.firstName,
       customerLastName: data.customer.lastName,
       customerPhone: data.customer.phone ?? "",
-      shippingAddress: JSON.stringify(data.shippingAddress),
-      billingAddress: JSON.stringify(data.billingAddress ?? data.shippingAddress),
+      shippingAddress: JSON.stringify(shippingAddress),
+      billingAddress: JSON.stringify(billingAddress),
       ...data.metadata,
     },
   });
@@ -293,8 +295,8 @@ export async function createShopCheckoutSession(input: z.infer<typeof shopChecko
       firstName: data.customer.firstName,
       lastName: data.customer.lastName,
       phone: data.customer.phone,
-      shippingAddress: data.shippingAddress,
-      billingAddress: data.billingAddress ?? data.shippingAddress,
+      shippingAddress,
+      billingAddress,
       subtotalAmount,
       shippingAmount,
       totalAmount,

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 export default function LoginClient() {
   const router = useRouter();
   const params = useSearchParams();
-  const nextPath = useMemo(() => params.get("next") ?? "/dashboard", [params]);
+  const nextPath = useMemo(() => params.get("next"), [params]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +30,7 @@ export default function LoginClient() {
         setError(json.error ?? "Login failed");
         return;
       }
-      const destination = json.role === "ADMIN" ? nextPath : "/academy";
+      const destination = nextPath || (json.role === "ADMIN" ? "/dashboard" : "/academy");
       router.replace(destination);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");

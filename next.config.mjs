@@ -37,7 +37,13 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "cqnbspefjfnngmomezsp.supabase.co",
+        hostname: (() => {
+          try {
+            return new URL(process.env.SUPABASE_URL || "").hostname;
+          } catch {
+            return "cqnbspefjfnngmomezsp.supabase.co";
+          }
+        })(),
         pathname: "/storage/v1/object/**",
       },
     ],

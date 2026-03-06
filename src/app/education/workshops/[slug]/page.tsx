@@ -138,7 +138,7 @@ async function getWorkshopData(slug: string) {
     testimonials: staticWorkshop.testimonials,
     ctaLabel: staticWorkshop.ctaLabel,
     ctaHref: staticWorkshop.ctaHref,
-    heroUrl: null,
+    heroUrl: staticWorkshop.image?.src ?? null,
     slug: staticWorkshop.slug,
   };
 }

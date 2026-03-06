@@ -1,7 +1,8 @@
 "use server";
 
 import * as shopService from "@/server/modules/shop/service";
-import { requireUserOrRedirect } from "@/server/security/auth";
+import { prisma } from "@/server/db/client";
+import { getCurrentSession, requireUserOrRedirect } from "@/server/security/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -29,7 +30,7 @@ export async function getAdminShopCategories() {
 
 export async function getAdminShopProducts() {
   await requireUserOrRedirect({ role: "ADMIN", next: "/dashboard/shop/products" });
-  return shopService.listPublishedProducts({ includeDrafts: true, limit: 200 });
+  return shopService.listPublishedProducts({ includeDrafts: true, limit: 100 });
 }
 
 export async function getShopStats() {
@@ -93,8 +94,45 @@ export async function updateShopOrder(id: string, payload: {
   revalidatePath(`/dashboard/shop/orders/${id}`);
 }
 
-export async function startShopCheckout(payload: Record<string, unknown>) {
-  const session = await shopService.createShopCheckoutSession(payload as any);
+export async function startShopCheckout(payload: {
+  items: { productId: string; quantity: number }[];
+  customer?: { email: string; firstName: string; lastName: string; phone?: string };
+  contactId?: string;
+  successUrl: string;
+  cancelUrl: string;
+}) {
+  const activeSession = await getCurrentSession();
+  let customer = payload.customer;
+  let contactId = payload.contactId;
+
+  if (activeSession) {
+    const user = await prisma.user.findUnique({
+      where: { id: activeSession.uid },
+      include: { contact: true },
+    });
+
+    if (user) {
+      customer = {
+        email: user.contact?.email || user.email || customer?.email || "",
+        firstName: user.contact?.firstName || customer?.firstName || "",
+        lastName: user.contact?.lastName || customer?.lastName || "",
+        phone: user.contact?.phone || customer?.phone,
+      };
+      contactId = user.contactId ?? contactId;
+    }
+  }
+
+  if (!customer?.email || !customer.firstName || !customer.lastName) {
+    throw new Error("Email, first name, and last name are required.");
+  }
+
+  const session = await shopService.createShopCheckoutSession({
+    items: payload.items,
+    customer,
+    contactId,
+    successUrl: payload.successUrl,
+    cancelUrl: payload.cancelUrl,
+  });
   if (session.url) redirect(session.url);
 }
 

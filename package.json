@@ -12,6 +12,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "seed:user": "npx tsx scripts/seed-user.ts",
+    "seed:shop": "npx tsx scripts/seed-shop-catalog.ts",
     "test": "vitest",
     "postinstall": "prisma generate",
     "ingest:extract": "npx tsx scripts/ingest/extract-content.ts",

@@ -61,7 +61,7 @@ async function getWorkshops(): Promise<WorkshopCard[]> {
     duration: w.duration,
     investment: w.investment,
     location: w.location,
-    heroUrl: null,
+    heroUrl: w.image?.src ?? null,
   }));
 }
 

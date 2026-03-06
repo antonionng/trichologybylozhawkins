@@ -403,7 +403,7 @@ async function main() {
         "Anyone who has completed Trichocare Phase 1",
       ],
       requirements: [],
-      requiredCourseSlugs: ["trichocare-phase-1"],
+      requiredCourseSlugs: [],
       price: 295,
     },
     "hair-loss-assessment-communication": {
@@ -426,7 +426,7 @@ async function main() {
     },
     "advanced-scalp-analysis": {
       targetAudience: [
-        "All hair & scalp specialists who have completed Trichocare Phase 1",
+        "All hair & scalp specialists who have completed Trichocare Phase 1 and Trichology in Clinical Practice",
       ],
       requirements: [],
       requiredCourseSlugs: ["trichocare-phase-1", "trichology-clinical-practice"],
