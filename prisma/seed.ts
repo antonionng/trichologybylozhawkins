@@ -372,7 +372,7 @@ async function main() {
 
   const courseHeroImages: Record<string, string> = {
     "trichology-clinical-practice": "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80",
-    "hair-loss-assessment-communication": "https://images.unsplash.com/photo-1559599101-f09722fb4948?auto=format&fit=crop&w=800&q=80",
+    "hair-loss-assessment-communication": "https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=800&q=80",
     "salon-trichology-essentials": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80",
     "advanced-scalp-analysis": "https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=800&q=80",
     "trichocare-phase-1": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80",
@@ -400,7 +400,7 @@ async function main() {
     "trichology-clinical-practice": {
       targetAudience: [
         "Newly qualified trichologists",
-        "Anyone who has completed Trichocare Phase 1",
+        "Anyone who has completed Hair & Scalp Foundation Phase 1",
       ],
       requirements: [],
       requiredCourseSlugs: [],
@@ -426,7 +426,7 @@ async function main() {
     },
     "advanced-scalp-analysis": {
       targetAudience: [
-        "All hair & scalp specialists who have completed Trichocare Phase 1 and Trichology in Clinical Practice",
+        "All hair & scalp specialists who have completed Hair & Scalp Foundation Phase 1 and Trichology in Clinical Practice",
       ],
       requirements: [],
       requiredCourseSlugs: ["trichocare-phase-1", "trichology-clinical-practice"],
@@ -1294,6 +1294,7 @@ async function main() {
           "When postpartum hair loss may need further investigation",
         ],
         whatItsNot: [
+          "A medical diagnosis",
           "A guarantee of immediate regrowth",
           "A substitute for medical advice if hair loss is prolonged or worsening",
         ],
@@ -1344,6 +1345,7 @@ async function main() {
           "Expected regrowth timelines",
         ],
         whatItsNot: [
+          "A medical diagnosis",
           "A mental health treatment",
           "A quick-fix solution for hair loss",
         ],
@@ -1743,19 +1745,19 @@ async function main() {
   await prisma.chatConversation.create({
     data: {
       contactId: contacts[0].id,
-      title: "Course Enquiry - Trichocare Phase 1",
+      title: "Course Enquiry - Hair & Scalp Foundation Phase 1",
       status: "ACTIVE",
       messages: {
         create: [
           {
             role: "USER",
             content:
-              "Hi, I am interested in the Trichocare Phase 1 course. What topics does it cover?",
+              "Hi, I am interested in the Hair & Scalp Foundation Phase 1 course. What topics does it cover?",
           },
           {
             role: "ASSISTANT",
             content:
-              "Hello Sarah! The Trichocare Phase 1 is an 8-day professional certification covering hair science, scalp conditions, diagnosis techniques, and client consultation skills. It's designed for hairstylists and beauty professionals. Would you like more details about specific days?",
+              "Hello Sarah! The Hair & Scalp Foundation Phase 1 is an 8-day professional certification covering hair science, scalp conditions, diagnosis techniques, and client consultation skills. It's designed for hairstylists and beauty professionals. Would you like more details about specific days?",
           },
         ],
       },

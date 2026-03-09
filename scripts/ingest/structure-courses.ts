@@ -201,7 +201,7 @@ function parseTrichocarePhase1(doc: ExtractedDocument): StructuredCourse {
   
   const course: StructuredCourse = {
     slug: "trichocare-phase-1",
-    title: "Trichocare Phase 1",
+    title: "Hair & Scalp Foundation Phase 1",
     subtitle: "8-Day Professional Trichology Certification",
     description: "Comprehensive 8-day professional trichology training covering hair science, scalp conditions, diagnosis techniques, and client consultation skills. Designed for hairstylists and beauty professionals looking to expand their expertise.",
     category: "Professional Certification",
@@ -234,7 +234,7 @@ function parseTrichocarePhase1(doc: ExtractedDocument): StructuredCourse {
         currentDay = newDay;
         currentModule = {
           title: `Day ${newDay}: ${getModuleTitle(newDay, content)}`,
-          description: `Training content for Day ${newDay} of the Trichocare Phase 1 program.`,
+          description: `Training content for Day ${newDay} of the Hair & Scalp Foundation Phase 1 program.`,
           position: newDay - 1,
           lessons: [],
         };
@@ -409,8 +409,8 @@ function parseExamDocument(doc: ExtractedDocument, dayRange: string): Structured
   
   const exam: StructuredExam = {
     courseSlug: "trichocare-phase-1",
-    title: `Trichocare Phase 1 Exam - ${dayRange}`,
-    description: `Assessment covering Days ${dayRange} of the Trichocare Phase 1 program.`,
+    title: `Hair & Scalp Foundation Phase 1 Exam - ${dayRange}`,
+    description: `Assessment covering Days ${dayRange} of the Hair & Scalp Foundation Phase 1 program.`,
     passingScore: 70,
     questions: [],
   };

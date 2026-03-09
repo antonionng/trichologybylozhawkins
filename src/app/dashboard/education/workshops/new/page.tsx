@@ -106,7 +106,7 @@ export default function NewWorkshopPage() {
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Advanced Scalp Treatment Workshop"
+              placeholder="e.g. Advanced Scalp Analysis Workshop"
               className="w-full rounded-2xl border border-black/10 bg-white px-6 py-4 text-xl font-medium focus:border-[#fab826] focus:outline-none focus:ring-4 focus:ring-[#fab826]/10 transition"
               autoFocus
             />

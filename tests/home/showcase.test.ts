@@ -40,12 +40,54 @@ describe("loadHomeShowcaseData", () => {
       signUrl,
       videoFallbackBySlug: {},
       videoFallbackDefault: "https://example.com/video-default.jpg",
+      productFallbacks: [
+        {
+          id: "fallback-1",
+          slug: "fallback-product",
+          name: "Fallback Product",
+          shortDescription: "Fallback description",
+          price: 19,
+          imageUrl: "https://example.com/fallback.jpg",
+        },
+      ],
     });
 
     expect(result.videos).toHaveLength(1);
     expect(result.courses).toHaveLength(1);
-    expect(result.products).toEqual([]);
+    expect(result.products).toEqual([
+      {
+        id: "fallback-1",
+        slug: "fallback-product",
+        name: "Fallback Product",
+        shortDescription: "Fallback description",
+        price: 19,
+        imageUrl: "https://example.com/fallback.jpg",
+      },
+    ]);
     expect(result.courses[0]?.heroUrl).toBe("https://example.com/course.jpg");
+  });
+
+  it("reports which showcase source failed to load", async () => {
+    const onLoadError = vi.fn();
+
+    await loadHomeShowcaseData({
+      loadVideos: async () => [],
+      loadCourses: async () => [],
+      loadProducts: async () => {
+        throw new Error("ShopProduct table missing");
+      },
+      signUrl: async (path: string) => `https://signed.example/${path}`,
+      videoFallbackBySlug: {},
+      videoFallbackDefault: "https://example.com/video-default.jpg",
+      productFallbacks: [],
+      onLoadError,
+    });
+
+    expect(onLoadError).toHaveBeenCalledTimes(1);
+    expect(onLoadError).toHaveBeenCalledWith(
+      "products",
+      expect.objectContaining({ message: "ShopProduct table missing" }),
+    );
   });
 });
 

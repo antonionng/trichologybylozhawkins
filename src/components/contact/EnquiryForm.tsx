@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -21,6 +21,7 @@ type FormData = {
   preferredContactMethod: 'email' | 'phone' | 'either';
   urgency: 'low' | 'normal' | 'high';
   consentToMarketing: boolean;
+  source: string;
 };
 
 const initialFormData: FormData = {
@@ -35,6 +36,7 @@ const initialFormData: FormData = {
   preferredContactMethod: 'email',
   urgency: 'normal',
   consentToMarketing: false,
+  source: '',
 };
 
 const enquiryTypes = [
@@ -67,9 +69,10 @@ const enquiryTypes = [
 type EnquiryFormProps = {
   isOpen: boolean;
   onClose: () => void;
+  initialData?: Partial<FormData>;
 };
 
-export function EnquiryForm({ isOpen, onClose }: EnquiryFormProps) {
+export function EnquiryForm({ isOpen, onClose, initialData }: EnquiryFormProps) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [loading, setLoading] = useState(false);
@@ -82,6 +85,14 @@ export function EnquiryForm({ isOpen, onClose }: EnquiryFormProps) {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError(null);
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setStep(1);
+    setError(null);
+    setSuccess(false);
+    setFormData({ ...initialFormData, ...initialData });
+  }, [initialData, isOpen]);
 
   const handleNext = () => {
     if (step === 1 && !formData.enquiryType) {

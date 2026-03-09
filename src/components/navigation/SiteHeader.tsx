@@ -7,6 +7,7 @@ import clsx from "clsx";
 import { ButtonLink } from "@/components/ui/Button";
 import { usePathname } from "next/navigation";
 import { useShopCart } from "@/components/shop/CartProvider";
+import { FEATURED_PUBLIC_QUIZ_HREF, FEATURED_PUBLIC_QUIZ_NAV_LABEL } from "@/lib/publicQuiz";
 
 interface Session {
   uid: string;
@@ -29,6 +30,7 @@ const navItems: NavItem[] = [
       { href: "/education/videos", label: "Video Courses" },
       { href: "/education#courses", label: "Training Courses" },
       { href: "/education#workshops", label: "In-Person Workshops" },
+      { href: FEATURED_PUBLIC_QUIZ_HREF, label: FEATURED_PUBLIC_QUIZ_NAV_LABEL },
       { href: "/blog", label: "Knowledge Hub" },
     ],
   },
@@ -44,6 +46,7 @@ const mobileLinks = [
   { href: "/education/videos", label: "Video Courses" },
   { href: "/education#courses", label: "Training Courses" },
   { href: "/education#workshops", label: "In-Person Workshops" },
+  { href: FEATURED_PUBLIC_QUIZ_HREF, label: FEATURED_PUBLIC_QUIZ_NAV_LABEL },
   { href: "/blog", label: "Knowledge Hub" },
   { href: "/about", label: "About Lorraine" },
   { href: "/contact", label: "Contact" },

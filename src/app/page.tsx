@@ -8,7 +8,11 @@ import { BlogHighlightsSection } from "@/components/sections/BlogHighlightsSecti
 import { FaqSection } from "@/components/sections/FaqSection";
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
-import { VIDEO_HERO_PLACEHOLDER_BY_SLUG, VIDEO_HERO_PLACEHOLDER_DEFAULT } from "@/lib/content";
+import {
+  HOME_PRODUCT_FALLBACKS,
+  VIDEO_HERO_PLACEHOLDER_BY_SLUG,
+  VIDEO_HERO_PLACEHOLDER_DEFAULT,
+} from "@/lib/content";
 import { loadHomeShowcaseData } from "@/server/modules/home/showcase";
 
 async function getShowcaseData() {
@@ -47,6 +51,10 @@ async function getShowcaseData() {
     signUrl: createSignedDownloadUrl,
     videoFallbackBySlug: VIDEO_HERO_PLACEHOLDER_BY_SLUG,
     videoFallbackDefault: VIDEO_HERO_PLACEHOLDER_DEFAULT,
+    productFallbacks: HOME_PRODUCT_FALLBACKS,
+    onLoadError: (source, error) => {
+      console.error(`[home-showcase] Failed to load ${source}`, error);
+    },
   }) as Promise<{ videos: VideoRow[]; courses: CourseRow[]; products: any[] }>;
 }
 

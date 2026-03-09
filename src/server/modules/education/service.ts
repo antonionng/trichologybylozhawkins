@@ -643,7 +643,7 @@ const BUNDLE_CONFIG: Record<
   { name: string; amount: number; currency: string; courseSlugs: string[] }
 > = {
   "phase-1-clinical-practice": {
-    name: "Trichocare Phase 1 + Trichology in Clinical Practice",
+    name: "Hair & Scalp Foundation Phase 1 + Trichology in Clinical Practice",
     amount: 700,
     currency: "GBP",
     courseSlugs: ["trichocare-phase-1", "trichology-clinical-practice"],

@@ -1,8 +1,8 @@
 [
   {
     "courseSlug": "trichocare-phase-1",
-    "title": "Trichocare Phase 1 Exam - Days 1-4",
-    "description": "Assessment covering Days Days 1-4 of the Trichocare Phase 1 program.",
+    "title": "Hair & Scalp Foundation Phase 1 Exam - Days 1-4",
+    "description": "Assessment covering Days Days 1-4 of the Hair & Scalp Foundation Phase 1 program.",
     "passingScore": 70,
     "questions": [
       {
@@ -269,8 +269,8 @@
   },
   {
     "courseSlug": "trichocare-phase-1",
-    "title": "Trichocare Phase 1 Exam - Days 5-8",
-    "description": "Assessment covering Days Days 5-8 of the Trichocare Phase 1 program.",
+    "title": "Hair & Scalp Foundation Phase 1 Exam - Days 5-8",
+    "description": "Assessment covering Days Days 5-8 of the Hair & Scalp Foundation Phase 1 program.",
     "passingScore": 70,
     "questions": []
   }

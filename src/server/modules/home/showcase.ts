@@ -38,6 +38,8 @@ type ShowcaseDeps = {
   signUrl: (path: string) => Promise<string>;
   videoFallbackBySlug: Record<string, string>;
   videoFallbackDefault: string;
+  productFallbacks?: HomeProductRow[];
+  onLoadError?: (source: "videos" | "courses" | "products", error: unknown) => void;
 };
 
 export async function loadHomeShowcaseData(deps: ShowcaseDeps) {
@@ -47,9 +49,20 @@ export async function loadHomeShowcaseData(deps: ShowcaseDeps) {
     deps.loadProducts(),
   ]);
 
+  if (videosResult.status === "rejected") {
+    deps.onLoadError?.("videos", videosResult.reason);
+  }
+  if (coursesResult.status === "rejected") {
+    deps.onLoadError?.("courses", coursesResult.reason);
+  }
+  if (productsResult.status === "rejected") {
+    deps.onLoadError?.("products", productsResult.reason);
+  }
+
   const videos = videosResult.status === "fulfilled" ? videosResult.value : [];
   const courses = coursesResult.status === "fulfilled" ? coursesResult.value : [];
-  const products = productsResult.status === "fulfilled" ? productsResult.value : [];
+  const products =
+    productsResult.status === "fulfilled" ? productsResult.value : deps.productFallbacks ?? [];
 
   const videoRows: HomeVideoRow[] = [];
   for (const v of videos) {
@@ -105,6 +118,24 @@ export async function loadHomeShowcaseData(deps: ShowcaseDeps) {
 
   const productRows: HomeProductRow[] = [];
   for (const p of products) {
+    if (
+      typeof p.id === "string" &&
+      typeof p.slug === "string" &&
+      typeof p.name === "string" &&
+      typeof p.price === "number" &&
+      ("imageUrl" in p || "shortDescription" in p)
+    ) {
+      productRows.push({
+        id: p.id,
+        slug: p.slug,
+        name: p.name,
+        shortDescription: p.shortDescription ?? null,
+        price: p.price,
+        imageUrl: p.imageUrl ?? null,
+      });
+      continue;
+    }
+
     let imageUrl: string | null = null;
     if (p.heroMedia?.path) {
       try {

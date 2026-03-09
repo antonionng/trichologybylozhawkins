@@ -77,6 +77,15 @@ export type FaqItem = {
   audience?: "consumer" | "professional";
 };
 
+export type HomeProductFallback = {
+  id: string;
+  slug: string;
+  name: string;
+  shortDescription: string;
+  price: number;
+  imageUrl?: string | null;
+};
+
 // ── Video hero placeholder by slug (used when heroMedia is missing or signed URL fails) ───
 
 /** Single placeholder used until you add slug-specific PNGs under public/images/ */
@@ -91,6 +100,41 @@ export const VIDEO_HERO_PLACEHOLDER_BY_SLUG: Record<string, string> = {
 
 /** Fallback when no hero image and slug not in VIDEO_HERO_PLACEHOLDER_BY_SLUG */
 export const VIDEO_HERO_PLACEHOLDER_DEFAULT = VIDEO_PLACEHOLDER_ASSET;
+
+export const HOME_PRODUCT_FALLBACKS: HomeProductFallback[] = [
+  {
+    id: "fallback-revitalize-shampoo",
+    slug: "revitalize-shampoo",
+    name: "Revitalize Shampoo",
+    shortDescription: "Gentle cleansing support for scalp comfort and everyday shine.",
+    price: 19,
+    imageUrl: null,
+  },
+  {
+    id: "fallback-densifying-shampoo",
+    slug: "densifying-shampoo",
+    name: "Densifying Shampoo",
+    shortDescription: "Lightweight cleansing support for fine and thinning hair routines.",
+    price: 22,
+    imageUrl: null,
+  },
+  {
+    id: "fallback-intense-hydrating-mask",
+    slug: "intense-hydrating-mask",
+    name: "Intense Hydrating Mask",
+    shortDescription: "Deep moisture treatment to restore softness and elasticity.",
+    price: 39,
+    imageUrl: null,
+  },
+  {
+    id: "fallback-primer-treatment-styling",
+    slug: "primer-treatment-styling",
+    name: "Primer",
+    shortDescription: "Prep and protect hair before styling with a smoother finish.",
+    price: 24,
+    imageUrl: null,
+  },
+];
 
 // ── Video Lessons (condition-specific clinical training modules) ────────────
 
@@ -252,6 +296,7 @@ export const videoDetailFallbacks: VideoDetailFallback[] = [
       "When postpartum hair loss may need further investigation",
     ],
     whatItsNot: [
+      "A medical diagnosis",
       "A guarantee of immediate regrowth",
       "A substitute for medical advice if hair loss is prolonged or worsening",
     ],
@@ -287,6 +332,7 @@ export const videoDetailFallbacks: VideoDetailFallback[] = [
       "Expected regrowth timelines",
     ],
     whatItsNot: [
+      "A medical diagnosis",
       "A mental health treatment",
       "A quick-fix solution for hair loss",
     ],
@@ -343,7 +389,7 @@ export const videoDetailFallbacks: VideoDetailFallback[] = [
 export const inPersonIntensives: IntensiveProgramme[] = [
   {
     id: "intensive-foundations",
-    title: "Complete Trichology Training",
+    title: "Hair & scalp science education",
     duration: "2 days",
     investment: "£1,250",
     location: "London studio or at your location",
@@ -359,7 +405,7 @@ export const inPersonIntensives: IntensiveProgramme[] = [
     ],
     image: {
       src: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=800&q=80",
-      alt: "Complete Trichology Training — in-person intensive with Lorraine Hawkins.",
+      alt: "Hair & scalp science education — in-person intensive with Lorraine Hawkins.",
     },
     slug: "trichocare-foundations-intensive",
     headline: "Two days that will transform how you care for every client who sits in your chair",
@@ -533,12 +579,12 @@ export const inPersonIntensives: IntensiveProgramme[] = [
   },
   {
     id: "intensive-regenerative-detox",
-    title: "Advanced Scalp Treatment Workshop",
+    title: "Advanced Scalp Analysis Workshop",
     duration: "1 day",
     investment: "£450 per participant",
     location: "Available in UK, Europe & North America",
     summary:
-      "Master advanced scalp detox and treatment methods for complex conditions. A focused, hands-on workshop for experienced practitioners.",
+      "Master advanced scalp analysis, scoping, and treatment methods for complex conditions. A focused, hands-on workshop for experienced practitioners.",
     outcomes: [
       "Master advanced treatment protocols for sensitive and reactive scalps",
       "Perform professional scalp massage and tool-based techniques",
@@ -549,12 +595,12 @@ export const inPersonIntensives: IntensiveProgramme[] = [
     ],
     image: {
       src: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80",
-      alt: "Advanced Scalp Treatment Workshop — hands-on training with Lorraine Hawkins.",
+      alt: "Advanced Scalp Analysis Workshop — hands-on training with Lorraine Hawkins.",
     },
     slug: "regenerative-scalp-detox-lab",
-    headline: "Advanced techniques for practitioners who are ready to handle the cases others can't",
+    headline: "Advanced scalp analysis and scoping for practitioners who are ready to handle the cases others can't",
     longDescription:
-      "You already know the basics. Your clients trust you. But some cases push beyond what general training covers — sensitive scalps that react to everything, chronic conditions that don't respond to standard treatments, clients who've tried everything and need a different approach.\n\nThis advanced workshop is for experienced practitioners who want to go deeper. Lorraine shares the protocols, massage techniques, and clinical reasoning she uses in her own practice for the most complex scalp conditions. Every technique is demonstrated, practised, and refined with direct feedback.\n\nYou'll leave with advanced skills that set you apart — and the confidence to charge accordingly.",
+      "You already know the basics. Your clients trust you. But some cases push beyond what general training covers — sensitive scalps that react to everything, chronic conditions that don't respond to standard treatments, clients who've tried everything and need a different approach.\n\nThis advanced workshop is for experienced practitioners who want to go deeper. Lorraine shares the analysis, scoping process, protocols, massage techniques, and clinical reasoning she uses in her own practice for the most complex scalp conditions. Every technique is demonstrated, practised, and refined with direct feedback.\n\nYou'll leave with advanced skills that set you apart — and the confidence to charge accordingly.",
     whoItsFor: [
       "Qualified trichologists looking to expand their treatment repertoire",
       "Experienced stylists who already offer basic scalp services",
@@ -606,7 +652,7 @@ export const inPersonIntensives: IntensiveProgramme[] = [
       {
         question: "Where are workshops held?",
         answer:
-          "Workshops rotate between London, key European cities, and North American locations. Contact us for the latest schedule, or arrange a private workshop at your venue.",
+          "Workshops will be done in Cheshire or in your own salon space.",
       },
     ],
     testimonials: [
@@ -779,9 +825,9 @@ export const services: Service[] = [
   },
   {
     id: "service-workshop",
-    name: "Scalp Treatment Workshop",
+    name: "Advanced Scalp Analysis Workshop",
     description:
-      "A hands-on workshop for experienced practitioners. Master advanced scalp treatment methods, massage techniques, and client aftercare protocols.",
+      "A hands-on workshop for experienced practitioners. Master advanced scalp analysis, scoping, and client aftercare protocols.",
     duration: "1 day",
     audience: "professional",
     focus: ["Advanced treatment methods", "Massage techniques", "Client aftercare"],

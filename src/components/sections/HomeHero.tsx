@@ -8,6 +8,7 @@ import { PageSection } from "@/components/layout/PageSection";
 import { ButtonLink } from "@/components/ui/Button";
 import { Surface } from "@/components/layout/Surface";
 import { photography, textureAssets, illustrationAssets } from "@/lib/visualAssets";
+import { FEATURED_PUBLIC_QUIZ_HREF, FEATURED_PUBLIC_QUIZ_LABEL } from "@/lib/publicQuiz";
 
 export function HomeHero() {
   const parallaxX = useMotionValue(0);
@@ -65,7 +66,7 @@ export function HomeHero() {
               for hair professionals.
             </h1>
             <p className="max-w-lg text-lg leading-relaxed text-brand-graphite/75">
-              Lorraine Hawkins has spent 18 years in clinical practice. Now she teaches what she knows — through video courses, structured training programs, and hands-on workshops built for professionals.
+              Lorraine Hawkins has over 25 years of experience in the hair industry and is a qualified trichologist and educator. She shares her expertise through video courses, structured training programs, and hands-on workshops designed for professionals who want to deepen their understanding of hair and scalp health.
             </p>
           </div>
 
@@ -76,18 +77,25 @@ export function HomeHero() {
             <ButtonLink href="/education/videos" variant="ghost" size="lg" icon={<span aria-hidden>→</span>}>
               Video Courses
             </ButtonLink>
+            <ButtonLink href={FEATURED_PUBLIC_QUIZ_HREF} variant="secondary" size="lg">
+              {FEATURED_PUBLIC_QUIZ_LABEL}
+            </ButtonLink>
           </div>
+
+          <p className="max-w-xl text-sm leading-relaxed text-brand-graphite/60">
+            Not a hair professional? Use the scalp health check for consumer-friendly guidance on common scalp concerns, then book with Lorraine if you want a personal consultation.
+          </p>
 
           {/* Trust indicators */}
           <div className="flex flex-wrap gap-6 text-sm text-brand-graphite/65">
             <span className="flex items-center gap-2">
-              <span className="inline-block h-2 w-2 rounded-full bg-brand-salmon" /> 18 years clinical practice
+              <span className="inline-block h-2 w-2 rounded-full bg-brand-salmon" /> 25+ years hair industry experience
             </span>
             <span className="flex items-center gap-2">
-              <span className="inline-block h-2 w-2 rounded-full bg-brand-clay" /> Evidence-based
+              <span className="inline-block h-2 w-2 rounded-full bg-brand-clay" /> Evidence-based trichology education
             </span>
             <span className="flex items-center gap-2">
-              <span className="inline-block h-2 w-2 rounded-full bg-brand-graphite" /> 2,400+ learners
+              <span className="inline-block h-2 w-2 rounded-full bg-brand-graphite" /> Professional training & workshops
             </span>
           </div>
         </div>

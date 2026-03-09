@@ -168,7 +168,7 @@ export function WorkshopEditor({ workshop, heroUrl }: Props) {
                 onChange={(e) =>
                   setForm((p) => ({ ...p, title: e.target.value }))
                 }
-                placeholder="e.g. Advanced Scalp Treatment Workshop"
+                placeholder="e.g. Advanced Scalp Analysis Workshop"
               />
               <AdminInput
                 label="URL Slug"

@@ -7,6 +7,11 @@ import { generateQuizAiFeedback } from "@/server/modules/education/quizAi";
 import { getQuizUpsellCoursesWithReasons } from "@/server/modules/education/recommendations";
 import { ActivityType } from "@prisma/client";
 import { sendNewQuizLeadEmail, sendQuizResultEmail } from "@/server/modules/email/transactional";
+import {
+  buildPublicScalpQuizSubmission,
+  getPublicScalpQuizLeadSummary,
+  isFeaturedPublicScalpQuiz,
+} from "@/server/modules/education/publicScalpQuiz";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +91,77 @@ export async function POST(request: Request, { params }: RouteParams) {
         source: "quiz",
       },
     });
+
+    if (isFeaturedPublicScalpQuiz(params.slug)) {
+      const submission = buildPublicScalpQuizSubmission({
+        quizQuestions: quiz.questions.map((question) => ({
+          id: question.id,
+          position: question.position,
+          questionText: question.questionText,
+        })),
+        answers: data.answers,
+      });
+
+      const concernScore = submission.result.scoreBreakdown[submission.result.primaryConcern.key] ?? 0;
+      const maxScore = Object.values(submission.result.scoreBreakdown).reduce((sum, value) => sum + value, 0);
+      const percentage = maxScore > 0 ? (concernScore / maxScore) * 100 : 0;
+      const passed = submission.result.triage !== "prompt";
+
+      const attempt = await prisma.quizAttempt.create({
+        data: {
+          quizId: quiz.id,
+          contactId: contact.id,
+          score: concernScore,
+          maxScore,
+          percentage,
+          passed,
+          answers: submission.attemptAnswers as any,
+          aiFeedback: {
+            headline: submission.result.headline,
+            summary: submission.result.summary,
+            nextSteps: submission.result.nextSteps,
+            redFlags: submission.result.redFlags,
+            primaryConcern: submission.result.primaryConcern,
+            secondaryConcern: submission.result.secondaryConcern,
+            triage: submission.result.triage,
+          } as any,
+          completedAt: new Date(),
+        },
+      });
+
+      await prisma.activity.create({
+        data: {
+          type: ActivityType.NOTE,
+          contactId: contact.id,
+          subject: `Scalp quiz completed: ${quiz.title}`,
+          body: [
+            getPublicScalpQuizLeadSummary(submission.result),
+            submission.result.redFlags.length ? `Red flags: ${submission.result.redFlags.join(", ")}` : null,
+            `AttemptId: ${attempt.id}`,
+          ]
+            .filter(Boolean)
+            .join("\n\n"),
+        },
+      });
+
+      return NextResponse.json({
+        resultMode: submission.result.resultMode,
+        headline: submission.result.headline,
+        summary: submission.result.summary,
+        triage: submission.result.triage,
+        primaryConcern: submission.result.primaryConcern,
+        secondaryConcern: submission.result.secondaryConcern,
+        nextSteps: submission.result.nextSteps,
+        redFlags: submission.result.redFlags,
+        bookingCta: submission.result.bookingCta,
+        secondaryCta: submission.result.secondaryCta,
+        answers: submission.attemptAnswers,
+        score: concernScore,
+        maxScore,
+        percentage,
+        passed,
+      });
+    }
 
     const attempt = await submitQuizAttempt({
       quizId: quiz.id,

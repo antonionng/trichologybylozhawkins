@@ -372,7 +372,7 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
                 <p className="mt-1 text-sm font-semibold text-black">
                   {course.slug === "trichocare-phase-1"
                     ? "Add Trichology in Clinical Practice"
-                    : "Add Trichocare Phase 1"}
+                    : "Add Hair & Scalp Foundation Phase 1"}
                   {" "}— £700 for both
                 </p>
               </Link>

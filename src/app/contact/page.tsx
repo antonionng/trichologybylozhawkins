@@ -1,16 +1,18 @@
 'use client';
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { Container } from "@/components/layout/Container";
 import { ButtonLink, Button } from "@/components/ui/Button";
 import { photography } from "@/lib/visualAssets";
 import { EnquiryForm } from "@/components/contact/EnquiryForm";
 import { mailtoWithSubject, siteContact, siteContactLinks } from "@/lib/siteContact";
+import { buildScalpQuizContactPrefill } from "@/lib/scalpQuizContactPrefill";
 
 const responseInsights = [
   { value: "24–48h", label: "Response" },
-  { value: "Mon–Thu", label: "Consultations" },
+  { value: "Wed–Thu", label: "Consultations" },
   { value: "UK, EU & US", label: "Regions" },
 ];
 
@@ -50,17 +52,38 @@ const contactFaqs = [
 ];
 
 const officeHours = [
-  { label: "Consultations", detail: "Mon & Wed · 10am–5pm GMT" },
-  { label: "Training", detail: "Tue–Thu · 9am–6pm GMT" },
+  { label: "Consultations", detail: "Wed & Thu · 10am–5pm GMT" },
+  { label: "Training", detail: "Mon & Tue · 9am–6pm GMT" },
   { label: "Email", detail: "Monitored daily" },
 ];
 
 export default function Contact() {
   const [isEnquiryFormOpen, setIsEnquiryFormOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const quizPrefill = useMemo(() => buildScalpQuizContactPrefill(searchParams), [searchParams]);
+
+  useEffect(() => {
+    if (quizPrefill?.shouldAutoOpen) {
+      setIsEnquiryFormOpen(true);
+    }
+  }, [quizPrefill]);
 
   return (
     <main className="min-h-screen">
-      <EnquiryForm isOpen={isEnquiryFormOpen} onClose={() => setIsEnquiryFormOpen(false)} />
+      <EnquiryForm
+        isOpen={isEnquiryFormOpen}
+        onClose={() => setIsEnquiryFormOpen(false)}
+        initialData={
+          quizPrefill
+            ? {
+                enquiryType: quizPrefill.enquiryType,
+                message: quizPrefill.message,
+                urgency: quizPrefill.urgency,
+                source: quizPrefill.source,
+              }
+            : undefined
+        }
+      />
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-gradient-to-b from-brand-sand/60 via-brand-linen/20 to-white">
@@ -70,9 +93,13 @@ export default function Contact() {
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start">
             <div className="space-y-5">
               <span className="inline-block rounded-full bg-brand-salmon/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.4em] text-brand-salmon">Contact</span>
-              <h1 className="font-display text-3xl leading-[1.15] text-brand-graphite sm:text-[2.5rem]">Get in touch</h1>
+              <h1 className="font-display text-3xl leading-[1.15] text-brand-graphite sm:text-[2.5rem]">
+                {quizPrefill ? "Continue your scalp consultation request" : "Get in touch"}
+              </h1>
               <p className="max-w-lg text-base leading-relaxed text-brand-graphite/65">
-                Personal scalp care, team training, or speaking engagements — let us know how we can help.
+                {quizPrefill
+                  ? "We have opened a clinic enquiry for you with your quiz context prefilled. Review it, add any extra details, and send it through to Lorraine."
+                  : "Personal scalp care, team training, or speaking engagements. Let us know how we can help."}
               </p>
               <div className="flex flex-wrap gap-3 text-sm text-brand-graphite/60">
                 <a href={siteContactLinks.mailto} className="underline decoration-brand-salmon/40 underline-offset-4 hover:text-brand-graphite">{siteContact.email}</a>
@@ -80,7 +107,9 @@ export default function Contact() {
                 <a href={siteContactLinks.tel} className="underline decoration-brand-salmon/40 underline-offset-4 hover:text-brand-graphite">{siteContact.phoneDisplay}</a>
               </div>
               <div className="flex flex-wrap gap-3">
-                <Button variant="secondary" size="sm" onClick={() => setIsEnquiryFormOpen(true)}>Send enquiry</Button>
+                <Button variant="secondary" size="sm" onClick={() => setIsEnquiryFormOpen(true)}>
+                  {quizPrefill ? "Continue booking request" : "Send enquiry"}
+                </Button>
                 <ButtonLink href="/education/videos" variant="ghost" size="sm">View courses</ButtonLink>
               </div>
               <div className="grid grid-cols-3 gap-3 pt-1">
@@ -98,8 +127,12 @@ export default function Contact() {
               </div>
               <div className="rounded-xl border border-brand-graphite/8 bg-white p-4 space-y-2">
                 <p className="text-xs font-bold text-brand-graphite">Want to talk first?</p>
-                <p className="text-sm text-brand-graphite/55">Book a 30-minute call to discuss your needs.</p>
-                <Button variant="secondary" size="sm" onClick={() => setIsEnquiryFormOpen(true)}>Request a call</Button>
+                <p className="text-sm text-brand-graphite/55">
+                  {quizPrefill ? "Your scalp quiz details are ready to send through to Lorraine." : "Book a 30-minute call to discuss your needs."}
+                </p>
+                <Button variant="secondary" size="sm" onClick={() => setIsEnquiryFormOpen(true)}>
+                  {quizPrefill ? "Open your enquiry" : "Request a call"}
+                </Button>
               </div>
             </div>
           </div>
