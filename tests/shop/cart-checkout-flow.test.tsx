@@ -24,21 +24,66 @@ function setCartState(overrides: Record<string, unknown> = {}) {
 }
 
 describe("shop cart checkout flow", () => {
-  it("shows guest checkout choices when shopper is not logged in", () => {
+  it("shows a single checkout path for guests", () => {
     setCartState();
     const html = renderToStaticMarkup(<CartPageClient />);
 
-    expect(html).toContain("Continue as guest");
-    expect(html).toContain("Create account");
-    expect(html).toContain("/login?next=%2Fshop%2Fcart");
+    expect(html).toContain("Continue to secure checkout");
+    expect(html).toContain('placeholder="Email"');
+    expect(html).toContain('placeholder="First name"');
+    expect(html).toContain('placeholder="Last name"');
   });
 
-  it("does not show full shipping address fields before guest checkout starts", () => {
+  it("does not show auth-choice buttons for guests", () => {
     setCartState();
     const html = renderToStaticMarkup(<CartPageClient />);
 
-    expect(html).not.toContain('placeholder="line1"');
-    expect(html).not.toContain('placeholder="city"');
-    expect(html).not.toContain('placeholder="postalCode"');
+    expect(html).not.toContain("Continue as guest");
+    expect(html).not.toContain("Create account");
+    expect(html).not.toContain("/login?next=%2Fshop%2Fcart");
+  });
+
+  it("shows inline missing-details fields for signed-in shoppers with incomplete identity", () => {
+    setCartState();
+    const html = renderToStaticMarkup(
+      <CartPageClient
+        initialCheckout={{
+          isAuthenticated: true,
+          customer: {
+            email: "ag@example.com",
+            firstName: "",
+            lastName: "",
+          },
+        }}
+      />,
+    );
+
+    expect(html).toContain("Signed in");
+    expect(html).toContain("ag@example.com");
+    expect(html).toContain('placeholder="First name"');
+    expect(html).toContain('placeholder="Last name"');
+  });
+
+  it("does not show the identity form for signed-in shoppers with complete identity", () => {
+    setCartState();
+    const html = renderToStaticMarkup(
+      <CartPageClient
+        initialCheckout={{
+          isAuthenticated: true,
+          customer: {
+            email: "ag@example.com",
+            firstName: "Ant",
+            lastName: "Gray",
+          },
+        }}
+      />,
+    );
+
+    expect(html).toContain("Signed in");
+    expect(html).toContain("Ant");
+    expect(html).toContain("Gray");
+    expect(html).not.toContain('placeholder="Email"');
+    expect(html).not.toContain('placeholder="First name"');
+    expect(html).not.toContain('placeholder="Last name"');
   });
 });

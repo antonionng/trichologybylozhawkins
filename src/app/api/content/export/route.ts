@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { contentExportFilterSchema } from "@/server/schema";
 import { listExportableContent } from "@/server/modules/contentFactory/service";
+import { requireUser } from "@/server/security/auth";
 
 const monthToRange = (month: string) => {
   const [yearStr, monthStr] = month.split("-");
@@ -21,6 +22,7 @@ const csvEscape = (value: unknown) => {
 
 export async function GET(request: NextRequest) {
   try {
+    await requireUser({ role: "ADMIN" });
     const { searchParams } = request.nextUrl;
 
     const payload = {

@@ -5,6 +5,7 @@ import OpenAI from "openai";
 import { ContentChannel, ContentSlotStatus } from "@prisma/client";
 import { queueContentGeneration } from "@/server/modules/ai/service";
 import { apiErrorResponse } from "@/server/http/errors";
+import { requireUser } from "@/server/security/auth";
 
 type AutopilotItem = {
   date: string; // YYYY-MM-DD
@@ -74,6 +75,7 @@ const monthLabel = (month: string) => {
 
 export async function POST(request: Request) {
   try {
+    await requireUser({ role: "ADMIN" });
     const body = await request.json();
     const data = monthlyAutopilotRequestSchema.parse(body);
 

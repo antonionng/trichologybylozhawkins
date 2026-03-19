@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { z } from "zod";
+import { requireUser } from "@/server/security/auth";
 
 const querySchema = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/),
@@ -88,6 +89,7 @@ const safeJsonParse = <T,>(value: string): T | null => {
 
 export async function GET(request: NextRequest) {
   try {
+    await requireUser({ role: "ADMIN" });
     const { searchParams } = request.nextUrl;
     const parsed = querySchema.parse({
       month: searchParams.get("month"),

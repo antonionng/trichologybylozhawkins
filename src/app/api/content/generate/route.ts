@@ -5,9 +5,11 @@ import {
   upsertContentSlot,
 } from "@/server/modules/contentFactory/service";
 import { queueContentGeneration } from "@/server/modules/ai/service";
+import { requireUser } from "@/server/security/auth";
 
 export async function POST(request: Request) {
   try {
+    await requireUser({ role: "ADMIN" });
     const body = await request.json();
     const data = contentGenerationRequestSchema.parse(body);
 

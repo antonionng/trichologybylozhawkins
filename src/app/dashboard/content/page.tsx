@@ -1,4 +1,5 @@
 import { prisma } from "@/server/db/client";
+import { requireUserOrRedirect } from "@/server/security/auth";
 import { ContentAutopilot } from "@/components/dashboard/content/ContentAutopilot";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,7 @@ type Props = {
 const currentMonth = () => new Date().toISOString().slice(0, 7);
 
 export default async function ContentDashboardPage({ searchParams }: Props) {
+  await requireUserOrRedirect({ role: "ADMIN", next: "/dashboard/content" });
   const resolved = (await searchParams) ?? {};
   const planId =
     typeof resolved.planId === "string" ? resolved.planId : Array.isArray(resolved.planId) ? resolved.planId[0] : undefined;

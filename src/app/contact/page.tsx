@@ -128,10 +128,10 @@ export default function Contact() {
               <div className="rounded-xl border border-brand-graphite/8 bg-white p-4 space-y-2">
                 <p className="text-xs font-bold text-brand-graphite">Want to talk first?</p>
                 <p className="text-sm text-brand-graphite/55">
-                  {quizPrefill ? "Your scalp quiz details are ready to send through to Lorraine." : "Book a 30-minute call to discuss your needs."}
+                  {quizPrefill ? "Your scalp quiz details are ready to send through to Lorraine." : "Book a 15-minute call to discuss your needs."}
                 </p>
                 <Button variant="secondary" size="sm" onClick={() => setIsEnquiryFormOpen(true)}>
-                  {quizPrefill ? "Open your enquiry" : "Request a call"}
+                  {quizPrefill ? "Open your enquiry" : "Request a 15-minute call"}
                 </Button>
               </div>
             </div>

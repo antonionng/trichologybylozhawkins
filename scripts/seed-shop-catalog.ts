@@ -23,6 +23,11 @@ const IMAGE_MAP = {
   densifying: asset("WhatsApp_Image_2026-03-02_at_13.52.22__6_-b5abe68c-9615-4532-b576-7328d73cb5c5.png"),
   hydrating: asset("WhatsApp_Image_2026-03-02_at_13.52.22__5_-30da4ec7-2f44-494b-9e42-d002308cd189.png"),
   masks: asset("WhatsApp_Image_2026-03-02_at_13.52.22__4_-8c05a3f0-beab-45b9-8cd6-d0b5ec1fbb94.png"),
+  hairDensity: asset("treatment-styling-hair-density-hero.png"),
+  reBuild: asset("treatment-styling-re-build-hero.png"),
+  silkSmooth: asset("treatment-styling-silk-smooth-hero.png"),
+  big: asset("treatment-styling-big-hero.png"),
+  primer: asset("treatment-styling-primer-hero.png"),
 };
 
 const categories = [
@@ -160,6 +165,66 @@ const products = [
       "Pineapple Enzyme Extract",
     ],
     imageKey: "masks" as const,
+  },
+  {
+    slug: "hair-density-complex-treatment-styling",
+    name: "Hair Density Complex",
+    categorySlug: "treatment-styling",
+    price: 40,
+    shortDescription: "Leave-in scalp treatment to support fuller, denser-looking hair.",
+    description:
+      "Hair Density Complex is a leave in treatment that increases hair density. This scalp complex contains DHT blocking ingredients and is rich in probiotics, caffeine and baikal skullcap which helps achieve a thicker fuller hair in 6-8 weeks.",
+    perfectFor: "fine, thinning and density-concerned hair",
+    keyIngredients: ["Apple Stem Cell", "Probiotics", "Caffeine", "Baikal Skullcap"],
+    imageKey: "hairDensity" as const,
+  },
+  {
+    slug: "rebuild-treatment-styling",
+    name: "RE-Build",
+    categorySlug: "treatment-styling",
+    price: 28,
+    shortDescription: "Protective blow-dry treatment for dry and damaged hair.",
+    description:
+      "The latest treatment for the perfect blow-dry, RE-Build protects, repairs and reinforces dry and damaged hair, leaving lengths super-smooth, with improved shine and reduced blow-dry time.",
+    perfectFor: "very dry and damaged hair",
+    keyIngredients: [],
+    imageKey: "reBuild" as const,
+  },
+  {
+    slug: "silk-smooth-treatment-styling",
+    name: "Silk Smooth",
+    categorySlug: "treatment-styling",
+    price: 25,
+    shortDescription: "Keratin and silk smoothing treatment for softness and shine.",
+    description:
+      "This unique Silk treatment complex is infused with Natural Keratin and Silk Amino Acids to deeply penetrate the hair, smoothing the cuticle and leaving hair soft, healthy and full of shine.",
+    perfectFor: "medium to thick textures",
+    keyIngredients: ["Natural Keratin", "Silk Amino Acids"],
+    imageKey: "silkSmooth" as const,
+  },
+  {
+    slug: "big-treatment-styling",
+    name: "Big",
+    categorySlug: "treatment-styling",
+    price: 18,
+    shortDescription: "Volume booster for thicker, fuller hair and oil-free shine.",
+    description:
+      "A volume booster to provide thicker fuller hair instantly. Infused with Honey and Bamboo Extracts it's a non-sticky formula with long lasting volume and an oil free shine.",
+    perfectFor: "fine and medium hair",
+    keyIngredients: ["Honey", "Bamboo Extract"],
+    imageKey: "big" as const,
+  },
+  {
+    slug: "primer-treatment-styling",
+    name: "Primer",
+    categorySlug: "treatment-styling",
+    price: 18,
+    shortDescription: "Leave-in detangler with protection, strength and shine.",
+    description:
+      "An exceptional leave-in treatment and the perfect detangler for everyday use. Containing Hydrolysed Silk Protein, Comfrey and Bamboo Extracts to strengthen and repair whilst providing protection and adding shine.",
+    perfectFor: "all hair types",
+    keyIngredients: ["Hydrolysed Silk Protein", "Comfrey", "Bamboo Extract"],
+    imageKey: "primer" as const,
   },
 ];
 

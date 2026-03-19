@@ -96,22 +96,27 @@ export async function getVideoBySlug(slug: string) {
 }
 
 export async function getEducationStats() {
+  await requireUserOrRedirect({ role: "ADMIN", next: "/dashboard/education" });
   return educationService.getEducationStats();
 }
 
 export async function getRecentEnrollments() {
+  await requireUserOrRedirect({ role: "ADMIN", next: "/dashboard/education" });
   return educationService.getRecentEnrollments();
 }
 
 export async function getCourse(id: string) {
+  await requireUserOrRedirect({ role: "ADMIN", next: `/dashboard/education/courses/${id}` });
   return educationService.getCourse(id);
 }
 
 export async function getVideoProduct(id: string) {
+  await requireUserOrRedirect({ role: "ADMIN", next: `/dashboard/education/videos/${id}` });
   return educationService.getVideoProduct(id);
 }
 
 export async function upsertCourse(data: z.infer<typeof courseMutationSchema>) {
+  await requireUserOrRedirect({ role: "ADMIN", next: "/dashboard/education/courses" });
   const course = await educationService.upsertCourse(data);
   revalidatePath("/dashboard/education");
   revalidatePath(`/dashboard/education/courses/${course.id}`);
@@ -131,6 +136,7 @@ export async function upsertVideoProduct(data: z.infer<typeof videoProductMutati
 }
 
 export async function deleteCourse(id: string) {
+  await requireUserOrRedirect({ role: "ADMIN", next: "/dashboard/education/courses" });
   await educationService.deleteCourse(id);
   revalidatePath("/dashboard/education");
   revalidatePath("/education");
@@ -147,17 +153,20 @@ export async function deleteVideoProduct(id: string) {
 }
 
 export async function upsertModule(data: z.infer<typeof moduleMutationSchema>) {
+  await requireUserOrRedirect({ role: "ADMIN", next: "/dashboard/education/courses" });
   const courseModule = await educationService.upsertCourseModule(data);
   revalidatePath(`/dashboard/education/courses/${courseModule.courseId}`);
   return courseModule;
 }
 
 export async function deleteModule(id: string, courseId: string) {
+  await requireUserOrRedirect({ role: "ADMIN", next: `/dashboard/education/courses/${courseId}` });
   await educationService.deleteCourseModule(id);
   revalidatePath(`/dashboard/education/courses/${courseId}`);
 }
 
 export async function upsertLesson(data: z.infer<typeof lessonMutationSchema>) {
+  await requireUserOrRedirect({ role: "ADMIN", next: "/dashboard/education/courses" });
   const lesson = await educationService.upsertCourseLesson(data);
   // We need to find the courseId to revalidate, but lesson only has moduleId.
   // For now we can rely on client side cache invalidation or passed courseId if we want to be precise,
@@ -178,11 +187,13 @@ export async function upsertLesson(data: z.infer<typeof lessonMutationSchema>) {
 }
 
 export async function deleteLesson(id: string, courseId: string) {
+  await requireUserOrRedirect({ role: "ADMIN", next: `/dashboard/education/courses/${courseId}` });
   await educationService.deleteCourseLesson(id);
   revalidatePath(`/dashboard/education/courses/${courseId}`);
 }
 
 export async function upsertPrice(data: z.infer<typeof priceMutationSchema>) {
+  await requireUserOrRedirect({ role: "ADMIN", next: "/dashboard/education/courses" });
   const price = await educationService.upsertCoursePrice(data);
   revalidatePath(`/dashboard/education/courses/${price.courseId}`);
   return price;
@@ -197,6 +208,7 @@ export async function upsertVideoPrice(data: z.infer<typeof videoPriceMutationSc
 }
 
 export async function upsertSession(data: z.infer<typeof sessionMutationSchema>) {
+  await requireUserOrRedirect({ role: "ADMIN", next: "/dashboard/education/courses" });
   const session = await educationService.upsertCourseSession(data);
   revalidatePath(`/dashboard/education/courses/${session.courseId}`);
   return session;
@@ -434,10 +446,12 @@ export async function getWorkshopBySlug(slug: string) {
 }
 
 export async function getWorkshopById(id: string) {
+  await requireUserOrRedirect({ role: "ADMIN", next: `/dashboard/education/workshops/${id}` });
   return workshopService.getWorkshop(id);
 }
 
 export async function upsertWorkshop(data: z.infer<typeof workshopMutationSchema>) {
+  await requireUserOrRedirect({ role: "ADMIN", next: "/dashboard/education/workshops" });
   const workshop = await workshopService.upsertWorkshop(data);
   revalidatePath("/dashboard/education/workshops");
   revalidatePath(`/dashboard/education/workshops/${workshop.id}`);

@@ -130,8 +130,8 @@ export const HOME_PRODUCT_FALLBACKS: HomeProductFallback[] = [
     id: "fallback-primer-treatment-styling",
     slug: "primer-treatment-styling",
     name: "Primer",
-    shortDescription: "Prep and protect hair before styling with a smoother finish.",
-    price: 24,
+    shortDescription: "Leave-in detangler with protection, strength and shine.",
+    price: 18,
     imageUrl: null,
   },
 ];

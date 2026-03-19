@@ -47,6 +47,7 @@ Make sure these are correct for your machine:
 - `REDIS_URL` (Redis, default: `redis://localhost:6379`)
 - `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` (required in production)
 - `RESEND_API_KEY` (required in production for campaign delivery)
+- `SHOP_ADMIN_NOTIFY_EMAILS` (comma-separated list for shop order alerts)
 - `DEV_SKIP_CHECKOUT=false` (must stay false in production)
 
 ### Install + DB setup

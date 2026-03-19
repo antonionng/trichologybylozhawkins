@@ -9,6 +9,7 @@ import {
 import { PaymentProvider, ShopOrderEventType, ShopOrderStatus, ShopProductStatus } from "@prisma/client";
 import Stripe from "stripe";
 import { z } from "zod";
+import { sendShopOrderLifecycleEmails } from "@/server/modules/shop/notifications";
 
 const categoryMutationSchema = shopCategorySchema.extend({
   id: z.string().cuid().optional(),
@@ -250,6 +251,15 @@ export async function createShopCheckoutSession(input: z.infer<typeof shopChecko
           },
         },
       },
+      include: {
+        items: true,
+      },
+    });
+
+    await sendShopOrderLifecycleEmails({
+      order,
+      previousStatus: ShopOrderStatus.PENDING,
+      appUrl: getBaseUrl(),
     });
 
     return { id: order.id, url: `${getBaseUrl()}/shop/success?order=${order.id}` };
@@ -378,6 +388,17 @@ export async function handleShopCheckoutFulfillment(options: {
       }
     }
   });
+
+  await sendShopOrderLifecycleEmails({
+    order: {
+      ...order,
+      status: nextStatus,
+    },
+    previousStatus: order.status,
+    previousTrackingNumber: order.trackingNumber,
+    previousTrackingUrl: order.trackingUrl,
+    appUrl: getBaseUrl(),
+  });
 }
 
 export async function listOrders(input: Partial<z.infer<typeof listOrdersSchema>> = {}) {
@@ -418,6 +439,11 @@ export async function getOrder(id: string) {
 
 export async function updateOrderStatus(id: string, input: z.infer<typeof shopOrderStatusSchema>) {
   const data = shopOrderStatusSchema.parse(input);
+  const existing = await prisma.shopOrder.findUnique({
+    where: { id },
+    include: { items: true },
+  });
+
   const updated = await prisma.shopOrder.update({
     where: { id },
     data: {
@@ -440,6 +466,19 @@ export async function updateOrderStatus(id: string, input: z.infer<typeof shopOr
       },
     },
   });
+
+  if (existing) {
+    await sendShopOrderLifecycleEmails({
+      order: {
+        ...existing,
+        ...updated,
+      },
+      previousStatus: existing.status,
+      previousTrackingNumber: existing.trackingNumber,
+      previousTrackingUrl: existing.trackingUrl,
+      appUrl: getBaseUrl(),
+    });
+  }
 
   return updated;
 }

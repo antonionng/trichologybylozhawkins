@@ -8,6 +8,7 @@
    - `STRIPE_SECRET_KEY` & `STRIPE_WEBHOOK_SECRET`
    - `DEV_SKIP_CHECKOUT=false`
    - `RESEND_API_KEY` & `RESEND_FROM_EMAIL`
+   - `SHOP_ADMIN_NOTIFY_EMAILS` for comma-separated shop order alerts
    - `OPENAI_API_KEY`
    - `SUPABASE_*` for secure media delivery
 2. Install dependencies and generate Prisma client:

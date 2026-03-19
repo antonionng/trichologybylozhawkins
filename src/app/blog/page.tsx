@@ -7,6 +7,76 @@ import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { blogHighlights, BlogHighlight } from "@/lib/content";
 import { getTopicAccent } from "@/lib/topicAccents";
 
+type BlogEntryRecord = {
+  id: string;
+  title: string;
+  summary: string | null;
+  slug: string;
+  publishedAt: Date | null;
+  createdAt: Date;
+  meta: unknown;
+};
+
+type BlogSlotRecord = {
+  id: string;
+  title: string;
+  brief: string | null;
+  publishedAt: Date | null;
+  createdAt: Date;
+  metadata: unknown;
+};
+
+const mapEntryToBlogHighlight = (entry: BlogEntryRecord): BlogHighlight => {
+  const meta = (entry.meta ?? {}) as Record<string, any>;
+  return {
+    id: entry.id,
+    title: entry.title,
+    excerpt: entry.summary || "",
+    category: meta.category || "Article",
+    slug: entry.slug,
+    published: entry.publishedAt
+      ? entry.publishedAt.toISOString().slice(0, 10)
+      : entry.createdAt.toISOString().slice(0, 10),
+    heroImage: meta.heroImage || undefined,
+  };
+};
+
+const mapContentSlotToBlogHighlight = (slot: BlogSlotRecord): BlogHighlight => {
+  const meta = (slot.metadata ?? {}) as Record<string, any>;
+  return {
+    id: slot.id,
+    title: slot.title,
+    excerpt: slot.brief || meta.excerpt || "",
+    category: meta.category || "Article",
+    slug: meta.slug || slot.id,
+    published: slot.publishedAt
+      ? slot.publishedAt.toISOString().slice(0, 10)
+      : slot.createdAt.toISOString().slice(0, 10),
+    heroImage: meta.heroImage || undefined,
+  };
+};
+
+export function mergeBlogHighlights(
+  entries: BlogEntryRecord[],
+  slots: BlogSlotRecord[],
+): BlogHighlight[] {
+  const merged = new Map<string, BlogHighlight>();
+
+  for (const entry of entries) {
+    const item = mapEntryToBlogHighlight(entry);
+    merged.set(item.slug, item);
+  }
+
+  for (const slot of slots) {
+    const item = mapContentSlotToBlogHighlight(slot);
+    if (!merged.has(item.slug)) {
+      merged.set(item.slug, item);
+    }
+  }
+
+  return Array.from(merged.values()).sort((a, b) => b.published.localeCompare(a.published));
+}
+
 async function getBlogPosts(): Promise<BlogHighlight[]> {
   try {
     const collection = await prisma.collection.findUnique({
@@ -20,21 +90,15 @@ async function getBlogPosts(): Promise<BlogHighlight[]> {
         take: 20,
       });
 
-      if (entries.length > 0) {
-        return entries.map((entry) => {
-          const meta = (entry.meta ?? {}) as Record<string, any>;
-          return {
-            id: entry.id,
-            title: entry.title,
-            excerpt: entry.summary || "",
-            category: meta.category || "Article",
-            slug: entry.slug,
-            published: entry.publishedAt
-              ? entry.publishedAt.toISOString().slice(0, 10)
-              : entry.createdAt.toISOString().slice(0, 10),
-            heroImage: meta.heroImage || undefined,
-          };
-        });
+      const slots = await prisma.contentSlot.findMany({
+        where: { channel: "BLOG", status: "PUBLISHED" },
+        orderBy: { publishedAt: "desc" },
+        take: 20,
+      });
+
+      const merged = mergeBlogHighlights(entries as BlogEntryRecord[], slots as BlogSlotRecord[]);
+      if (merged.length > 0) {
+        return merged;
       }
     }
 
@@ -45,20 +109,7 @@ async function getBlogPosts(): Promise<BlogHighlight[]> {
       take: 10,
     });
     if (slots.length > 0) {
-      return slots.map((slot) => {
-        const meta = (slot.metadata ?? {}) as any;
-        return {
-          id: slot.id,
-          title: slot.title,
-          excerpt: slot.brief || meta.excerpt || "",
-          category: meta.category || "Article",
-          slug: meta.slug || slot.id,
-          published: slot.publishedAt
-            ? slot.publishedAt.toISOString().slice(0, 10)
-            : slot.createdAt.toISOString().slice(0, 10),
-          heroImage: meta.heroImage || undefined,
-        };
-      });
+      return slots.map((slot) => mapContentSlotToBlogHighlight(slot as BlogSlotRecord));
     }
 
     return [];

@@ -72,6 +72,15 @@ function buildQuery(next: Partial<QueryState>, current: QueryState) {
   return params.toString();
 }
 
+export function buildContactExportHref(selectedIds: string[]) {
+  const params = new URLSearchParams();
+  for (const id of selectedIds) {
+    params.append("ids", id);
+  }
+  const query = params.toString();
+  return query ? `/api/crm/contacts/export?${query}` : "/api/crm/contacts/export";
+}
+
 export function ContactsIndexClient({
   initialResult,
   initialQuery,
@@ -211,7 +220,13 @@ export function ContactsIndexClient({
           <AdminButton variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
             Clear
           </AdminButton>
-          <AdminButton variant="secondary" size="sm">Export CSV</AdminButton>
+          <AdminButton
+            href={buildContactExportHref(Array.from(selected))}
+            variant="secondary"
+            size="sm"
+          >
+            Export CSV
+          </AdminButton>
         </Panel>
       )}
 

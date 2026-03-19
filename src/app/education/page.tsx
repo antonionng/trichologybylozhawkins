@@ -10,7 +10,7 @@ import { PageSection } from "@/components/layout/PageSection";
 import { Container } from "@/components/layout/Container";
 import { Surface } from "@/components/layout/Surface";
 import { videoLessons, videoDetailFallbacks, inPersonIntensives, VIDEO_HERO_PLACEHOLDER_BY_SLUG, VIDEO_HERO_PLACEHOLDER_DEFAULT } from "@/lib/content";
-import { getCourses, getPublicQuizzes } from "@/app/actions/education";
+import { getCourses, getPublicQuizzes, getWorkshops } from "@/app/actions/education";
 import { PurchaseButton } from "@/components/education/PurchaseButton";
 import { prisma } from "@/server/db/client";
 import { getCurrentSession } from "@/server/security/auth";
@@ -31,6 +31,24 @@ type VideoCard = {
   heroUrl: string | null;
   fromDb: boolean;
 };
+
+type WorkshopCard = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  duration: string;
+  investment: string;
+  location: string;
+  outcomes: string[];
+};
+
+export function selectFeaturedWorkshops(
+  dbWorkshops: WorkshopCard[],
+  fallbackWorkshops: WorkshopCard[],
+) {
+  return dbWorkshops.length > 0 ? dbWorkshops : fallbackWorkshops;
+}
 
 async function getVideos(): Promise<VideoCard[]> {
   try {
@@ -96,17 +114,51 @@ async function safeGetQuizzes() {
   try { return await getPublicQuizzes(); } catch { return []; }
 }
 
+async function safeGetWorkshops(): Promise<WorkshopCard[]> {
+  try {
+    const workshops = await getWorkshops();
+    if (workshops.length > 0) {
+      return workshops.map((workshop: any) => ({
+        id: workshop.id,
+        slug: workshop.slug,
+        title: workshop.title,
+        summary: workshop.summary || workshop.headline || "",
+        duration: workshop.duration || "In-person",
+        investment: workshop.investment || "Enquire",
+        location: workshop.location || "Location on request",
+        outcomes: workshop.outcomes ?? [],
+      }));
+    }
+  } catch {
+    // Fall through to static fallback cards.
+  }
+
+  return inPersonIntensives.map((programme) => ({
+    id: programme.id,
+    slug: programme.slug,
+    title: programme.title,
+    summary: programme.summary,
+    duration: programme.duration,
+    investment: programme.investment,
+    location: programme.location,
+    outcomes: programme.outcomes,
+  }));
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    Page
    ═══════════════════════════════════════════════════════════════════════ */
 
 export default async function Education() {
-  const [courses, publicQuizzes, videos, session] = await Promise.all([
+  const [courses, publicQuizzes, videos, workshops, session] = await Promise.all([
     safeGetCourses(),
     safeGetQuizzes(),
     getVideos(),
+    safeGetWorkshops(),
     getCurrentSession(),
   ]);
+
+  const featuredWorkshops = selectFeaturedWorkshops(workshops, []);
 
   const proCourseRaw = courses.filter(
     (c) => c.slug !== "academy-quizzes"
@@ -496,7 +548,7 @@ export default async function Education() {
             </p>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {inPersonIntensives.map((programme, idx) => (
+            {featuredWorkshops.map((programme, idx) => (
               <Link
                 key={programme.id}
                 href={`/education/workshops/${programme.slug}`}

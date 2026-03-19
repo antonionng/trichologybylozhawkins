@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import Link from "next/link";
+import React, { useState } from "react";
 import { startShopCheckout } from "@/app/actions/shop";
 import { useShopCart } from "@/components/shop/CartProvider";
 
@@ -10,13 +9,6 @@ type CustomerIdentity = {
   firstName: string;
   lastName: string;
   phone: string;
-};
-
-type SignupForm = {
-  email: string;
-  firstName: string;
-  lastName: string;
-  password: string;
 };
 
 export type CartCheckoutInitialState = {
@@ -32,17 +24,25 @@ const defaultIdentity: CustomerIdentity = {
   phone: "",
 };
 
-const defaultSignup: SignupForm = {
-  email: "",
-  firstName: "",
-  lastName: "",
-  password: "",
+const getMissingIdentityFields = (value: Partial<CustomerIdentity>) => {
+  const missing: string[] = [];
+  if (!value.email?.trim()) missing.push("email address");
+  if (!value.firstName?.trim()) missing.push("first name");
+  if (!value.lastName?.trim()) missing.push("last name");
+  return missing;
 };
 
-type GuestStep = "choice" | "guest" | "signup";
+const formatMissingFieldsMessage = (missingFields: string[]) => {
+  if (missingFields.length === 0) return null;
+  if (missingFields.length === 1) {
+    return `Please add your ${missingFields[0]} before checkout.`;
+  }
+  if (missingFields.length === 2) {
+    return `Please add your ${missingFields[0]} and ${missingFields[1]} before checkout.`;
+  }
 
-const isIdentityComplete = (value: Partial<CustomerIdentity>) =>
-  Boolean(value.email?.trim() && value.firstName?.trim() && value.lastName?.trim());
+  return `Please add your ${missingFields[0]}, ${missingFields[1]}, and ${missingFields[2]} before checkout.`;
+};
 
 export function CartPageClient({ initialCheckout }: { initialCheckout?: CartCheckoutInitialState }) {
   const { items, subtotal, updateQuantity, removeItem } = useShopCart();
@@ -51,40 +51,22 @@ export function CartPageClient({ initialCheckout }: { initialCheckout?: CartChec
     ...initialCheckout?.customer,
     phone: initialCheckout?.customer?.phone ?? "",
   });
-  const [guestStep, setGuestStep] = useState<GuestStep>("choice");
-  const [signup, setSignup] = useState<SignupForm>({
-    ...defaultSignup,
-    email: initialCheckout?.customer?.email ?? "",
-    firstName: initialCheckout?.customer?.firstName ?? "",
-    lastName: initialCheckout?.customer?.lastName ?? "",
-  });
   const [loading, setLoading] = useState(false);
-  const [signupLoading, setSignupLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isAuthenticated = Boolean(initialCheckout?.isAuthenticated);
+  const showIdentityForm = getMissingIdentityFields(identity).length > 0;
 
-  const loginHref = "/login?next=%2Fshop%2Fcart";
-  const showIdentityForm = !isAuthenticated && guestStep === "guest";
-
-  const checkoutLabel = useMemo(
-    () => (isAuthenticated ? "Continue to secure checkout" : "Proceed to secure checkout"),
-    [isAuthenticated],
-  );
-
-  const onCheckout = async (customerOverride?: Partial<CustomerIdentity>) => {
+  const onCheckout = async () => {
     setError(null);
     if (items.length === 0) {
       setError("Your cart is empty.");
       return;
     }
 
-    const resolvedIdentity = {
-      ...identity,
-      ...customerOverride,
-    };
-
-    if (!isIdentityComplete(resolvedIdentity)) {
-      setError("Please add your name and email before checkout.");
+    const missingFields = getMissingIdentityFields(identity);
+    const missingFieldsMessage = formatMissingFieldsMessage(missingFields);
+    if (missingFieldsMessage) {
+      setError(missingFieldsMessage);
       return;
     }
 
@@ -94,10 +76,10 @@ export function CartPageClient({ initialCheckout }: { initialCheckout?: CartChec
       await startShopCheckout({
         items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
         customer: {
-          email: resolvedIdentity.email.trim(),
-          firstName: resolvedIdentity.firstName.trim(),
-          lastName: resolvedIdentity.lastName.trim(),
-          phone: resolvedIdentity.phone.trim() || undefined,
+          email: identity.email.trim(),
+          firstName: identity.firstName.trim(),
+          lastName: identity.lastName.trim(),
+          phone: identity.phone.trim() || undefined,
         },
         contactId: initialCheckout?.contactId,
         successUrl: `${base}/shop/success?session_id={CHECKOUT_SESSION_ID}`,
@@ -108,40 +90,6 @@ export function CartPageClient({ initialCheckout }: { initialCheckout?: CartChec
       setError(err instanceof Error ? err.message : "Checkout failed.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const onSignupAndCheckout = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setError(null);
-    if (items.length === 0) {
-      setError("Your cart is empty.");
-      return;
-    }
-    setSignupLoading(true);
-    try {
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(signup),
-      });
-      const payload = (await response.json()) as { ok?: boolean; error?: string };
-      if (!response.ok || !payload.ok) {
-        throw new Error(payload.error || "Unable to create account.");
-      }
-      const createdIdentity = {
-        email: signup.email,
-        firstName: signup.firstName,
-        lastName: signup.lastName || signup.firstName,
-        phone: "",
-      };
-      setIdentity(createdIdentity);
-      await onCheckout(createdIdentity);
-    } catch (err) {
-      if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
-      setError(err instanceof Error ? err.message : "Unable to create account.");
-    } finally {
-      setSignupLoading(false);
     }
   };
 
@@ -197,72 +145,14 @@ export function CartPageClient({ initialCheckout }: { initialCheckout?: CartChec
             <p className="text-sm text-brand-graphite/65">{identity.email}</p>
           </div>
         ) : (
-          <>
-            <div className="rounded-2xl border border-brand-graphite/10 bg-brand-ivory/60 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-brand-graphite/45">Checkout options</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Link href={loginHref} className="inline-flex items-center rounded-xl border border-brand-graphite/15 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-brand-graphite hover:bg-brand-sand/60">
-                  Sign in
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setGuestStep("signup")}
-                  className="inline-flex items-center rounded-xl border border-brand-graphite/15 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-brand-graphite hover:bg-brand-sand/60"
-                >
-                  Create account
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setGuestStep("guest")}
-                  className="inline-flex items-center rounded-xl bg-brand-graphite px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-brand-ivory hover:bg-brand-night"
-                >
-                  Continue as guest
-                </button>
-              </div>
-            </div>
-            {guestStep === "signup" ? (
-              <form onSubmit={onSignupAndCheckout} className="grid gap-3">
-                <input
-                  value={signup.firstName}
-                  onChange={(event) => setSignup((prev) => ({ ...prev, firstName: event.target.value }))}
-                  placeholder="First name"
-                  className="rounded-xl border border-brand-graphite/15 bg-brand-ivory/40 px-3 py-2 text-sm text-brand-graphite placeholder:text-brand-graphite/45 focus:border-brand-graphite/30 focus:outline-none"
-                  required
-                />
-                <input
-                  value={signup.lastName}
-                  onChange={(event) => setSignup((prev) => ({ ...prev, lastName: event.target.value }))}
-                  placeholder="Last name"
-                  className="rounded-xl border border-brand-graphite/15 bg-brand-ivory/40 px-3 py-2 text-sm text-brand-graphite placeholder:text-brand-graphite/45 focus:border-brand-graphite/30 focus:outline-none"
-                />
-                <input
-                  value={signup.email}
-                  onChange={(event) => setSignup((prev) => ({ ...prev, email: event.target.value }))}
-                  placeholder="Email"
-                  type="email"
-                  className="rounded-xl border border-brand-graphite/15 bg-brand-ivory/40 px-3 py-2 text-sm text-brand-graphite placeholder:text-brand-graphite/45 focus:border-brand-graphite/30 focus:outline-none"
-                  required
-                />
-                <input
-                  value={signup.password}
-                  onChange={(event) => setSignup((prev) => ({ ...prev, password: event.target.value }))}
-                  placeholder="Password (min 8 characters)"
-                  type="password"
-                  minLength={8}
-                  className="rounded-xl border border-brand-graphite/15 bg-brand-ivory/40 px-3 py-2 text-sm text-brand-graphite placeholder:text-brand-graphite/45 focus:border-brand-graphite/30 focus:outline-none"
-                  required
-                />
-                <button
-                  type="submit"
-                  disabled={signupLoading || loading}
-                  className="w-full rounded-xl bg-brand-graphite px-4 py-3 text-xs font-semibold uppercase tracking-[0.28em] text-brand-ivory transition hover:bg-brand-night disabled:opacity-60"
-                >
-                  {signupLoading ? "Creating account..." : "Create account & checkout"}
-                </button>
-              </form>
-            ) : null}
-          </>
+          <div className="rounded-2xl border border-brand-graphite/10 bg-brand-ivory/60 p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-brand-graphite/45">Secure checkout</p>
+            <p className="mt-2 text-sm text-brand-graphite/65">
+              Enter your details once, then complete payment securely on Stripe.
+            </p>
+          </div>
         )}
+
         {showIdentityForm ? (
           <div className="grid gap-3">
             <input
@@ -293,8 +183,14 @@ export function CartPageClient({ initialCheckout }: { initialCheckout?: CartChec
               placeholder="Phone (optional)"
               className="rounded-xl border border-brand-graphite/15 bg-brand-ivory/40 px-3 py-2 text-sm text-brand-graphite placeholder:text-brand-graphite/45 focus:border-brand-graphite/30 focus:outline-none"
             />
+            {!isAuthenticated ? (
+              <p className="text-xs text-brand-graphite/55">
+                No account needed. We only need these details so Stripe can complete your order.
+              </p>
+            ) : null}
           </div>
         ) : null}
+
         <p className="text-sm text-brand-graphite/70">
           Subtotal: <strong className="text-base text-brand-graphite">£{subtotal.toFixed(2)}</strong>
         </p>
@@ -305,10 +201,10 @@ export function CartPageClient({ initialCheckout }: { initialCheckout?: CartChec
         <button
           type="button"
           onClick={onCheckout}
-          disabled={loading || signupLoading}
+          disabled={loading}
           className="w-full rounded-xl bg-brand-graphite px-4 py-3 text-xs font-semibold uppercase tracking-[0.28em] text-brand-ivory transition hover:bg-brand-night disabled:opacity-60"
         >
-          {loading ? "Processing..." : checkoutLabel}
+          {loading ? "Processing..." : "Continue to secure checkout"}
         </button>
       </section>
     </div>

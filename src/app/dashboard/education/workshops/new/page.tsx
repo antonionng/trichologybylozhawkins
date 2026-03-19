@@ -1,11 +1,30 @@
 "use client";
 
+import React from "react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { upsertWorkshop } from "@/app/actions/education";
 import { Surface } from "@/components/layout/Surface";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
+
+export async function assertSuccessfulAiWorkshopBuild(response: Response) {
+  if (response.ok) {
+    return;
+  }
+
+  let message = `Failed to generate workshop draft (${response.status})`;
+  try {
+    const body = await response.json();
+    if (typeof body?.error === "string" && body.error.trim()) {
+      message = body.error;
+    }
+  } catch {
+    // Keep the default fallback when the response is not valid JSON.
+  }
+
+  throw new Error(message);
+}
 
 export default function NewWorkshopPage() {
   const router = useRouter();
@@ -24,6 +43,7 @@ export default function NewWorkshopPage() {
 
     setIsCreating(true);
     setError(null);
+    let createdWorkshopId: string | null = null;
 
     try {
       const slug = title
@@ -36,9 +56,10 @@ export default function NewWorkshopPage() {
         slug,
         status: "DRAFT",
       } as any);
+      createdWorkshopId = workshop.id;
 
       if (mode === "ai") {
-        await fetch("/api/ai/workshop-builder", {
+        const response = await fetch("/api/ai/workshop-builder", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -47,11 +68,20 @@ export default function NewWorkshopPage() {
             image: { aspectRatio: "16:9", style: "natural" },
           }),
         });
+        await assertSuccessfulAiWorkshopBuild(response);
       }
 
       router.push(`/dashboard/education/workshops/${workshop.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create workshop");
+      const message = err instanceof Error ? err.message : "Failed to create workshop";
+      if (createdWorkshopId && mode === "ai") {
+        router.push(
+          `/dashboard/education/workshops/${createdWorkshopId}?generationError=${encodeURIComponent(message)}`,
+        );
+        router.refresh();
+        return;
+      }
+      setError(message);
       setIsCreating(false);
     }
   };
@@ -125,7 +155,7 @@ export default function NewWorkshopPage() {
                 className="w-full rounded-2xl border border-black/10 bg-white px-6 py-4 text-sm focus:border-[#fab826] focus:outline-none focus:ring-4 focus:ring-[#fab826]/10 transition"
               />
               <p className="text-[11px] text-black/40 leading-relaxed italic">
-                Our AI will generate a full workshop page — headline,
+                Our AI will generate a full workshop page with headline,
                 description, agenda, outcomes, FAQs, testimonials, and a hero
                 image.
               </p>

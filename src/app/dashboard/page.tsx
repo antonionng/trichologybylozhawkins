@@ -1,3 +1,4 @@
+import React from "react";
 import Link from "next/link";
 import { prisma } from "@/server/db/client";
 import { requireUserOrRedirect } from "@/server/security/auth";
@@ -128,7 +129,7 @@ export default async function DashboardHome() {
                   </p>
                   <p className="text-xs text-admin-text-muted">{formatDate(eq.createdAt)}</p>
                 </div>
-                <Link href="/dashboard/education?tab=enquiries" className="text-xs text-admin-accent hover:underline shrink-0">
+                <Link href="/dashboard/education/enquiries" className="text-xs text-admin-accent hover:underline shrink-0">
                   Review
                 </Link>
               </div>
@@ -188,7 +189,7 @@ export default async function DashboardHome() {
                   </p>
                   <p className="text-xs text-admin-text-muted">{eq.email}</p>
                 </div>
-                <AdminButton href="/dashboard/education?tab=enquiries" variant="ghost" size="sm">
+                <AdminButton href="/dashboard/education/enquiries" variant="ghost" size="sm">
                   Follow up
                 </AdminButton>
               </div>

@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { prisma } from "@/server/db/client";
+import { requireUserOrRedirect } from "@/server/security/auth";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminButton } from "@/components/admin/AdminButton";
 import { StatusBadge } from "@/components/admin/AdminBadge";
@@ -16,6 +17,12 @@ type ArticleRow = {
   updatedAt: Date;
   source: "entry" | "content-factory";
 };
+
+export function getKnowledgeHubEditHref(article: Pick<ArticleRow, "id" | "source">) {
+  return article.source === "entry"
+    ? `/dashboard/knowledge-hub/${article.id}`
+    : `/dashboard/content?slotId=${article.id}`;
+}
 
 async function getArticles(): Promise<ArticleRow[]> {
   const rows: ArticleRow[] = [];
@@ -78,6 +85,7 @@ function fmtDate(date: Date) {
 }
 
 export default async function KnowledgeHubList() {
+  await requireUserOrRedirect({ role: "ADMIN", next: "/dashboard/knowledge-hub" });
   const articles = await getArticles();
 
   const published = articles.filter((a) => a.status === "PUBLISHED").length;
@@ -159,10 +167,7 @@ export default async function KnowledgeHubList() {
               </tr>
             ) : (
               articles.map((article) => {
-                const editHref =
-                  article.source === "entry"
-                    ? `/dashboard/knowledge-hub/${article.id}`
-                    : `/dashboard/content`;
+                const editHref = getKnowledgeHubEditHref(article);
                 return (
                   <tr
                     key={article.id}

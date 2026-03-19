@@ -35,6 +35,42 @@ type NewChatLeadEmailInput = {
   recentMessages?: { role: "user" | "assistant"; content: string }[] | null;
 };
 
+type ShopOrderEmailItem = {
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  currency: string;
+};
+
+type ShopOrderConfirmationEmailInput = {
+  to: string;
+  appUrl: string;
+  orderId: string;
+  customerName: string;
+  customerEmail: string;
+  subtotalAmount: number;
+  shippingAmount: number;
+  totalAmount: number;
+  currency: string;
+  trackingUrl?: string | null;
+  items: ShopOrderEmailItem[];
+};
+
+type ShopAdminOrderNotificationEmailInput = {
+  to: string[];
+  appUrl: string;
+  orderId: string;
+  customerName: string;
+  customerEmail: string;
+  statusLabel: string;
+  subtotalAmount: number;
+  shippingAmount: number;
+  totalAmount: number;
+  currency: string;
+  trackingUrl?: string | null;
+  items: ShopOrderEmailItem[];
+};
+
 function getResend() {
   const key = process.env.RESEND_API_KEY;
   if (!key) return null;
@@ -233,6 +269,170 @@ export async function sendNewChatLeadEmail(input: NewChatLeadEmailInput) {
   });
 
   return { skipped: false as const, id: res.data?.id ?? null };
+}
+
+export async function sendShopOrderConfirmationEmail(input: ShopOrderConfirmationEmailInput) {
+  const client = getResend();
+  if (!client) return { skipped: true as const, reason: "Missing RESEND_API_KEY" };
+
+  const subject = `Order confirmed: ${input.orderId}`;
+  const shopUrl = `${input.appUrl}/shop`;
+  const lineItemsHtml = renderOrderItemsHtml(input.items);
+  const lineItemsText = renderOrderItemsText(input.items);
+  const totalsText = renderOrderTotalsText(input.currency, input.subtotalAmount, input.shippingAmount, input.totalAmount);
+  const trackingMarkup = input.trackingUrl
+    ? `<p style="margin: 16px 0 0;"><a href="${input.trackingUrl}" style="display: inline-block; background: #111; color: #fff; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 600;">Track your order</a></p>`
+    : "";
+  const trackingText = input.trackingUrl ? `Tracking: ${input.trackingUrl}` : null;
+
+  const html = `
+    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+      <h2 style="margin: 0 0 12px;">Thanks for your order</h2>
+      <p style="margin: 0 0 16px;">
+        Hi ${escapeHtml(input.customerName)},<br/>
+        Your order <strong>${escapeHtml(input.orderId)}</strong> has been confirmed.
+      </p>
+      <p style="margin: 0 0 10px;"><strong>Email:</strong> ${escapeHtml(input.customerEmail)}</p>
+      <div style="margin: 0 0 16px;">
+        <p style="margin: 0 0 8px;"><strong>Items</strong></p>
+        ${lineItemsHtml}
+      </div>
+      <p style="margin: 0 0 6px;"><strong>Subtotal:</strong> ${escapeHtml(formatMoney(input.currency, input.subtotalAmount))}</p>
+      <p style="margin: 0 0 6px;"><strong>Shipping:</strong> ${escapeHtml(formatMoney(input.currency, input.shippingAmount))}</p>
+      <p style="margin: 0 0 18px;"><strong>Total:</strong> ${escapeHtml(formatMoney(input.currency, input.totalAmount))}</p>
+      <p style="margin: 0 0 18px;">
+        <a href="${shopUrl}" style="display: inline-block; background: #fab826; color: #111; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 600;">
+          Continue shopping
+        </a>
+      </p>
+      ${trackingMarkup}
+    </div>
+  `.trim();
+
+  const text = [
+    "Thanks for your order",
+    "",
+    `Hi ${input.customerName},`,
+    `Your order ${input.orderId} has been confirmed.`,
+    `Email: ${input.customerEmail}`,
+    "",
+    "Items:",
+    lineItemsText,
+    "",
+    totalsText,
+    trackingText,
+    "",
+    `Shop: ${shopUrl}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const res = await client.emails.send({
+    from: fromAddress(),
+    to: input.to,
+    subject,
+    html,
+    text,
+  });
+
+  return { skipped: false as const, id: res.data?.id ?? null };
+}
+
+export async function sendShopAdminOrderNotificationEmail(input: ShopAdminOrderNotificationEmailInput) {
+  const client = getResend();
+  if (!client) return { skipped: true as const, reason: "Missing RESEND_API_KEY" };
+
+  const subject = `${input.statusLabel}: ${input.orderId}`;
+  const orderUrl = `${input.appUrl}/dashboard/shop/orders/${encodeURIComponent(input.orderId)}`;
+  const lineItemsHtml = renderOrderItemsHtml(input.items);
+  const lineItemsText = renderOrderItemsText(input.items);
+  const totalsText = renderOrderTotalsText(input.currency, input.subtotalAmount, input.shippingAmount, input.totalAmount);
+  const trackingHtml = input.trackingUrl
+    ? `<p style="margin: 0 0 16px;"><strong>Tracking:</strong> <a href="${input.trackingUrl}">${escapeHtml(input.trackingUrl)}</a></p>`
+    : "";
+  const trackingText = input.trackingUrl ? `Tracking: ${input.trackingUrl}` : null;
+
+  const html = `
+    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+      <h2 style="margin: 0 0 12px;">${escapeHtml(input.statusLabel)}</h2>
+      <p style="margin: 0 0 10px;"><strong>Order:</strong> ${escapeHtml(input.orderId)}</p>
+      <p style="margin: 0 0 10px;"><strong>Customer:</strong> ${escapeHtml(input.customerName)}</p>
+      <p style="margin: 0 0 10px;"><strong>Email:</strong> ${escapeHtml(input.customerEmail)}</p>
+      ${trackingHtml}
+      <div style="margin: 0 0 16px;">
+        <p style="margin: 0 0 8px;"><strong>Items</strong></p>
+        ${lineItemsHtml}
+      </div>
+      <p style="margin: 0 0 6px;"><strong>Subtotal:</strong> ${escapeHtml(formatMoney(input.currency, input.subtotalAmount))}</p>
+      <p style="margin: 0 0 6px;"><strong>Shipping:</strong> ${escapeHtml(formatMoney(input.currency, input.shippingAmount))}</p>
+      <p style="margin: 0 0 18px;"><strong>Total:</strong> ${escapeHtml(formatMoney(input.currency, input.totalAmount))}</p>
+      <p style="margin: 0;">
+        <a href="${orderUrl}" style="display: inline-block; background: #111; color: #fff; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 600;">
+          View order
+        </a>
+      </p>
+    </div>
+  `.trim();
+
+  const text = [
+    input.statusLabel,
+    `Order: ${input.orderId}`,
+    `Customer: ${input.customerName}`,
+    `Email: ${input.customerEmail}`,
+    trackingText,
+    "",
+    "Items:",
+    lineItemsText,
+    "",
+    totalsText,
+    "",
+    `Order admin: ${orderUrl}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const res = await client.emails.send({
+    from: fromAddress(),
+    to: input.to,
+    subject,
+    html,
+    text,
+  });
+
+  return { skipped: false as const, id: res.data?.id ?? null };
+}
+
+function renderOrderItemsHtml(items: ShopOrderEmailItem[]) {
+  return `
+    <ul style="margin: 0; padding-left: 18px;">
+      ${items
+        .map(
+          (item) =>
+            `<li>${escapeHtml(item.productName)} x${item.quantity} (${escapeHtml(
+              formatMoney(item.currency, item.unitPrice)
+            )})</li>`
+        )
+        .join("")}
+    </ul>
+  `.trim();
+}
+
+function renderOrderItemsText(items: ShopOrderEmailItem[]) {
+  return items
+    .map((item) => `- ${item.productName} x${item.quantity} (${formatMoney(item.currency, item.unitPrice)})`)
+    .join("\n");
+}
+
+function renderOrderTotalsText(currency: string, subtotalAmount: number, shippingAmount: number, totalAmount: number) {
+  return [
+    `Subtotal: ${formatMoney(currency, subtotalAmount)}`,
+    `Shipping: ${formatMoney(currency, shippingAmount)}`,
+    `Total: ${formatMoney(currency, totalAmount)}`,
+  ].join("\n");
+}
+
+function formatMoney(currency: string, amount: number) {
+  return `${currency} ${amount.toFixed(2)}`;
 }
 
 function escapeHtml(value: string) {

@@ -6,13 +6,13 @@ import { ButtonLink } from "@/components/ui/Button";
 import { photography } from "@/lib/visualAssets";
 
 const aboutMetrics = [
-  { value: "18+", label: "Years practice" },
+  { value: "25+", label: "Years practice" },
   { value: "2,400+", label: "Consultations" },
   { value: "Video & live", label: "Formats" },
 ];
 
 const careerMilestones = [
-  { year: "2007", title: "Clinical foundations", description: "Qualified from the Institute of Trichologists. Began working alongside dermatologists in London clinics, focusing on complex scalp conditions and diagnostics.", color: "bg-rose-400" },
+  { year: "2007", title: "Clinical foundations", description: "Qualified as a trichologist through Tricocare (tricocare.co.uk). Began working alongside dermatologists in London clinics, focusing on complex scalp conditions and diagnostics.", color: "bg-rose-400" },
   { year: "2013", title: "Training professionals", description: "Started teaching salon teams how to assess scalp health, deliver treatments, and have supportive conversations with clients.", color: "bg-amber-400" },
   { year: "2018", title: "Building education programs", description: "Created structured training programs — hands-on workshops and online courses — making trichology education accessible to more practitioners.", color: "bg-emerald-400" },
   { year: "2025", title: "Video education", description: "Launched condition-specific video training modules for hair professionals. Evidence-based clinical education accessible to practitioners everywhere.", color: "bg-sky-400" },
@@ -37,10 +37,9 @@ export default function About() {
               <span className="inline-block rounded-full bg-brand-salmon/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.4em] text-brand-salmon">About</span>
               <h1 className="font-display text-3xl leading-[1.15] text-brand-graphite sm:text-[2.5rem]">Lorraine Hawkins</h1>
               <p className="text-base leading-relaxed text-brand-graphite/70">
-                Clinical trichologist and educator. Lorraine trains hair professionals through video courses, structured programs, and hands-on workshops — all built on 18 years of clinical experience.
+                Lorraine Hawkins has over 25 years of experience in the hair industry and is a qualified trichologist and educator. She shares her expertise through video courses, structured training programs, and hands-on workshops designed for professionals who want to deepen their understanding of hair and scalp health.
               </p>
               <div className="space-y-3 text-sm leading-relaxed text-brand-graphite/60">
-                <p>For nearly two decades, Lorraine has worked in clinical practice and professional education. She creates condition-specific video training, structured courses, and delivers hands-on workshops for trichologists, stylists, and salon teams.</p>
                 <p>Her approach: explain what&rsquo;s happening clearly, recommend what&rsquo;s supported by evidence, and be honest about what she doesn&rsquo;t know.</p>
               </div>
               <div className="flex flex-wrap gap-3 pt-1">
@@ -69,7 +68,7 @@ export default function About() {
               <div className="rounded-xl border border-brand-graphite/8 bg-white p-4 space-y-2">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-graphite/45">Credentials</p>
                 <ul className="space-y-1.5 text-sm text-brand-graphite/65">
-                  {["Fellow, Institute of Trichologists (FIT)", "Certified Nutritional Practitioner", "18+ years clinical trichology & education"].map((c) => (
+                  {["Qualified trichologist, Tricocare", "Certified Nutritional Practitioner"].map((c) => (
                     <li key={c} className="flex gap-2">
                       <span className="mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-salmon" />
                       <span>{c}</span>
@@ -93,7 +92,7 @@ export default function About() {
             <div className="flex flex-col gap-3 rounded-2xl border border-brand-sage/20 bg-white p-5 shadow-sm">
               <span className="inline-flex self-start rounded-full bg-brand-sage/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] text-brand-graphite/55">Professional education</span>
               <h3 className="font-display text-lg text-brand-graphite">Training hair professionals</h3>
-              <p className="flex-1 text-sm leading-relaxed text-brand-graphite/60">Video courses, structured training programs, and hands-on workshops for trichologists, stylists, and salon teams. Clinical skills and consultation confidence built on 18 years of practice.</p>
+              <p className="flex-1 text-sm leading-relaxed text-brand-graphite/60">Video courses, structured training programs, and hands-on workshops for trichologists, stylists, and salon teams. Clinical skills and consultation confidence built on 25 years of practice.</p>
               <ButtonLink href="/education" variant="ghost" size="sm">Training programs &rarr;</ButtonLink>
             </div>
           </div>

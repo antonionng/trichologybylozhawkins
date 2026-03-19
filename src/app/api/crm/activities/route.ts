@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { listActivities, logActivity } from "@/server/modules/crm/service";
 import type { ActivityType } from "@prisma/client";
+import { requireUser } from "@/server/security/auth";
 
 export async function POST(request: Request) {
   try {
+    await requireUser({ role: "ADMIN" });
     const body = await request.json();
     const activity = await logActivity(body);
     return NextResponse.json(activity);
@@ -28,6 +30,7 @@ export async function GET(request: Request) {
   const sort = (searchParams.get("sort") as "asc" | "desc" | null) ?? undefined;
 
   try {
+    await requireUser({ role: "ADMIN" });
     const result = await listActivities({
       page,
       pageSize,

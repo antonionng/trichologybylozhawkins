@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
@@ -10,6 +11,7 @@ const TABS = [
   { label: "Workshops", href: "/dashboard/education/workshops" },
   { label: "Videos", href: "/dashboard/education/videos" },
   { label: "Quizzes", href: "/dashboard/education/quizzes" },
+  { label: "Enquiries", href: "/dashboard/education/enquiries" },
   { label: "Conditions", href: "/dashboard/education/conditions" },
 ];
 

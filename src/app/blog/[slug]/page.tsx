@@ -115,6 +115,22 @@ type ContentSection = {
   items?: string[];
 };
 
+type ContentSlotArticleRecord = {
+  id: string;
+  title: string;
+  brief: string | null;
+  createdAt: Date;
+  publishedAt: Date | null;
+  metadata: unknown;
+  assets: Array<{
+    type: string;
+    mediaUrl?: string | null;
+    variants?: Array<{
+      copy?: string | null;
+    }>;
+  }>;
+};
+
 async function getArticleFromCms(slug: string) {
   try {
     const collection = await prisma.collection.findUnique({
@@ -155,6 +171,64 @@ async function getArticleFromCms(slug: string) {
   }
 }
 
+const splitCopyIntoSections = (copy: string) =>
+  copy
+    .split(/\n{2,}/g)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+    .map((text) => ({ type: "paragraph", text }));
+
+export function mapContentSlotToArticle(slot: ContentSlotArticleRecord) {
+  const meta = (slot.metadata ?? {}) as Record<string, any>;
+  const copyAsset = slot.assets.find((asset) => asset.type === "COPY");
+  const primaryVariant = copyAsset?.variants?.[0];
+  const sections = primaryVariant?.copy
+    ? splitCopyIntoSections(primaryVariant.copy)
+    : slot.brief
+      ? [{ type: "paragraph", text: slot.brief }]
+      : [];
+  const imageAsset = slot.assets.find((asset) => asset.type === "IMAGE" && asset.mediaUrl);
+
+  return {
+    title: slot.title,
+    category: meta.category || "Article",
+    published: (slot.publishedAt ?? slot.createdAt).toISOString().slice(0, 10),
+    readTime: meta.readTime || "5 min read",
+    excerpt: slot.brief || meta.excerpt || "",
+    heroImage: meta.heroImage || imageAsset?.mediaUrl || "",
+    content: sections,
+  };
+}
+
+async function getArticleFromContentSlot(slug: string) {
+  try {
+    const slots = await prisma.contentSlot.findMany({
+      where: { channel: "BLOG", status: "PUBLISHED" },
+      include: {
+        assets: {
+          orderBy: { createdAt: "asc" },
+          include: {
+            variants: {
+              orderBy: { createdAt: "asc" },
+            },
+          },
+        },
+      },
+      orderBy: { publishedAt: "desc" },
+      take: 100,
+    });
+
+    const slot = slots.find((item) => {
+      const meta = (item.metadata ?? {}) as Record<string, any>;
+      return (meta.slug || item.id) === slug;
+    });
+
+    return slot ? mapContentSlotToArticle(slot as ContentSlotArticleRecord) : null;
+  } catch {
+    return null;
+  }
+}
+
 /* ─── Helpers ─── */
 
 function formatPublishedDate(isoDate: string) {
@@ -178,7 +252,8 @@ export default async function BlogPost({ params }: BlogPostProps) {
   const { slug } = await params;
 
   const cmsPost = await getArticleFromCms(slug);
-  const post = cmsPost || blogPosts[slug];
+  const slotPost = cmsPost ? null : await getArticleFromContentSlot(slug);
+  const post = cmsPost || slotPost || blogPosts[slug];
 
   if (!post) {
     notFound();

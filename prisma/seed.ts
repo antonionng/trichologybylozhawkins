@@ -372,7 +372,7 @@ async function main() {
 
   const courseHeroImages: Record<string, string> = {
     "trichology-clinical-practice": "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80",
-    "hair-loss-assessment-communication": "https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=800&q=80",
+    "hair-loss-assessment-communication": "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?auto=format&fit=crop&w=800&q=80",
     "salon-trichology-essentials": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80",
     "advanced-scalp-analysis": "https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=800&q=80",
     "trichocare-phase-1": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80",
@@ -494,7 +494,7 @@ async function main() {
 
       // Create modules and lessons
       for (const moduleData of courseData.modules) {
-        const module = await prisma.courseModule.create({
+        const courseModule = await prisma.courseModule.create({
           data: {
             courseId: course.id,
             title: moduleData.title,
@@ -506,7 +506,7 @@ async function main() {
         for (const lessonData of moduleData.lessons) {
           await prisma.courseLesson.create({
             data: {
-              moduleId: module.id,
+              moduleId: courseModule.id,
               title: lessonData.title.substring(0, 100),
               description: lessonData.description || undefined,
               content: {
@@ -524,7 +524,7 @@ async function main() {
           const moduleQuiz = await prisma.quiz.create({
             data: {
               courseId: course.id,
-              moduleId: module.id,
+              moduleId: courseModule.id,
               title: moduleData.quiz.title,
               passingScore: moduleData.quiz.passingScore,
               isRequired: true,
@@ -1598,15 +1598,27 @@ async function main() {
       keyIngredients: ["Organic Samoa (Coconut) Oil", "Hydrolysed Pea Protein", "Pineapple Enzyme Extract"],
     },
     {
-      slug: "primer-treatment-styling",
-      name: "Primer",
+      slug: "hair-density-complex-treatment-styling",
+      name: "Hair Density Complex",
       categorySlug: "treatment-styling",
-      size: "150ml",
-      price: 24,
-      shortDescription: "Pre-styling prep for manageability and protection.",
+      size: "30ml",
+      price: 40,
+      shortDescription: "Leave-in scalp treatment to support fuller, denser-looking hair.",
       description:
-        "Primer supports styling performance while preparing hair for smooth, controlled finishes.",
-      perfectFor: "all hair types",
+        "Hair Density Complex is a leave in treatment that increases hair density. This scalp complex contains DHT blocking ingredients and is rich in probiotics, caffeine and baikal skullcap which helps achieve a thicker fuller hair in 6-8 weeks.",
+      perfectFor: "fine, thinning and density-concerned hair",
+      keyIngredients: ["Apple Stem Cell", "Probiotics", "Caffeine", "Baikal Skullcap"],
+    },
+    {
+      slug: "rebuild-treatment-styling",
+      name: "RE-Build",
+      categorySlug: "treatment-styling",
+      size: "110ml",
+      price: 28,
+      shortDescription: "Protective blow-dry treatment for dry and damaged hair.",
+      description:
+        "The latest treatment for the perfect blow-dry, RE-Build protects, repairs and reinforces dry and damaged hair, leaving lengths super-smooth, with improved shine and reduced blow-dry time.",
+      perfectFor: "very dry and damaged hair",
       keyIngredients: [],
     },
     {
@@ -1614,22 +1626,36 @@ async function main() {
       name: "Silk Smooth",
       categorySlug: "treatment-styling",
       size: "110ml",
-      price: 26,
-      shortDescription: "Silkening treatment for frizz control and shine.",
-      description: "Lightweight finishing treatment to smooth the fibre surface and add softness.",
-      perfectFor: "unruly or frizz-prone hair",
-      keyIngredients: [],
+      price: 25,
+      shortDescription: "Keratin and silk smoothing treatment for softness and shine.",
+      description:
+        "This unique Silk treatment complex is infused with Natural Keratin and Silk Amino Acids to deeply penetrate the hair, smoothing the cuticle and leaving hair soft, healthy and full of shine.",
+      perfectFor: "medium to thick textures",
+      keyIngredients: ["Natural Keratin", "Silk Amino Acids"],
     },
     {
-      slug: "rebuild-treatment-styling",
-      name: "Rebuild",
+      slug: "big-treatment-styling",
+      name: "Big",
       categorySlug: "treatment-styling",
-      size: "110ml",
-      price: 28,
-      shortDescription: "Bond-supporting treatment for weakened strands.",
-      description: "Targeted treatment styling formula to improve resilience and support stronger-looking hair.",
-      perfectFor: "damaged and weakened hair",
-      keyIngredients: [],
+      size: "150ml",
+      price: 18,
+      shortDescription: "Volume booster for thicker, fuller hair and oil-free shine.",
+      description:
+        "A volume booster to provide thicker fuller hair instantly. Infused with Honey and Bamboo Extracts it's a non-sticky formula with long lasting volume and an oil free shine.",
+      perfectFor: "fine and medium hair",
+      keyIngredients: ["Honey", "Bamboo Extract"],
+    },
+    {
+      slug: "primer-treatment-styling",
+      name: "Primer",
+      categorySlug: "treatment-styling",
+      size: "150ml",
+      price: 18,
+      shortDescription: "Leave-in detangler with protection, strength and shine.",
+      description:
+        "An exceptional leave-in treatment and the perfect detangler for everyday use. Containing Hydrolysed Silk Protein, Comfrey and Bamboo Extracts to strengthen and repair whilst providing protection and adding shine.",
+      perfectFor: "all hair types",
+      keyIngredients: ["Hydrolysed Silk Protein", "Comfrey", "Bamboo Extract"],
     },
   ];
 

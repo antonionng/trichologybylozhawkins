@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { LifecycleStage } from "@prisma/client";
 import { listContacts, upsertContact } from "@/server/modules/crm/service";
+import { requireUser } from "@/server/security/auth";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -15,6 +16,7 @@ export async function GET(request: Request) {
   const search = searchParams.get("search") ?? undefined;
 
   try {
+    await requireUser({ role: "ADMIN" });
     const result = await listContacts({
       page,
       pageSize,
@@ -36,6 +38,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    await requireUser({ role: "ADMIN" });
     const body = await request.json();
     const contact = await upsertContact(body);
     return NextResponse.json(contact);

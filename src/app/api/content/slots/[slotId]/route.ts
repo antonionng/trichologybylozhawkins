@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/client";
+import { requireUser } from "@/server/security/auth";
 
 type Params = {
   params: Promise<{ slotId: string }>;
@@ -7,6 +8,7 @@ type Params = {
 
 export async function GET(_request: Request, { params }: Params) {
   try {
+    await requireUser({ role: "ADMIN" });
     const { slotId } = await params;
 
     const slot = await prisma.contentSlot.findUnique({

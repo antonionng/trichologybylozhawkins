@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { listAudiences, upsertAudience } from "@/server/modules/email/service";
+import { requireUser } from "@/server/security/auth";
 
 export async function GET() {
   try {
+    await requireUser({ role: "ADMIN" });
     const audiences = await listAudiences();
     return NextResponse.json(audiences);
   } catch (error) {
@@ -18,6 +20,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    await requireUser({ role: "ADMIN" });
     const body = await request.json();
     const audience = await upsertAudience(body);
     return NextResponse.json(audience);

@@ -10,6 +10,7 @@ const serverEnvironmentSchemaBase = z.object({
   RESEND_API_KEY: z.string().min(1).optional(),
   RESEND_FROM_EMAIL: z.string().min(1).optional(),
   CHAT_ADMIN_NOTIFY_EMAIL: z.string().email().optional(),
+  SHOP_ADMIN_NOTIFY_EMAILS: z.string().optional(),
   // Used to sign/verify session cookies. Required in production; dev can fall back.
   AUTH_SECRET: z.string().min(16).optional(),
   // Compatibility alias (e.g. NextAuth setups).
@@ -89,6 +90,17 @@ export const serverEnvironmentSchema = serverEnvironmentSchemaBase
   }));
 
 export type ServerEnvironment = z.infer<typeof serverEnvironmentSchema>;
+
+export const parseEmailList = (value?: string): string[] => {
+  if (!value) return [];
+
+  return [...new Set(
+    value
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+  )];
+};
 
 let cachedEnv: ServerEnvironment | null = null;
 
