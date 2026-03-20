@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { Surface } from "@/components/layout/Surface";
 import { photography } from "@/lib/visualAssets";
+import { PROFESSIONAL_GATED_QUIZ_HREF } from "@/lib/publicQuiz";
 import { ProgressRing } from "./ProgressRing";
 import { ContinueLearningCard } from "./ContinueLearningCard";
 import { LearningMetrics } from "./LearningMetrics";
@@ -40,6 +41,7 @@ type QuizCard = {
   passingScore: number;
   course?: { title: string };
   _count?: { questions: number };
+  heroUrl?: string | null;
 };
 
 type VideoCard = {
@@ -147,7 +149,7 @@ export function AcademyTabs({
   const tab: TabKey =
     rawTab && VALID_TABS.includes(rawTab) ? rawTab : "library";
 
-  const featuredQuizHref = "/quiz/trichology-knowledge-check";
+  const featuredQuizHref = PROFESSIONAL_GATED_QUIZ_HREF;
 
   const quote = useMemo(
     () =>
@@ -871,37 +873,56 @@ export function AcademyTabs({
           </Surface>
 
           <div className="grid gap-4 lg:grid-cols-3">
-            {quizzes.map((quiz) => (
+            {quizzes.map((quiz, qi) => (
               <Surface
                 key={quiz.id}
                 variant="card"
-                padding="lg"
-                className="space-y-3"
+                padding="none"
+                className="flex h-full flex-col overflow-hidden"
               >
-                <div>
-                  <p className="text-xs uppercase tracking-[0.25em] text-black/40">
-                    {quiz.course?.title ?? "Quiz"}
-                  </p>
-                  <h3 className="text-lg font-semibold text-black">
-                    {quiz.title}
-                  </h3>
-                  {quiz.description ? (
-                    <p className="mt-1 text-sm text-black/60 line-clamp-2">
-                      {quiz.description}
-                    </p>
-                  ) : null}
+                <div className="relative h-36 w-full shrink-0 overflow-hidden bg-gradient-to-br from-[#fab826]/15 to-brand-sage/20">
+                  {quiz.heroUrl ? (
+                    <Image
+                      src={quiz.heroUrl}
+                      alt={quiz.title}
+                      fill
+                      className="object-cover transition-transform duration-500 hover:scale-[1.03]"
+                      sizes="(max-width: 1024px) 100vw, 33vw"
+                    />
+                  ) : (
+                    <div
+                      className={`flex h-full items-center justify-center bg-gradient-to-br ${GRADIENTS[qi % GRADIENTS.length]}`}
+                    >
+                      <span className="text-4xl font-display text-black/20">?</span>
+                    </div>
+                  )}
                 </div>
-                <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-                  <div className="text-xs text-black/50">
-                    {quiz._count?.questions ?? 0} questions &middot; Pass{" "}
-                    {quiz.passingScore}%
+                <div className="flex flex-1 flex-col space-y-3 p-6">
+                  <div className="flex-1">
+                    <p className="text-xs uppercase tracking-[0.25em] text-black/40">
+                      {quiz.course?.title ?? "Quiz"}
+                    </p>
+                    <h3 className="text-lg font-semibold text-black">
+                      {quiz.title}
+                    </h3>
+                    {quiz.description ? (
+                      <p className="mt-1 text-sm text-black/60 line-clamp-2">
+                        {quiz.description}
+                      </p>
+                    ) : null}
                   </div>
-                  <Link
-                    href={`/academy/quizzes/${quiz.id}`}
-                    className="text-xs font-semibold uppercase tracking-[0.3em] text-[#b67400] hover:underline"
-                  >
-                    Take
-                  </Link>
+                  <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                    <div className="text-xs text-black/50">
+                      {quiz._count?.questions ?? 0} questions &middot; Pass{" "}
+                      {quiz.passingScore}%
+                    </div>
+                    <Link
+                      href={`/academy/quizzes/${quiz.id}`}
+                      className="text-xs font-semibold uppercase tracking-[0.3em] text-[#b67400] hover:underline"
+                    >
+                      Take
+                    </Link>
+                  </div>
                 </div>
               </Surface>
             ))}

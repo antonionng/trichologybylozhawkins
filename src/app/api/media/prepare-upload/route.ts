@@ -10,7 +10,7 @@ const safeFileName = (name: string) =>
     .replace(/[^a-z0-9._-]+/g, "-")
     .replace(/(^-|-$)+/g, "");
 
-type PrepareKind = "video-product-hero" | "video-product-video";
+type PrepareKind = "video-product-hero" | "video-product-video" | "quiz-hero";
 
 export async function POST(request: Request) {
   try {
@@ -19,22 +19,32 @@ export async function POST(request: Request) {
     const body = await request.json();
     const kind = body.kind as PrepareKind;
     const videoProductId = (body.videoProductId ?? "").trim();
+    const quizId = (body.quizId ?? "").trim();
     const filename = safeFileName(body.filename ?? "upload.bin");
     const contentType = body.contentType ?? "application/octet-stream";
 
-    if (!kind || !["video-product-hero", "video-product-video"].includes(kind)) {
+    if (
+      !kind ||
+      !["video-product-hero", "video-product-video", "quiz-hero"].includes(kind)
+    ) {
       return NextResponse.json({ error: "Invalid kind" }, { status: 400 });
     }
 
-    if (!videoProductId) {
+    if (kind === "quiz-hero") {
+      if (!quizId) {
+        return NextResponse.json({ error: "quizId is required" }, { status: 400 });
+      }
+    } else if (!videoProductId) {
       return NextResponse.json({ error: "videoProductId is required" }, { status: 400 });
     }
 
     const stamp = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     const basePath =
-      kind === "video-product-hero"
-        ? `videos/${videoProductId}/hero`
-        : `videos/${videoProductId}/video`;
+      kind === "quiz-hero"
+        ? `quiz/${quizId}/hero`
+        : kind === "video-product-hero"
+          ? `videos/${videoProductId}/hero`
+          : `videos/${videoProductId}/video`;
 
     const storagePath = `${basePath}/${stamp}-${filename}`;
     const { signedUrl, token } = await createSignedUploadUrl(storagePath);

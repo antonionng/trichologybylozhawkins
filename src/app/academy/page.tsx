@@ -4,6 +4,7 @@ import { listEnrolledCourses, listPurchasedVideos } from "@/server/modules/educa
 import { prisma } from "@/server/db/client";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
 import { AcademyTabs } from "@/components/academy/AcademyTabs";
+import { resolveQuizCardImageUrl } from "@/server/modules/education/quizHero";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +74,7 @@ export default async function AcademyHome() {
         where: { status: "PUBLISHED", isPublic: false },
         include: {
           course: { select: { title: true } },
+          heroMedia: { select: { path: true } },
           _count: { select: { questions: true } },
         },
         orderBy: { createdAt: "desc" },
@@ -379,11 +381,18 @@ export default async function AcademyHome() {
     enrichedBrowseCourses,
     enrichedMyVideos,
     enrichedBrowseVideos,
+    enrichedQuizzes,
   ] = await Promise.all([
     withHeroUrls(myCourses),
     withHeroUrls(browseCourses),
     withVideoHeroUrls(myVideos),
     withVideoHeroUrls(browseVideos),
+    Promise.all(
+      quizzes.map(async (q) => ({
+        ...q,
+        heroUrl: await resolveQuizCardImageUrl(q),
+      })),
+    ),
   ]);
 
   return (
@@ -391,7 +400,7 @@ export default async function AcademyHome() {
       <AcademyTabs
         myCourses={enrichedMyCourses as any}
         browseCourses={enrichedBrowseCourses as any}
-        quizzes={quizzes as any}
+        quizzes={enrichedQuizzes as any}
         myVideos={enrichedMyVideos as any}
         browseVideos={enrichedBrowseVideos as any}
         userName={userName}

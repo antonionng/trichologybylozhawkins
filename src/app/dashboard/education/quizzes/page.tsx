@@ -4,6 +4,7 @@ import { prisma } from "@/server/db/client";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminButton } from "@/components/admin/AdminButton";
 import { QuizzesTableClient } from "./QuizzesTableClient";
+import { resolveQuizCardImageUrl } from "@/server/modules/education/quizHero";
 
 async function getQuizzes() {
   return prisma.quiz.findMany({
@@ -17,6 +18,8 @@ async function getQuizzes() {
       isFeaturedLead: true,
       slug: true,
       createdAt: true,
+      cardImageUrl: true,
+      heroMedia: { select: { path: true } },
       course: { select: { id: true, title: true, slug: true } },
       _count: { select: { questions: true, attempts: true } },
     },
@@ -25,7 +28,13 @@ async function getQuizzes() {
 }
 
 export default async function QuizzesPage() {
-  const quizzes = await getQuizzes();
+  const rows = await getQuizzes();
+  const quizzes = await Promise.all(
+    rows.map(async (q) => ({
+      ...q,
+      heroUrl: await resolveQuizCardImageUrl(q),
+    })),
+  );
 
   return (
     <div className="space-y-6">
@@ -43,7 +52,7 @@ export default async function QuizzesPage() {
           </AdminButton>
         }
       />
-      <QuizzesTableClient quizzes={JSON.parse(JSON.stringify(quizzes))} />
+      <QuizzesTableClient quizzes={JSON.parse(JSON.stringify(quizzes)) as any} />
     </div>
   );
 }

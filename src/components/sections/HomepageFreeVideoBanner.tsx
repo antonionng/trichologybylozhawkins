@@ -40,19 +40,19 @@ export function HomepageFreeVideoBanner({
   const eyebrow = lead.kind === "QUIZ" ? "Featured quiz" : "Free video";
   const headline =
     lead.kind === "QUIZ"
-      ? "Take the featured quiz. Unlock your full results with a free academy account."
+      ? "Take the featured scalp quiz and get Lorraine's next steps."
       : "Join the academy. Watch the free lesson. Upgrade when you are ready.";
   const description =
     lead.kind === "QUIZ"
-      ? `Start ${lead.title}, then create your free academy account to unlock your full results, tailored next steps, and a clear route into Lorraine's training.`
+      ? `Start ${lead.title}, add your email to unlock your guidance summary, and get a clear route into Lorraine's consultation support if you need it.`
       : `Create your free academy account to unlock ${lead.title} and step straight into Lorraine's clinical training world.`;
   const primaryHref =
     lead.kind === "QUIZ"
-      ? `/academy/signup?next=${encodeURIComponent(`/quiz/${lead.slug}?unlock=1`)}`
+      ? `/quiz/${lead.slug}`
       : "/academy/signup";
   const secondaryHref =
     lead.kind === "QUIZ" ? `/quiz/${lead.slug}` : `/education/videos/${lead.slug}`;
-  const secondaryLabel = lead.kind === "QUIZ" ? "Take featured quiz" : "View free lesson";
+  const secondaryLabel = lead.kind === "QUIZ" ? "See how it works" : "View free lesson";
   const mediaSrc = lead.heroUrl ?? photography.consultation.src;
   const mediaAlt = lead.heroUrl ? lead.title : photography.consultation.alt;
 
@@ -78,7 +78,7 @@ export function HomepageFreeVideoBanner({
               {lead.kind === "VIDEO" && lead.category && lead.durationLabel ? <span>/</span> : null}
               {lead.kind === "VIDEO" && lead.durationLabel ? <span>{lead.durationLabel}</span> : null}
               {(lead.category || (lead.kind === "VIDEO" && lead.durationLabel)) ? <span>/</span> : null}
-              <span>{lead.kind === "QUIZ" ? "Signup unlocks full results" : "Instant access after signup"}</span>
+              <span>{lead.kind === "QUIZ" ? "Email unlocks your guidance summary" : "Instant access after signup"}</span>
             </div>
 
             <div className="max-w-2xl rounded-3xl border border-white/10 bg-white/8 p-5 backdrop-blur-sm">
@@ -93,7 +93,7 @@ export function HomepageFreeVideoBanner({
 
             <div className="flex flex-wrap gap-3">
               <ButtonLink href={primaryHref} variant="primary" size="lg">
-                Create free academy account
+                {lead.kind === "QUIZ" ? "Start scalp quiz" : "Create free academy account"}
               </ButtonLink>
               <ButtonLink href={secondaryHref} variant="ghost" size="lg" className="border-white/30 text-white hover:bg-white/10">
                 {secondaryLabel}

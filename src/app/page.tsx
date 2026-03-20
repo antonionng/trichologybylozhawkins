@@ -14,8 +14,9 @@ import {
   VIDEO_HERO_PLACEHOLDER_BY_SLUG,
   VIDEO_HERO_PLACEHOLDER_DEFAULT,
 } from "@/lib/content";
+import { FEATURED_PUBLIC_QUIZ_SLUG } from "@/lib/publicQuiz";
 import { loadHomeShowcaseData } from "@/server/modules/home/showcase";
-import { getCurrentFeaturedLeadItem } from "@/server/modules/education/featuredLeadItem";
+import { ensureFeaturedPublicQuizExists } from "@/server/modules/education/featuredPublicQuiz";
 
 async function getShowcaseData() {
   return loadHomeShowcaseData({
@@ -60,44 +61,44 @@ async function getShowcaseData() {
   }) as Promise<{ videos: VideoRow[]; courses: CourseRow[]; products: any[] }>;
 }
 
-async function getHomepageFreeVideo() {
+async function getHomepageFeaturedQuiz() {
   try {
-    const lead = await getCurrentFeaturedLeadItem();
-    if (!lead) return null;
+    await ensureFeaturedPublicQuizExists(FEATURED_PUBLIC_QUIZ_SLUG);
+    const quiz = await prisma.quiz.findFirst({
+      where: { slug: FEATURED_PUBLIC_QUIZ_SLUG, isPublic: true, status: "PUBLISHED" },
+      select: {
+        slug: true,
+        title: true,
+        description: true,
+        heroMediaId: true,
+        cardImageUrl: true,
+      },
+    });
+
+    if (!quiz?.slug) return null;
 
     let heroUrl: string | null = null;
-    if (lead.kind === "VIDEO" && lead.heroMedia?.path) {
-      try {
-        heroUrl = await createSignedDownloadUrl(lead.heroMedia.path);
-      } catch {
-        heroUrl = null;
+    if (quiz.heroMediaId) {
+      const heroMedia = await prisma.mediaAsset.findUnique({
+        where: { id: quiz.heroMediaId },
+        select: { path: true },
+      });
+      if (heroMedia?.path) {
+        try {
+          heroUrl = await createSignedDownloadUrl(heroMedia.path);
+        } catch {
+          heroUrl = null;
+        }
       }
     }
 
-    if (!heroUrl && lead.kind === "VIDEO") {
-      heroUrl = VIDEO_HERO_PLACEHOLDER_BY_SLUG[lead.slug] ?? VIDEO_HERO_PLACEHOLDER_DEFAULT;
-    }
-
-    if (lead.kind === "QUIZ") {
-      return {
-        kind: "QUIZ" as const,
-        slug: lead.slug,
-        title: lead.title,
-        description: lead.description,
-        category: "Academy quiz",
-        heroUrl,
-      };
-    }
-
     return {
-      kind: "VIDEO" as const,
-      slug: lead.slug,
-      title: lead.title,
-      subtitle: lead.subtitle,
-      description: lead.description,
-      category: lead.category,
-      durationLabel: lead.durationMinutes ? `${lead.durationMinutes} mins` : "Self-paced",
-      heroUrl,
+      kind: "QUIZ" as const,
+      slug: quiz.slug,
+      title: quiz.title,
+      description: quiz.description,
+      category: "Scalp guidance",
+      heroUrl: heroUrl ?? quiz.cardImageUrl ?? null,
     };
   } catch {
     return null;
@@ -105,15 +106,15 @@ async function getHomepageFreeVideo() {
 }
 
 export default async function Home() {
-  const [{ videos, courses, products }, freeVideo] = await Promise.all([
+  const [{ videos, courses, products }, featuredQuiz] = await Promise.all([
     getShowcaseData(),
-    getHomepageFreeVideo(),
+    getHomepageFeaturedQuiz(),
   ]);
 
   return (
     <main>
       <HomeHero />
-      {freeVideo ? <HomepageFreeVideoBanner lead={freeVideo} /> : null}
+      {featuredQuiz ? <HomepageFreeVideoBanner lead={featuredQuiz} /> : null}
       <EducationShowcase videos={videos} courses={courses} />
       <ProductsShowcase products={products as any} />
       <ServicesShowcase />

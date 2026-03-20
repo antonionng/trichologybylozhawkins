@@ -12,6 +12,7 @@ import { photography } from "@/lib/visualAssets";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
 import { prisma } from "@/server/db/client";
 import { Prisma } from "@prisma/client";
+import { resolveQuizCardImageUrl } from "@/server/modules/education/quizHero";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,8 @@ async function getCourseQuizzes(courseId: string) {
         title: true,
         description: true,
         passingScore: true,
+        cardImageUrl: true,
+        heroMedia: { select: { path: true } },
         _count: { select: { questions: true } },
       },
       orderBy: { createdAt: "asc" },
@@ -70,10 +73,17 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
   const course = await getCourseBySlug(params.slug);
   if (!course) notFound();
 
-  const [quizzes, enrollmentCount] = await Promise.all([
+  const [quizzesRaw, enrollmentCount] = await Promise.all([
     getCourseQuizzes(course.id),
     prisma.enrollment.count({ where: { courseId: course.id, status: "ACTIVE" } }),
   ]);
+
+  const quizzes = await Promise.all(
+    quizzesRaw.map(async (q) => ({
+      ...q,
+      heroUrl: await resolveQuizCardImageUrl(q),
+    })),
+  );
 
   const primaryPrice = course.pricing.find((p: any) => p.isPrimary) || course.pricing[0];
   const courseMeta = (course.meta ?? {}) as Record<string, unknown>;
@@ -243,15 +253,30 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
                     <Link
                       key={quiz.id}
                       href={`/academy/quizzes/${quiz.id}`}
-                      className="group flex items-center justify-between rounded-2xl border border-black/5 bg-[#fab826]/5 px-6 py-4 transition-all hover:bg-[#fab826]/10 hover:border-[#fab826]/20"
+                      className="group flex items-center gap-4 rounded-2xl border border-black/5 bg-[#fab826]/5 px-4 py-3 transition-all hover:bg-[#fab826]/10 hover:border-[#fab826]/20 sm:px-6 sm:py-4"
                     >
-                      <div>
+                      <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-xl bg-black/5">
+                        {quiz.heroUrl ? (
+                          <Image
+                            src={quiz.heroUrl}
+                            alt={quiz.title}
+                            fill
+                            className="object-cover"
+                            sizes="96px"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-xs font-bold text-[#b67400]/40">
+                            Quiz
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
                         <p className="font-bold text-black group-hover:text-[#b67400] transition-colors">{quiz.title}</p>
                         <p className="text-xs text-black/50">
                           {quiz._count.questions} questions · Requires {quiz.passingScore}% to pass
                         </p>
                       </div>
-                      <span className="text-xl text-[#fab826] transition-transform group-hover:translate-x-1">→</span>
+                      <span className="shrink-0 text-xl text-[#fab826] transition-transform group-hover:translate-x-1">→</span>
                     </Link>
                   ))}
                 </div>

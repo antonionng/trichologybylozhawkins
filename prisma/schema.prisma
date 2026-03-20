@@ -234,6 +234,7 @@ model MediaAsset {
   shopHeroProducts ShopProduct[] @relation("ShopProductHeroMedia")
   shopProductImages ShopProductImage[] @relation("ShopProductImageMedia")
   downloadableAssets DownloadableAsset[] @relation("AssetMedia")
+  heroQuizzes       Quiz[]            @relation("QuizHeroMedia")
 }
 
 model EntryMedia {
@@ -1368,13 +1369,19 @@ model Quiz {
   slug                String?        @unique
   resultsCopy         Json?          // { low: {headline, body}, medium: {...}, high: {...} }
   recommendedCourseId String?
+  /// Supabase storage hero (preferred over cardImageUrl when set)
+  heroMediaId         String?
+  /// Optional external image URL (e.g. seeded Unsplash) when no uploaded hero
+  cardImageUrl        String?
   course              Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
   recommendedCourse   Course?        @relation("RecommendedCourseForQuiz", fields: [recommendedCourseId], references: [id], onDelete: SetNull)
+  heroMedia           MediaAsset?    @relation("QuizHeroMedia", fields: [heroMediaId], references: [id], onDelete: SetNull)
   questions           QuizQuestion[]
   attempts            QuizAttempt[]
 
   @@index([courseId])
   @@index([recommendedCourseId])
+  @@index([heroMediaId])
 }
 
 model QuizQuestion {

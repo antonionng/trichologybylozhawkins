@@ -32,7 +32,7 @@ export function getConsumerQuizGateCopy() {
     eyebrow: "See Lorraine's guidance",
     title: "Save your personalised scalp summary",
     body:
-      "Add your details to view your guidance summary, likely concern pattern, and the best next step if you want to book with Lorraine.",
+      "Add your email to view your guidance summary, likely concern pattern, and the best next step if you want to book with Lorraine.",
     submitLabel: "Show my guidance",
     backLabel: "Back to my answers",
   };

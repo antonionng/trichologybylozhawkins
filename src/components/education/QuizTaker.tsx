@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Surface } from "@/components/layout/Surface";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
@@ -124,7 +124,7 @@ export function QuizTaker({
   const currentQuestion = quiz.questions[currentIndex];
   const currentAnswer = answers.find((a) => a.questionId === currentQuestion?.id);
   const progress = ((currentIndex + 1) / quiz.questions.length) * 100;
-  const isConsumerMode = mode === "public_consumer" || mode === "public_signup_gate";
+  const isConsumerMode = mode === "public_consumer";
   const isSignupGateMode = mode === "public_signup_gate";
   const consumerIntro = getConsumerQuizIntro(quiz.questions.length);
   const consumerQuestionCopy = getConsumerQuizQuestionCopy(currentIndex + 1, quiz.questions.length);
@@ -258,13 +258,18 @@ export function QuizTaker({
   };
 
   const handleLeadSubmit = async () => {
-    if (!leadName.trim() || !leadEmail.trim()) {
+    if (isConsumerMode && !leadEmail.trim()) {
+      setError("Please enter your email to unlock your results.");
+      return;
+    }
+
+    if (!isConsumerMode && (!leadName.trim() || !leadEmail.trim())) {
       setError("Please enter your name and email to unlock your results.");
       return;
     }
 
     await submitAnswers({
-      name: leadName.trim(),
+      ...(leadName.trim() ? { name: leadName.trim() } : {}),
       email: leadEmail.trim(),
     });
   };
@@ -778,15 +783,6 @@ export function QuizTaker({
             <div className="rounded-[1.8rem] border border-brand-graphite/8 bg-white/90 p-5 shadow-[0_16px_38px_-28px_rgba(15,23,42,0.35)] sm:p-6">
               <div className="grid gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs uppercase tracking-[0.2em] text-brand-graphite/60">Name</label>
-                  <input
-                    value={leadName}
-                    onChange={(e) => setLeadName(e.target.value)}
-                    className="w-full rounded-2xl border border-brand-graphite/12 bg-brand-sand/10 px-4 py-3 text-sm focus:border-[#fab826] focus:outline-none"
-                    placeholder="Your name"
-                  />
-                </div>
-                <div className="space-y-2">
                   <label className="text-xs uppercase tracking-[0.2em] text-brand-graphite/60">Email</label>
                   <input
                     value={leadEmail}
@@ -866,34 +862,16 @@ export function QuizTaker({
     if (isConsumerMode) {
       return (
         <Surface variant="glass" padding="lg" className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-3">
-              <span className="inline-flex rounded-full bg-[#fab826]/12 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.35em] text-[#9f6c08]">
-                {consumerIntro.eyebrow}
-              </span>
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-brand-graphite/35">
-                  {quiz.course.title}
-                </p>
-                <h1 className="mt-2 font-display text-3xl leading-[1.08] text-brand-graphite sm:text-[2.75rem]">
-                  {quiz.title}
-                </h1>
-              </div>
-              <p className="max-w-2xl text-base leading-relaxed text-brand-graphite/65">
-                {quiz.description ?? consumerIntro.body}
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              {consumerIntro.benefits.map((benefit) => (
-                <div
-                  key={benefit}
-                  className="rounded-[1.5rem] border border-brand-graphite/8 bg-white/80 p-4 text-sm leading-relaxed text-brand-graphite/70"
-                >
-                  {benefit}
-                </div>
-              ))}
-            </div>
+          <div className="space-y-3">
+            <span className="inline-flex rounded-full bg-[#fab826]/12 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.35em] text-[#9f6c08]">
+              Before you start
+            </span>
+            <h2 className="font-display text-3xl leading-[1.08] text-brand-graphite sm:text-[2.4rem]">
+              A quick guidance check, then Lorraine&apos;s next steps
+            </h2>
+            <p className="max-w-2xl text-base leading-relaxed text-brand-graphite/65">
+              {consumerIntro.reassurance}
+            </p>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.86fr)]">
@@ -918,7 +896,19 @@ export function QuizTaker({
             </div>
 
             <div className="rounded-[1.7rem] border border-brand-graphite/8 bg-white/85 p-5 shadow-[0_16px_36px_-28px_rgba(15,23,42,0.35)]">
-              <p className="text-sm leading-relaxed text-brand-graphite/70">{consumerIntro.reassurance}</p>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-brand-graphite/40">
+                You will get
+              </p>
+              <div className="mt-4 grid gap-3">
+                {consumerIntro.benefits.map((benefit) => (
+                  <div
+                    key={benefit}
+                    className="rounded-[1.35rem] border border-brand-graphite/8 bg-brand-sand/10 p-4 text-sm leading-relaxed text-brand-graphite/70"
+                  >
+                    {benefit}
+                  </div>
+                ))}
+              </div>
               <div className="mt-5 flex flex-wrap gap-3">
                 <Button variant="primary" size="lg" onClick={() => setStarted(true)}>
                   {consumerIntro.startLabel}
@@ -931,54 +921,52 @@ export function QuizTaker({
     }
 
     return (
-      <Surface variant="glass" padding="lg" className="space-y-6 text-center">
-        <div>
+      <Surface variant="glass" padding="lg" className="space-y-6">
+        <div className="space-y-3 text-center">
           <p className="text-xs uppercase tracking-[0.3em] text-black/40">
-            {quiz.course.title}
+            Ready to begin
           </p>
-          <h1 className="mt-2 text-2xl font-semibold text-black">{quiz.title}</h1>
-          {quiz.description && (
-            <p className="mt-3 text-black/60">{quiz.description}</p>
-          )}
+          <h2 className="text-2xl font-semibold text-black">
+            Start when you are ready
+          </h2>
+          <p className="mx-auto max-w-2xl text-sm leading-relaxed text-black/60">
+            Work through each question in order, submit once at the end, and
+            review your score and answer breakdown straight away.
+          </p>
         </div>
 
-        {isConsumerMode ? (
-          <div className="mx-auto grid max-w-2xl gap-3 py-2 sm:grid-cols-3">
-            <div className="rounded-xl bg-white/70 p-4">
-              <p className="text-2xl font-semibold text-black">{quiz.questions.length}</p>
-              <p className="text-xs text-black/50">Guided questions</p>
-            </div>
-            <div className="rounded-xl bg-white/70 p-4">
-              <p className="text-2xl font-semibold text-black">Likely</p>
-              <p className="text-xs text-black/50">Concern patterns</p>
-            </div>
-            <div className="rounded-xl bg-white/70 p-4">
-              <p className="text-2xl font-semibold text-black">Book</p>
-              <p className="text-xs text-black/50">Lorraine if needed</p>
-            </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-[1.35rem] border border-black/8 bg-white/75 p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-black/35">
+              Focus
+            </p>
+            <p className="mt-2 text-sm text-black/70">
+              Answer each question carefully before moving on.
+            </p>
           </div>
-        ) : (
-          <div className="mx-auto grid max-w-sm grid-cols-3 gap-4 py-4">
-            <div className="rounded-xl bg-white/70 p-4">
-              <p className="text-2xl font-semibold text-black">{quiz.questions.length}</p>
-              <p className="text-xs text-black/50">Questions</p>
-            </div>
-            <div className="rounded-xl bg-white/70 p-4">
-              <p className="text-2xl font-semibold text-black">{quiz.passingScore}%</p>
-              <p className="text-xs text-black/50">To Pass</p>
-            </div>
-            <div className="rounded-xl bg-white/70 p-4">
-              <p className="text-2xl font-semibold text-black">
-                {quiz.timeLimit ? `${quiz.timeLimit}m` : "∞"}
-              </p>
-              <p className="text-xs text-black/50">Time Limit</p>
-            </div>
+          <div className="rounded-[1.35rem] border border-black/8 bg-white/75 p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-black/35">
+              Review
+            </p>
+            <p className="mt-2 text-sm text-black/70">
+              See your score, correct answers, and next steps at the end.
+            </p>
           </div>
-        )}
+          <div className="rounded-[1.35rem] border border-black/8 bg-white/75 p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-black/35">
+              Progress
+            </p>
+            <p className="mt-2 text-sm text-black/70">
+              Your attempt stays in the academy flow for easy review later.
+            </p>
+          </div>
+        </div>
 
-        <Button variant="primary" size="lg" onClick={() => setStarted(true)}>
-          {isConsumerMode ? "Start scalp check" : "Start Quiz"}
-        </Button>
+        <div className="flex justify-center">
+          <Button variant="primary" size="lg" onClick={() => setStarted(true)}>
+            Start quiz
+          </Button>
+        </div>
       </Surface>
     );
   }

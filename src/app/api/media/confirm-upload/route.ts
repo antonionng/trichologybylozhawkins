@@ -4,7 +4,7 @@ import { requireUser } from "@/server/security/auth";
 
 export const dynamic = "force-dynamic";
 
-type ConfirmKind = "video-product-hero" | "video-product-video";
+type ConfirmKind = "video-product-hero" | "video-product-video" | "quiz-hero";
 
 export async function POST(request: Request) {
   try {
@@ -13,19 +13,45 @@ export async function POST(request: Request) {
     const body = await request.json();
     const kind = body.kind as ConfirmKind;
     const videoProductId = (body.videoProductId ?? "").trim();
+    const quizId = (body.quizId ?? "").trim();
     const storagePath = (body.storagePath ?? "").trim();
     const contentType = (body.contentType ?? "").trim();
     const title = (body.title ?? "").trim() || undefined;
     const sizeBytes = body.sizeBytes ?? 0;
 
-    if (!kind || !["video-product-hero", "video-product-video"].includes(kind)) {
+    if (
+      !kind ||
+      !["video-product-hero", "video-product-video", "quiz-hero"].includes(kind)
+    ) {
       return NextResponse.json({ error: "Invalid kind" }, { status: 400 });
     }
-    if (!videoProductId) {
+    if (kind === "quiz-hero") {
+      if (!quizId) {
+        return NextResponse.json({ error: "quizId is required" }, { status: 400 });
+      }
+    } else if (!videoProductId) {
       return NextResponse.json({ error: "videoProductId is required" }, { status: 400 });
     }
     if (!storagePath) {
       return NextResponse.json({ error: "storagePath is required" }, { status: 400 });
+    }
+
+    if (kind === "quiz-hero") {
+      const media = await prisma.mediaAsset.create({
+        data: {
+          title: title ?? "Quiz card image",
+          path: storagePath,
+          mimeType: contentType || "image/jpeg",
+          sizeBytes,
+        },
+      });
+
+      await prisma.quiz.update({
+        where: { id: quizId },
+        data: { heroMediaId: media.id, cardImageUrl: null },
+      });
+
+      return NextResponse.json({ ok: true, kind, media });
     }
 
     if (kind === "video-product-hero") {

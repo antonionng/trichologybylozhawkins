@@ -18,6 +18,12 @@ export const quizCreateSchema = z.object({
   slug: z.string().min(1).optional(),
   resultsCopy: z.any().optional(),
   recommendedCourseId: z.string().cuid().nullable().optional(),
+  heroMediaId: z.string().cuid().nullable().optional(),
+  cardImageUrl: z
+    .union([z.string().url(), z.literal("")])
+    .nullable()
+    .optional()
+    .transform((v) => (v === "" ? null : v)),
 });
 
 export const quizUpdateSchema = quizCreateSchema.partial().extend({
@@ -65,6 +71,7 @@ export async function getQuiz(id: string) {
     where: { id },
     include: {
       course: { select: { id: true, title: true, slug: true } },
+      heroMedia: { select: { id: true, path: true } },
       questions: { orderBy: { position: "asc" } },
       _count: { select: { attempts: true } },
     },
@@ -88,6 +95,7 @@ export async function updateQuiz(input: z.infer<typeof quizUpdateSchema>) {
     data,
     include: {
       course: { select: { id: true, title: true } },
+      heroMedia: { select: { id: true, path: true } },
     },
   });
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Panel } from "@/components/admin/Panel";
 import { AdminButton } from "@/components/admin/AdminButton";
@@ -24,6 +25,8 @@ type Quiz = {
   isPublic: boolean;
   isFeaturedLead: boolean;
   slug: string | null;
+  cardImageUrl?: string | null;
+  heroMedia?: { id: string; path: string } | null;
   recommendedCourseId?: string | null;
   course: { id: string; title: string; slug: string };
   recommendedCourse?: { id: string; title: string } | null;
@@ -43,17 +46,20 @@ type Quiz = {
 type Props = {
   quiz: Quiz;
   courses: Array<{ id: string; title: string }>;
+  /** Resolved preview URL (signed storage or external) */
+  heroUrl?: string | null;
 };
 
-type TabKey = "settings" | "questions" | "attempts";
+type TabKey = "settings" | "media" | "questions" | "attempts";
 
 const TABS: AdminTab[] = [
   { key: "settings", label: "Settings" },
+  { key: "media", label: "Card image" },
   { key: "questions", label: "Questions" },
   { key: "attempts", label: "Attempts" },
 ];
 
-export function QuizEditor({ quiz, courses }: Props) {
+export function QuizEditor({ quiz, courses, heroUrl }: Props) {
   const router = useRouter();
   const { toast } = useToast();
   const [tab, setTab] = useState<TabKey>("settings");
@@ -71,6 +77,7 @@ export function QuizEditor({ quiz, courses }: Props) {
     isPublic: quiz.isPublic,
     isFeaturedLead: quiz.isFeaturedLead,
     slug: quiz.slug || "",
+    cardImageUrl: quiz.cardImageUrl || "",
   });
 
   const [newQuestion, setNewQuestion] = useState({
@@ -84,10 +91,12 @@ export function QuizEditor({ quiz, courses }: Props) {
   const [aiTopic, setAiTopic] = useState("");
   const [aiDifficulty, setAiDifficulty] = useState<"BEGINNER" | "INTERMEDIATE" | "ADVANCED">("INTERMEDIATE");
   const [aiCount, setAiCount] = useState(10);
+  const [uploading, setUploading] = useState(false);
 
   const handleSave = async () => {
     setSaving(true); setError(null);
     try {
+      const trimmedUrl = form.cardImageUrl.trim();
       const res = await fetch(`/api/education/quizzes/${quiz.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -99,6 +108,8 @@ export function QuizEditor({ quiz, courses }: Props) {
           isPublic: form.isPublic,
           isFeaturedLead: form.isFeaturedLead,
           slug: form.slug.trim() || undefined,
+          cardImageUrl: trimmedUrl || null,
+          ...(trimmedUrl ? { heroMediaId: null } : {}),
         }),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to save"); }
@@ -108,6 +119,82 @@ export function QuizEditor({ quiz, courses }: Props) {
       setError(err instanceof Error ? err.message : "Failed to save");
       toast("Failed to save", "error");
     } finally { setSaving(false); }
+  };
+
+  const uploadHero = async (file: File) => {
+    setUploading(true);
+    setError(null);
+    try {
+      const prepRes = await fetch("/api/media/prepare-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "quiz-hero",
+          quizId: quiz.id,
+          filename: file.name,
+          contentType: file.type || "application/octet-stream",
+        }),
+      });
+      const prepJson = await prepRes.json();
+      if (!prepRes.ok) throw new Error(prepJson?.error ?? "Failed to prepare upload");
+
+      const uploadRes = await fetch(prepJson.signedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file,
+      });
+      if (!uploadRes.ok) {
+        const text = await uploadRes.text().catch(() => "");
+        throw new Error(text || `Upload failed (${uploadRes.status})`);
+      }
+
+      const confirmRes = await fetch("/api/media/confirm-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "quiz-hero",
+          quizId: quiz.id,
+          storagePath: prepJson.storagePath,
+          contentType: file.type || "application/octet-stream",
+          title: `Quiz: ${quiz.title}`,
+          sizeBytes: file.size,
+        }),
+      });
+      const confirmJson = await confirmRes.json();
+      if (!confirmRes.ok) throw new Error(confirmJson?.error ?? "Failed to save upload");
+      setForm((p) => ({ ...p, cardImageUrl: "" }));
+      toast("Card image uploaded", "success");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+      toast("Upload failed", "error");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const clearCardImage = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/education/quizzes/${quiz.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ heroMediaId: null, cardImageUrl: null }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "Failed to clear");
+      }
+      setForm((p) => ({ ...p, cardImageUrl: "" }));
+      toast("Card image removed", "success");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to clear");
+      toast("Failed to remove image", "error");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAddQuestion = async () => {
@@ -257,6 +344,55 @@ export function QuizEditor({ quiz, courses }: Props) {
               className="h-4 w-4 rounded border-admin-border-strong bg-admin-elevated text-admin-accent focus:ring-admin-accent/40"
             />
             <label htmlFor="isRequired" className="text-sm text-admin-text-secondary">Required to complete course</label>
+          </div>
+        </Panel>
+      )}
+
+      {tab === "media" && (
+        <Panel variant="default" padding="lg" className="space-y-5 max-w-2xl">
+          <div>
+            <h2 className="text-sm font-semibold text-admin-text">Quiz card image</h2>
+            <p className="mt-1 text-xs text-admin-text-muted">
+              Shown on academy quiz cards, public quiz pages, and the admin list. Upload to Supabase or paste an external image URL (e.g. CDN). External URL replaces an uploaded image when you save.
+            </p>
+          </div>
+          {heroUrl ? (
+            <div className="relative h-44 w-full overflow-hidden rounded-lg border border-admin-border bg-admin-elevated">
+              <Image src={heroUrl} alt="" fill className="object-cover" sizes="(max-width: 768px) 100vw, 448px" />
+            </div>
+          ) : (
+            <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-admin-border text-sm text-admin-text-muted">
+              No card image yet
+            </div>
+          )}
+          <div className="space-y-2">
+            <label className="block text-xs font-medium text-admin-text-secondary">Upload image</label>
+            <input
+              type="file"
+              accept="image/*"
+              disabled={uploading}
+              className="block w-full text-sm text-admin-text file:mr-3 file:rounded-md file:border-0 file:bg-admin-accent file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = "";
+                if (f) void uploadHero(f);
+              }}
+            />
+            {uploading ? <p className="text-xs text-admin-text-muted">Uploading…</p> : null}
+          </div>
+          <AdminInput
+            label="External image URL"
+            value={form.cardImageUrl}
+            onChange={(e) => setForm((p) => ({ ...p, cardImageUrl: e.target.value }))}
+            placeholder="https://…"
+          />
+          <div className="flex flex-wrap gap-2">
+            <AdminButton type="button" variant="secondary" size="sm" onClick={handleSave} loading={saving} disabled={uploading}>
+              Save URL
+            </AdminButton>
+            <AdminButton type="button" variant="ghost" size="sm" onClick={() => void clearCardImage()} loading={saving} disabled={uploading}>
+              Remove image
+            </AdminButton>
           </div>
         </Panel>
       )}

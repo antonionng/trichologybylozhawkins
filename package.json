@@ -14,6 +14,7 @@
     "prisma:migrate": "prisma migrate dev",
     "seed:user": "npx tsx scripts/seed-user.ts",
     "seed:shop": "npx tsx scripts/seed-shop-catalog.ts",
+    "backfill:quiz-images": "npx tsx scripts/backfill-quiz-card-images.ts",
     "pretest": "prisma generate",
     "test": "vitest",
     "postinstall": "prisma generate",

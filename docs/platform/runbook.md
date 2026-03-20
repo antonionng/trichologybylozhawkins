@@ -28,6 +28,11 @@
 
 ## Seeding / Fixtures
 
+- **Quiz card images (non-destructive):** Published quizzes with no `cardImageUrl` and no `heroMediaId` can get default Unsplash URLs in rotation:
+  ```bash
+  DRY_RUN=1 npm run backfill:quiz-images   # preview
+  npm run backfill:quiz-images             # apply (uses DATABASE_URL from `.env`)
+  ```
 - Use Prisma Studio (`npx prisma studio`) for ad-hoc seeding.
 - Minimal APIs exist for:
   - `POST /api/crm/contacts`

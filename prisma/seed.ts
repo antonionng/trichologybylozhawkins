@@ -27,6 +27,11 @@ import {
 } from "@prisma/client";
 import fs from "fs";
 import path from "path";
+import {
+  quizCardImages,
+  QUIZ_CARD_IMAGE_POOL,
+  resolveQuizCardImage,
+} from "../src/lib/quizCardImagePool";
 
 const prisma = new PrismaClient();
 
@@ -521,6 +526,10 @@ async function main() {
 
         // Create module quiz if present
         if (moduleData.quiz && moduleData.quiz.questions.length > 0) {
+          const moduleQuizCardImageUrl = resolveQuizCardImage({
+            title: moduleData.quiz.title,
+            description: moduleData.description,
+          });
           const moduleQuiz = await prisma.quiz.create({
             data: {
               courseId: course.id,
@@ -529,6 +538,7 @@ async function main() {
               passingScore: moduleData.quiz.passingScore,
               isRequired: true,
               status: QuizStatus.PUBLISHED,
+              cardImageUrl: moduleQuizCardImageUrl ?? undefined,
             },
           });
           for (let qi = 0; qi < moduleData.quiz.questions.length; qi++) {
@@ -693,6 +703,11 @@ async function main() {
           description: examData.description,
           passingScore: examData.passingScore,
           status: QuizStatus.PUBLISHED,
+          cardImageUrl:
+            resolveQuizCardImage({
+              title: examData.title,
+              description: examData.description,
+            }) ?? undefined,
         },
       });
 
@@ -766,6 +781,7 @@ async function main() {
     slug?: string;
     resultsCopy?: any;
     recommendedCourseId?: string | null;
+    cardImageUrl?: string | null;
     questions: Array<{
       questionText: string;
       questionType: QuestionType;
@@ -775,6 +791,13 @@ async function main() {
       points?: number;
     }>;
   }) => {
+    const resolvedCardImageUrl =
+      input.cardImageUrl ??
+      resolveQuizCardImage({
+        slug: input.slug,
+        title: input.title,
+        description: input.description,
+      });
     const quiz = await prisma.quiz.create({
       data: {
         courseId: quizContainerCourse.id,
@@ -786,6 +809,7 @@ async function main() {
         slug: input.slug ?? undefined,
         resultsCopy: input.resultsCopy ?? undefined,
         recommendedCourseId: input.recommendedCourseId ?? undefined,
+        cardImageUrl: resolvedCardImageUrl ?? undefined,
       },
     });
 
@@ -855,6 +879,7 @@ async function main() {
       "A quick assessment to benchmark your trichology knowledge and highlight the next best steps for your learning.",
     isPublic: true,
     slug: "trichology-knowledge-check",
+    cardImageUrl: quizCardImages.knowledgeCheck,
     recommendedCourseId: recommendedCourse?.id ?? null,
     resultsCopy: {
       low: {
@@ -939,6 +964,7 @@ async function main() {
     description: "Core fundamentals: structure, cycle phases, and what shedding really means.",
     isPublic: true,
     slug: "hair-growth-anatomy",
+    cardImageUrl: quizCardImages.hairAnatomy,
     recommendedCourseId: recommendedCourse?.id ?? null,
     resultsCopy: {
       low: {
@@ -977,6 +1003,7 @@ async function main() {
     description: "Pattern recognition, common contributors, and supportive management principles.",
     isPublic: true,
     slug: "female-pattern-hair-loss",
+    cardImageUrl: quizCardImages.femalePattern,
     recommendedCourseId: recommendedCourse?.id ?? null,
     resultsCopy: {
       low: {
@@ -1011,6 +1038,7 @@ async function main() {
     description: "Identify typical triggers, timeline, and reassurance principles.",
     isPublic: true,
     slug: "telogen-effluvium",
+    cardImageUrl: quizCardImages.telogen,
     recommendedCourseId: recommendedCourse?.id ?? null,
     resultsCopy: {
       low: {
@@ -1045,6 +1073,7 @@ async function main() {
     description: "Scale, itch, and inflammation: differentiate common presentations.",
     isPublic: true,
     slug: "scalp-dermatitis-inflammation",
+    cardImageUrl: quizCardImages.scalpInflammation,
     recommendedCourseId: recommendedCourse?.id ?? null,
     resultsCopy: {
       low: {
@@ -1079,6 +1108,7 @@ async function main() {
     description: "Patterns, early warning signs, and prevention principles.",
     isPublic: true,
     slug: "traction-alopecia",
+    cardImageUrl: quizCardImages.traction,
     recommendedCourseId: recommendedCourse?.id ?? null,
     resultsCopy: {
       low: {
@@ -1113,6 +1143,7 @@ async function main() {
     description: "Structure your consult, capture the timeline, and interpret what you see.",
     isPublic: true,
     slug: "consultation-workflow",
+    cardImageUrl: quizCardImages.consultation,
     recommendedCourseId: recommendedCourse?.id ?? null,
     resultsCopy: {
       low: {
@@ -1147,6 +1178,7 @@ async function main() {
     description: "Key nutrients, red flags, and how to discuss tests appropriately.",
     isPublic: true,
     slug: "nutrition-hair-health",
+    cardImageUrl: quizCardImages.nutrition,
     recommendedCourseId: recommendedCourse?.id ?? null,
     resultsCopy: {
       low: {
@@ -1181,6 +1213,7 @@ async function main() {
     description: "Make evidence-based recommendations and avoid common pitfalls.",
     isPublic: true,
     slug: "product-ingredient-literacy",
+    cardImageUrl: quizCardImages.productCare,
     recommendedCourseId: recommendedCourse?.id ?? null,
     resultsCopy: {
       low: {
@@ -1211,6 +1244,34 @@ async function main() {
   });
 
   console.log("✓ Created Academy quizzes container course + 9 quizzes (8 standalone + 1 featured)");
+
+  const quizzesMissingCard = await prisma.quiz.findMany({
+    where: {
+      status: QuizStatus.PUBLISHED,
+      cardImageUrl: null,
+      heroMediaId: null,
+    },
+    select: { id: true, title: true, slug: true, description: true },
+    orderBy: { createdAt: "asc" },
+  });
+  for (let i = 0; i < quizzesMissingCard.length; i++) {
+    const quiz = quizzesMissingCard[i]!;
+    const resolvedCardImageUrl =
+      resolveQuizCardImage({
+        slug: quiz.slug,
+        title: quiz.title,
+        description: quiz.description,
+      }) ?? QUIZ_CARD_IMAGE_POOL[i % QUIZ_CARD_IMAGE_POOL.length];
+    await prisma.quiz.update({
+      where: { id: quiz.id },
+      data: { cardImageUrl: resolvedCardImageUrl },
+    });
+  }
+  if (quizzesMissingCard.length > 0) {
+    console.log(
+      `✓ Assigned default card images to ${quizzesMissingCard.length} quiz(es) still missing artwork`,
+    );
+  }
 
   // --- VIDEO PRODUCT SEEDING ---
   console.log("\nCreating Video Products...");

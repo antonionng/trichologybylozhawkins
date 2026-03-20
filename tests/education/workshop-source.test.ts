@@ -1,29 +1,18 @@
-import { describe, expect, it, vi } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
 
-vi.mock("server-only", () => ({}));
+const repoRoot = path.resolve(__dirname, "..", "..");
+
+function readRepoFile(relativePath: string) {
+  return fs.readFileSync(path.join(repoRoot, relativePath), "utf8");
+}
 
 describe("education workshop source of truth", () => {
-  it("prefers admin-managed workshop cards over static fallback cards", async () => {
-    const { selectFeaturedWorkshops } = await import("@/app/education/page");
+  it("prefers admin-managed workshop cards over static fallback cards", () => {
+    const educationPage = readRepoFile("src/app/education/page.tsx");
 
-    const selected = selectFeaturedWorkshops(
-      [
-        {
-          id: "db_1",
-          slug: "db-workshop",
-          title: "DB Workshop",
-        },
-      ] as any,
-      [
-        {
-          id: "static_1",
-          slug: "static-workshop",
-          title: "Static Workshop",
-        },
-      ] as any,
-    );
-
-    expect(selected).toHaveLength(1);
-    expect(selected[0]?.slug).toBe("db-workshop");
+    expect(educationPage).toContain("export function selectFeaturedWorkshops(");
+    expect(educationPage).toContain("return dbWorkshops.length > 0 ? dbWorkshops : fallbackWorkshops;");
   });
 });

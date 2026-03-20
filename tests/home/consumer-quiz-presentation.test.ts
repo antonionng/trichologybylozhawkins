@@ -34,6 +34,8 @@ describe("consumer quiz presentation copy", () => {
     const resultCopy = getConsumerQuizResultCopy();
 
     expect(gateCopy.eyebrow).toBe("See Lorraine's guidance");
+    expect(gateCopy.body).toContain("email");
+    expect(gateCopy.body.toLowerCase()).not.toContain("details");
     expect(gateCopy.submitLabel).toBe("Show my guidance");
     expect(resultCopy.summaryLabel).toBe("Lorraine's summary");
     expect(resultCopy.nextStepsLabel).toBe("What to do next");

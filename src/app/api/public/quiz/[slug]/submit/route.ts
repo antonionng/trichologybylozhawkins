@@ -3,7 +3,6 @@ import { z } from "zod";
 import { prisma } from "@/server/db/client";
 import { submitQuizAttempt } from "@/server/modules/education/quiz";
 import { ensureFeaturedPublicQuizExists } from "@/server/modules/education/featuredPublicQuiz";
-import { getCurrentFeaturedLeadItem } from "@/server/modules/education/featuredLeadItem";
 import { generateQuizAiFeedback } from "@/server/modules/education/quizAi";
 import { getQuizUpsellCoursesWithReasons } from "@/server/modules/education/recommendations";
 import { getCurrentSession } from "@/server/security/auth";
@@ -14,6 +13,7 @@ import {
   getPublicScalpQuizLeadSummary,
   isFeaturedPublicScalpQuiz,
 } from "@/server/modules/education/publicScalpQuiz";
+import { PROFESSIONAL_GATED_QUIZ_SLUG } from "@/lib/publicQuiz";
 
 export const dynamic = "force-dynamic";
 
@@ -80,14 +80,12 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 
-    const [featuredLeadItem, session] = await Promise.all([
-      getCurrentFeaturedLeadItem(),
-      getCurrentSession(),
-    ]);
-    const isFeaturedLeadQuiz =
-      featuredLeadItem?.kind === "QUIZ" && featuredLeadItem.slug === params.slug;
+    const session = await getCurrentSession();
+    const isScalpQuiz = isFeaturedPublicScalpQuiz(params.slug);
+    const isProfessionalGatedQuiz = params.slug === PROFESSIONAL_GATED_QUIZ_SLUG;
+    const contactSource = isScalpQuiz ? "trichology_quiz" : "quiz";
 
-    if (isFeaturedLeadQuiz && !session && (!data.name || !data.email)) {
+    if (isProfessionalGatedQuiz && !session && (!data.name || !data.email)) {
       return NextResponse.json({
         requiresSignup: true,
         teaserTitle: "Your full results are ready",
@@ -112,18 +110,25 @@ export async function POST(request: Request, { params }: RouteParams) {
       }
 
       if (user.contact) {
-        contact = user.contact;
+        if (isScalpQuiz && user.contact.source !== contactSource && prisma.contact.update) {
+          contact = await prisma.contact.update({
+            where: { id: user.contact.id },
+            data: { source: contactSource },
+          });
+        } else {
+          contact = user.contact;
+        }
       } else {
         contact = await prisma.contact.upsert({
           where: { email: user.email.toLowerCase() },
           update: {
-            source: "quiz",
+            source: contactSource,
           },
           create: {
             email: user.email.toLowerCase(),
             firstName: "Learner",
             lastName: "",
-            source: "quiz",
+            source: contactSource,
           },
         });
 
@@ -133,33 +138,41 @@ export async function POST(request: Request, { params }: RouteParams) {
         });
       }
     } else {
-      if (!data.name || !data.email) {
+      if (!data.email || (!isScalpQuiz && !data.name)) {
         return NextResponse.json(
-          { error: "Name and email are required to unlock your results" },
+          {
+            error: isScalpQuiz
+              ? "Email is required to unlock your results"
+              : "Name and email are required to unlock your results",
+          },
           { status: 400 },
         );
       }
 
       const email = data.email.toLowerCase();
-      const { firstName, lastName } = splitName(data.name);
+      const nameParts = data.name ? splitName(data.name) : { firstName: "Guest", lastName: "" };
 
       contact = await prisma.contact.upsert({
         where: { email },
         update: {
-          firstName,
-          lastName,
-          source: "quiz",
+          ...(data.name
+            ? {
+                firstName: nameParts.firstName,
+                lastName: nameParts.lastName,
+              }
+            : {}),
+          source: contactSource,
         },
         create: {
           email,
-          firstName,
-          lastName,
-          source: "quiz",
+          firstName: nameParts.firstName,
+          lastName: nameParts.lastName,
+          source: contactSource,
         },
       });
     }
 
-    if (isFeaturedPublicScalpQuiz(params.slug)) {
+    if (isScalpQuiz) {
       const submission = buildPublicScalpQuizSubmission({
         quizQuestions: quiz.questions.map((question) => ({
           id: question.id,

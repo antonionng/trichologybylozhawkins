@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { AdminTable, AdminColumn } from "@/components/admin/AdminTable";
 import { AdminButton } from "@/components/admin/AdminButton";
 import { StatusBadge, AdminBadge } from "@/components/admin/AdminBadge";
@@ -17,9 +18,23 @@ type QuizRow = {
   createdAt: string;
   course: { id: string; title: string; slug: string };
   _count: { questions: number; attempts: number };
+  heroUrl?: string | null;
 };
 
 const columns: AdminColumn<QuizRow>[] = [
+  {
+    key: "thumb",
+    header: "",
+    className: "w-14",
+    render: (row) =>
+      row.heroUrl ? (
+        <div className="relative h-10 w-14 overflow-hidden rounded-md border border-admin-border bg-admin-elevated">
+          <Image src={row.heroUrl} alt={row.title} fill className="object-cover" sizes="56px" />
+        </div>
+      ) : (
+        <div className="h-10 w-14 rounded-md border border-dashed border-admin-border bg-admin-surface/50" />
+      ),
+  },
   {
     key: "title",
     header: "Quiz",

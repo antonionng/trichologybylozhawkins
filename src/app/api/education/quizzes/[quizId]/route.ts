@@ -46,6 +46,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     const quiz = await updateQuiz(input);
     revalidatePath("/");
     revalidatePath("/education");
+    revalidatePath("/academy");
     revalidatePath(`/quiz/${quiz.slug ?? ""}`);
     return NextResponse.json(quiz);
   } catch (error) {

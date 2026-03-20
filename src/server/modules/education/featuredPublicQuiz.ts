@@ -1,6 +1,7 @@
 import { CourseLevel, CourseStatus, EnrollmentType, QuestionType, QuizStatus } from "@prisma/client";
 import { prisma } from "@/server/db/client";
 import { FEATURED_PUBLIC_QUIZ_SLUG } from "@/lib/publicQuiz";
+import { quizCardImages } from "@/lib/quizCardImagePool";
 import { getFeaturedPublicScalpQuizContent } from "@/server/modules/education/publicScalpQuiz";
 
 type SeedQuestion = {
@@ -110,6 +111,7 @@ export async function ensureFeaturedPublicQuizExists(slug: string): Promise<bool
       isPublic: true,
       resultsCopy: FEATURED_PUBLIC_QUIZ.resultsCopy as any,
       recommendedCourseId: recommendedCourse?.id ?? null,
+      cardImageUrl: quizCardImages.knowledgeCheck,
     },
     create: {
       courseId: containerCourse.id,
@@ -121,6 +123,7 @@ export async function ensureFeaturedPublicQuizExists(slug: string): Promise<bool
       slug: FEATURED_PUBLIC_QUIZ_SLUG,
       resultsCopy: FEATURED_PUBLIC_QUIZ.resultsCopy as any,
       recommendedCourseId: recommendedCourse?.id ?? null,
+      cardImageUrl: quizCardImages.knowledgeCheck,
     },
   });
 
