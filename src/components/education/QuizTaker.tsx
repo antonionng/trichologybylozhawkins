@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Surface } from "@/components/layout/Surface";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { PurchaseButton } from "@/components/education/PurchaseButton";
 import {
   getConsumerQuizGateCopy,
@@ -23,6 +24,7 @@ type Question = {
 
 type Quiz = {
   id: string;
+  slug?: string | null;
   title: string;
   description: string | null;
   passingScore: number;
@@ -34,7 +36,7 @@ type Quiz = {
 type Props = {
   quiz: Quiz;
   submitUrl?: string;
-  mode?: "academy" | "public_lead_gate" | "public_consumer";
+  mode?: "academy" | "public_lead_gate" | "public_consumer" | "public_signup_gate";
   resultPrimaryCta?: { href: string; label: string };
   resultSecondaryCta?: { href: string; label: string };
 };
@@ -45,6 +47,10 @@ type Answer = {
 };
 
 type QuizResult = {
+  requiresSignup?: boolean;
+  signupPath?: string;
+  teaserTitle?: string;
+  teaserBody?: string;
   resultMode?: "consumer_scalp";
   score: number;
   maxScore: number;
@@ -103,6 +109,7 @@ export function QuizTaker({
   resultPrimaryCta,
   resultSecondaryCta,
 }: Props) {
+  const searchParams = useSearchParams();
   const [started, setStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
@@ -117,7 +124,8 @@ export function QuizTaker({
   const currentQuestion = quiz.questions[currentIndex];
   const currentAnswer = answers.find((a) => a.questionId === currentQuestion?.id);
   const progress = ((currentIndex + 1) / quiz.questions.length) * 100;
-  const isConsumerMode = mode === "public_consumer";
+  const isConsumerMode = mode === "public_consumer" || mode === "public_signup_gate";
+  const isSignupGateMode = mode === "public_signup_gate";
   const consumerIntro = getConsumerQuizIntro(quiz.questions.length);
   const consumerQuestionCopy = getConsumerQuizQuestionCopy(currentIndex + 1, quiz.questions.length);
   const consumerGateCopy = getConsumerQuizGateCopy();
@@ -130,6 +138,28 @@ export function QuizTaker({
     if (showAllCourses) return upsellCourses;
     return upsellCourses.slice(0, 6);
   }, [showAllCourses, upsellCourses]);
+  const unlockStorageKey = useMemo(
+    () => `lh_quiz_unlock:${quiz.slug ?? quiz.id}`,
+    [quiz.id, quiz.slug],
+  );
+
+  const buildSignupPath = useCallback(() => {
+    const quizPath = `/quiz/${quiz.slug ?? quiz.id}?unlock=1`;
+    return `/academy/signup?next=${encodeURIComponent(quizPath)}`;
+  }, [quiz.id, quiz.slug]);
+
+  const persistPendingAnswers = useCallback(
+    (nextAnswers: Answer[]) => {
+      if (typeof window === "undefined") return;
+      window.sessionStorage.setItem(unlockStorageKey, JSON.stringify(nextAnswers));
+    },
+    [unlockStorageKey],
+  );
+
+  const clearPendingAnswers = useCallback(() => {
+    if (typeof window === "undefined") return;
+    window.sessionStorage.removeItem(unlockStorageKey);
+  }, [unlockStorageKey]);
 
   const handleAnswer = (questionId: string, answer: number | string) => {
     setAnswers((prev) => {
@@ -156,6 +186,7 @@ export function QuizTaker({
   };
 
   const resetQuiz = () => {
+    clearPendingAnswers();
     setResult(null);
     setAnswers([]);
     setCurrentIndex(0);
@@ -166,6 +197,51 @@ export function QuizTaker({
     setShowAllCourses(false);
     setError(null);
   };
+
+  const submitAnswers = useCallback(
+    async (payload?: { answers?: Answer[]; name?: string; email?: string }) => {
+      setSubmitting(true);
+      setError(null);
+
+      try {
+        const nextAnswers = payload?.answers ?? answers;
+        const endpoint =
+          submitUrl ??
+          (mode === "academy"
+            ? `/api/academy/quiz/${quiz.id}/submit`
+            : `/api/public/quiz/${quiz.id}/submit`);
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            answers: nextAnswers,
+            ...(payload?.name ? { name: payload.name } : {}),
+            ...(payload?.email ? { email: payload.email } : {}),
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to submit quiz");
+        }
+
+        if (data.requiresSignup) {
+          persistPendingAnswers(nextAnswers);
+        } else {
+          clearPendingAnswers();
+        }
+
+        setResult(data);
+        setGateOpen(false);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to submit quiz");
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [answers, clearPendingAnswers, mode, persistPendingAnswers, quiz.id, submitUrl],
+  );
 
   const handleSubmit = async () => {
     if (answers.length !== quiz.questions.length) {
@@ -178,29 +254,7 @@ export function QuizTaker({
       return;
     }
 
-    setSubmitting(true);
-    setError(null);
-
-    try {
-      const endpoint = submitUrl ?? `/api/academy/quiz/${quiz.id}/submit`;
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to submit quiz");
-      }
-
-      setResult(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit quiz");
-    } finally {
-      setSubmitting(false);
-    }
+    await submitAnswers();
   };
 
   const handleLeadSubmit = async () => {
@@ -209,35 +263,80 @@ export function QuizTaker({
       return;
     }
 
-    setSubmitting(true);
-    setError(null);
-
-    try {
-      const endpoint = submitUrl ?? `/api/public/quiz/${quiz.id}/submit`;
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: leadName.trim(),
-          email: leadEmail.trim(),
-          answers,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to submit quiz");
-      }
-      setResult(data);
-      setGateOpen(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit quiz");
-    } finally {
-      setSubmitting(false);
-    }
+    await submitAnswers({
+      name: leadName.trim(),
+      email: leadEmail.trim(),
+    });
   };
 
+  useEffect(() => {
+    if (!isSignupGateMode) return;
+    if (searchParams.get("unlock") !== "1") return;
+    if (result || submitting) return;
+    if (typeof window === "undefined") return;
+
+    const storedAnswers = window.sessionStorage.getItem(unlockStorageKey);
+    if (!storedAnswers) return;
+
+    try {
+      const parsedAnswers = JSON.parse(storedAnswers) as Answer[];
+      if (!Array.isArray(parsedAnswers) || parsedAnswers.length !== quiz.questions.length) {
+        clearPendingAnswers();
+        return;
+      }
+
+      setStarted(true);
+      setAnswers(parsedAnswers);
+      void submitAnswers({ answers: parsedAnswers });
+    } catch {
+      clearPendingAnswers();
+    }
+  }, [
+    clearPendingAnswers,
+    isSignupGateMode,
+    quiz.questions.length,
+    result,
+    searchParams,
+    submitAnswers,
+    submitting,
+    unlockStorageKey,
+  ]);
+
   if (result) {
+    if (result.requiresSignup) {
+      const signupPath = result.signupPath ?? buildSignupPath();
+
+      return (
+        <Surface variant="glass" padding="lg" className="space-y-6">
+          <div className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-brand-graphite/40">
+              Full results unlocked on signup
+            </p>
+            <h1 className="font-display text-3xl leading-[1.1] text-brand-graphite sm:text-[2.5rem]">
+              {result.teaserTitle ?? "Your full results are ready"}
+            </h1>
+            <p className="max-w-2xl text-base leading-relaxed text-brand-graphite/65">
+              {result.teaserBody ??
+                "Create your free academy account to unlock your personalised next steps and recommended training."}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={signupPath}
+              onClick={() => persistPendingAnswers(answers)}
+              className="inline-flex items-center justify-center rounded-full bg-brand-graphite px-6 py-3 text-sm font-semibold text-brand-ivory transition hover:bg-brand-graphite/90"
+            >
+              Create free academy account
+            </Link>
+            <Button variant="ghost" size="md" onClick={resetQuiz}>
+              Try Again
+            </Button>
+          </div>
+        </Surface>
+      );
+    }
+
     if (result.resultMode === "consumer_scalp") {
       const primary = result.bookingCta ?? resultPrimaryCta ?? { href: "/contact?service=clinic", label: "Book a scalp consultation with Lorraine" };
       const secondary = result.secondaryCta ?? resultSecondaryCta ?? { href: "/education/conditions", label: "Learn about scalp concerns" };

@@ -112,6 +112,7 @@ export const videoProductUpsertSchema = z.object({
   description: z.string().optional(),
   category: z.string().optional(),
   durationMinutes: z.number().int().positive().optional(),
+  isFreeOnSignup: z.boolean().optional(),
   heroMediaId: z.string().cuid().nullable().optional(),
   status: z.nativeEnum(CourseStatus).default(CourseStatus.DRAFT),
   videoSourceType: videoSourceTypeSchema,

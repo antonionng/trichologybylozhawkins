@@ -21,7 +21,12 @@ type Quiz = {
   timeLimit: number | null;
   isRequired: boolean;
   status: string;
+  isPublic: boolean;
+  isFeaturedLead: boolean;
+  slug: string | null;
+  recommendedCourseId?: string | null;
   course: { id: string; title: string; slug: string };
+  recommendedCourse?: { id: string; title: string } | null;
   questions: Array<{
     id: string;
     position: number;
@@ -63,6 +68,9 @@ export function QuizEditor({ quiz, courses }: Props) {
     timeLimit: quiz.timeLimit || "",
     isRequired: quiz.isRequired,
     status: quiz.status,
+    isPublic: quiz.isPublic,
+    isFeaturedLead: quiz.isFeaturedLead,
+    slug: quiz.slug || "",
   });
 
   const [newQuestion, setNewQuestion] = useState({
@@ -88,6 +96,9 @@ export function QuizEditor({ quiz, courses }: Props) {
           courseId: form.courseId, passingScore: form.passingScore,
           timeLimit: form.timeLimit ? Number(form.timeLimit) : undefined,
           isRequired: form.isRequired, status: form.status,
+          isPublic: form.isPublic,
+          isFeaturedLead: form.isFeaturedLead,
+          slug: form.slug.trim() || undefined,
         }),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to save"); }
@@ -206,12 +217,40 @@ export function QuizEditor({ quiz, courses }: Props) {
           <div className="lg:col-span-2">
             <AdminTextarea label="Description" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} rows={3} />
           </div>
+          <AdminInput
+            label="Public quiz slug"
+            value={form.slug}
+            onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
+            placeholder="scalp-health-check"
+          />
           <AdminInput label="Passing Score (%)" type="number" min={0} max={100} value={String(form.passingScore)}
             onChange={(e) => setForm((p) => ({ ...p, passingScore: Number(e.target.value) }))} />
           <AdminInput label="Time Limit (mins)" type="number" min={1} value={String(form.timeLimit)}
             onChange={(e) => setForm((p) => ({ ...p, timeLimit: e.target.value }))} placeholder="No limit" />
           <AdminSelect label="Status" value={form.status} onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
             options={[{ value: "DRAFT", label: "Draft" }, { value: "PUBLISHED", label: "Published" }, { value: "ARCHIVED", label: "Archived" }]} />
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="isPublic"
+              checked={form.isPublic}
+              onChange={(e) => setForm((p) => ({ ...p, isPublic: e.target.checked }))}
+              className="h-4 w-4 rounded border-admin-border-strong bg-admin-elevated text-admin-accent focus:ring-admin-accent/40"
+            />
+            <label htmlFor="isPublic" className="text-sm text-admin-text-secondary">Public quiz</label>
+          </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="isFeaturedLead"
+              checked={form.isFeaturedLead}
+              onChange={(e) => setForm((p) => ({ ...p, isFeaturedLead: e.target.checked }))}
+              className="h-4 w-4 rounded border-admin-border-strong bg-admin-elevated text-admin-accent focus:ring-admin-accent/40"
+            />
+            <label htmlFor="isFeaturedLead" className="text-sm text-admin-text-secondary">
+              Featured lead quiz
+            </label>
+          </div>
           <div className="flex items-center gap-3">
             <input type="checkbox" id="isRequired" checked={form.isRequired}
               onChange={(e) => setForm((p) => ({ ...p, isRequired: e.target.checked }))}

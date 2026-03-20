@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { enrollInVideo } from "@/app/actions/education";
 import { prisma } from "@/server/db/client";
 import { Container } from "@/components/layout/Container";
 import { PageSection } from "@/components/layout/PageSection";
@@ -10,8 +11,8 @@ import { Surface } from "@/components/layout/Surface";
 import { ButtonLink } from "@/components/ui/Button";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
 import { getCurrentSession } from "@/server/security/auth";
+import { getCurrentFeaturedLeadItem } from "@/server/modules/education/featuredLeadItem";
 import { VideoPurchaseButton } from "@/components/education/VideoPurchaseButton";
-import { VideoEnrollButton } from "@/components/education/VideoEnrollButton";
 import { videoDetailFallbacks, videoLessons, VIDEO_HERO_PLACEHOLDER_BY_SLUG, VIDEO_HERO_PLACEHOLDER_DEFAULT } from "@/lib/content";
 import { getTopicAccent } from "@/lib/topicAccents";
 import { ArticleCta } from "@/components/sections/ArticleCta";
@@ -213,6 +214,19 @@ export default async function VideoDetailPage({
   ]);
   const accent = getTopicAccent(video.category);
   const isLoggedIn = !!session;
+  const featuredLeadItem = await getCurrentFeaturedLeadItem();
+  const isCurrentFreeSignupVideo =
+    featuredLeadItem?.kind === "VIDEO" && !!video.dbId && featuredLeadItem.id === video.dbId;
+
+  async function claimFreeLesson() {
+    "use server";
+
+    if (!video.dbId) {
+      throw new Error("Video not found");
+    }
+
+    await enrollInVideo(video.dbId);
+  }
 
   return (
     <main className="min-h-screen">
@@ -351,14 +365,24 @@ export default async function VideoDetailPage({
                   <p className="text-[10px] uppercase tracking-[0.3em] text-brand-graphite/35 font-bold">Instant access</p>
                   <div className="text-2xl font-bold text-brand-graphite">{video.priceLabel}</div>
                 </div>
-                {isLoggedIn && video.dbId ? (
-                  <VideoEnrollButton
-                    videoProductId={video.dbId}
-                    label="View Video"
-                    className="inline-flex w-full items-center justify-center rounded-xl bg-brand-graphite px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-graphite/85"
-                  />
+                {isLoggedIn && video.dbId && isCurrentFreeSignupVideo ? (
+                  <form action={claimFreeLesson}>
+                    <button
+                      type="submit"
+                      className="inline-flex w-full items-center justify-center rounded-xl bg-brand-graphite px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-graphite/85"
+                    >
+                      Unlock free lesson
+                    </button>
+                  </form>
                 ) : isLoggedIn ? (
                   <ButtonLink href="/academy" variant="secondary" size="sm" className="w-full justify-center">Go to Academy</ButtonLink>
+                ) : video.dbId && video.dbPriceId && video.dbAmount != null && video.dbCurrency ? (
+                  <VideoPurchaseButton
+                    videoProductId={video.dbId}
+                    priceId={video.dbPriceId}
+                    amount={video.dbAmount}
+                    currency={video.dbCurrency}
+                  />
                 ) : (
                   <ButtonLink href="/login" variant="secondary" size="sm" className="w-full justify-center">Sign in to watch</ButtonLink>
                 )}

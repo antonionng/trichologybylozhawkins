@@ -126,10 +126,21 @@ export async function upsertCourse(data: z.infer<typeof courseMutationSchema>) {
 
 export async function upsertVideoProduct(data: z.infer<typeof videoProductMutationSchema>) {
   await requireUserOrRedirect({ role: "ADMIN", next: "/dashboard/education/videos" });
+  if (data.isFreeOnSignup) {
+    await prisma.videoProduct.updateMany({
+      where: {
+        isFreeOnSignup: true,
+        ...(data.id ? { NOT: { id: data.id } } : {}),
+      },
+      data: { isFreeOnSignup: false },
+    });
+  }
   const video = await educationService.upsertVideoProduct(data as any);
+  revalidatePath("/");
   revalidatePath("/dashboard/education");
   revalidatePath("/dashboard/education/videos");
   revalidatePath(`/dashboard/education/videos/${video.id}`);
+  revalidatePath("/education");
   revalidatePath("/education/videos");
   revalidatePath(`/education/videos/${video.slug}`);
   return video;
@@ -203,6 +214,7 @@ export async function upsertVideoPrice(data: z.infer<typeof videoPriceMutationSc
   await requireUserOrRedirect({ role: "ADMIN", next: "/dashboard/education/videos" });
   const price = await educationService.upsertVideoProductPrice(data as any);
   revalidatePath(`/dashboard/education/videos/${price.videoProductId}`);
+  revalidatePath("/education");
   revalidatePath("/education/videos");
   return price;
 }
@@ -377,6 +389,7 @@ export async function enrollInVideo(videoProductId: string) {
 
   const video = await prisma.videoProduct.findUnique({ where: { id: videoProductId } });
   if (!video) throw new Error("Video not found");
+  if (!video.isFreeOnSignup) throw new Error("This video is not available for free signup access");
 
   const user = await prisma.user.findUnique({
     where: { id: userSession.uid },

@@ -1,6 +1,41 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db/client";
 import { createPasswordHash, setSessionCookieForUser } from "@/server/security/auth";
+import { getCurrentFeaturedLeadItem } from "@/server/modules/education/featuredLeadItem";
+import { sendAcademySignupNotifications } from "@/server/modules/education/notifications";
+
+async function grantSignupVideoAccess(contactId: string) {
+  const featuredLeadItem = await getCurrentFeaturedLeadItem();
+  const signupVideo = featuredLeadItem?.kind === "VIDEO" ? featuredLeadItem : null;
+
+  if (!signupVideo) {
+    return null;
+  }
+
+  const existingAccess = await prisma.videoAccess.findFirst({
+    where: {
+      contactId,
+      videoProductId: signupVideo.id,
+      status: "ACTIVE",
+    },
+  });
+
+  if (!existingAccess) {
+    await prisma.videoAccess.create({
+      data: {
+        contactId,
+        videoProductId: signupVideo.id,
+        status: "ACTIVE",
+        notes: "Granted automatically on academy signup",
+      },
+    });
+  }
+
+  return {
+    academyPath: `/academy/videos/${signupVideo.id}`,
+    videoTitle: signupVideo.title,
+  };
+}
 
 export async function POST(request: Request) {
   try {
@@ -64,7 +99,22 @@ export async function POST(request: Request) {
 
     await setSessionCookieForUser({ userId: user.id, role: user.role });
 
-    return NextResponse.json({ ok: true, role: user.role });
+    const signupVideo = await grantSignupVideoAccess(contact.id);
+
+    await sendAcademySignupNotifications({
+      contactId: contact.id,
+      email,
+      firstName,
+      lastName,
+      videoTitle: signupVideo?.videoTitle ?? null,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      role: user.role,
+      academyPath: signupVideo?.academyPath ?? "/academy",
+      videoTitle: signupVideo?.videoTitle ?? null,
+    });
   } catch (error) {
     console.error("[auth/signup] Error:", error);
     return NextResponse.json(

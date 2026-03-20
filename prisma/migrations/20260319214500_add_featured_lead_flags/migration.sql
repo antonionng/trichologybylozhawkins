@@ -1,0 +1,5 @@
+ALTER TABLE "VideoProduct"
+ADD COLUMN "isFreeOnSignup" BOOLEAN NOT NULL DEFAULT false;
+
+ALTER TABLE "Quiz"
+ADD COLUMN "isFeaturedLead" BOOLEAN NOT NULL DEFAULT false;

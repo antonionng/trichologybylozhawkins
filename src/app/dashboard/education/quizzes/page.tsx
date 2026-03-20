@@ -14,6 +14,7 @@ async function getQuizzes() {
       passingScore: true,
       status: true,
       isPublic: true,
+      isFeaturedLead: true,
       slug: true,
       createdAt: true,
       course: { select: { id: true, title: true, slug: true } },

@@ -313,7 +313,7 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
 
               <div className="space-y-4">
                 <Link
-                  href={`/academy/${course.id}`}
+                  href={`/education/checkout/${course.slug}`}
                   className="inline-flex w-full items-center justify-center rounded-xl bg-[#fab826] px-6 py-3 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-sm transition hover:bg-[#e5a820]"
                 >
                   Start Course
@@ -404,7 +404,7 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
             <p className="text-xs text-black/50 leading-tight">{course.title}</p>
           </div>
           <Link
-            href={`/academy/${course.id}`}
+            href={`/education/checkout/${course.slug}`}
             className="inline-flex items-center justify-center rounded-xl bg-[#fab826] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-sm transition hover:bg-[#e5a820]"
           >
             Start Course

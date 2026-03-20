@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ButtonLink } from "@/components/ui/Button";
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { FaqSection } from "@/components/sections/FaqSection";
+import { FreeAcademyVideoPromoSection } from "@/components/sections/FreeAcademyVideoPromoSection";
 import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 import { PageSection } from "@/components/layout/PageSection";
 import { Container } from "@/components/layout/Container";
@@ -14,6 +15,7 @@ import { getCourses, getPublicQuizzes, getWorkshops } from "@/app/actions/educat
 import { PurchaseButton } from "@/components/education/PurchaseButton";
 import { prisma } from "@/server/db/client";
 import { getCurrentSession } from "@/server/security/auth";
+import { getCurrentFeaturedLeadItem } from "@/server/modules/education/featuredLeadItem";
 import { getTopicAccent } from "@/lib/topicAccents";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
 import { photography } from "@/lib/visualAssets";
@@ -145,17 +147,61 @@ async function safeGetWorkshops(): Promise<WorkshopCard[]> {
   }));
 }
 
+async function getFreeSignupVideoPromo() {
+  try {
+    const lead = await getCurrentFeaturedLeadItem();
+    if (!lead) return null;
+
+    let heroUrl: string | null = null;
+    if (lead.kind === "VIDEO" && lead.heroMedia?.path) {
+      try {
+        heroUrl = await createSignedDownloadUrl(lead.heroMedia.path);
+      } catch {
+        heroUrl = null;
+      }
+    }
+    if (!heroUrl && lead.kind === "VIDEO") {
+      heroUrl = VIDEO_HERO_PLACEHOLDER_BY_SLUG[lead.slug] ?? VIDEO_HERO_PLACEHOLDER_DEFAULT;
+    }
+
+    return lead.kind === "QUIZ"
+      ? {
+          kind: "QUIZ" as const,
+          id: lead.id,
+          slug: lead.slug,
+          title: lead.title,
+          description: lead.description,
+          category: "Academy quiz",
+          heroUrl,
+        }
+      : {
+          kind: "VIDEO" as const,
+          id: lead.id,
+          slug: lead.slug,
+          title: lead.title,
+          subtitle: lead.subtitle,
+          description: lead.description,
+          category: lead.category,
+          durationLabel: lead.durationMinutes ? `${lead.durationMinutes} mins` : "Self-paced",
+          heroUrl,
+        };
+  } catch {
+    return null;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    Page
    ═══════════════════════════════════════════════════════════════════════ */
 
 export default async function Education() {
-  const [courses, publicQuizzes, videos, workshops, session] = await Promise.all([
+  const [courses, publicQuizzes, videos, workshops, session, freeSignupVideo] = await Promise.all([
     safeGetCourses(),
     safeGetQuizzes(),
     getVideos(),
     safeGetWorkshops(),
     getCurrentSession(),
+    getFreeSignupVideoPromo(),
   ]);
 
   const featuredWorkshops = selectFeaturedWorkshops(workshops, []);
@@ -234,6 +280,8 @@ export default async function Education() {
           </div>
         </Container>
       </section>
+
+      {freeSignupVideo ? <FreeAcademyVideoPromoSection lead={freeSignupVideo} /> : null}
 
       {/* ── Message from Lorraine ────────────────────────────────────────── */}
       <section className="border-y border-brand-graphite/6 bg-gradient-to-br from-brand-mist/10 via-brand-sand/20 to-white py-10 sm:py-14">

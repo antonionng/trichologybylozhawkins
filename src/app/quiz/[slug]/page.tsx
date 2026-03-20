@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/server/db/client";
 import { QuizTaker } from "@/components/education/QuizTaker";
 import { ensureFeaturedPublicQuizExists } from "@/server/modules/education/featuredPublicQuiz";
+import { getCurrentFeaturedLeadItem } from "@/server/modules/education/featuredLeadItem";
+import { getCurrentSession } from "@/server/security/auth";
 import { FEATURED_PUBLIC_QUIZ_RESULT_LABEL } from "@/lib/publicQuiz";
 import { Container } from "@/components/layout/Container";
 import { PageSection } from "@/components/layout/PageSection";
@@ -38,6 +40,11 @@ async function getPublicQuiz(slug: string) {
 }
 
 export default async function PublicQuizPage({ params }: Props) {
+  const [featuredLeadItem, session] = await Promise.all([
+    getCurrentFeaturedLeadItem(),
+    getCurrentSession(),
+  ]);
+
   let quiz = await getPublicQuiz(params.slug);
 
   // If the DB is fresh and seeding hasn't been run, bootstrap the featured public quiz on-demand.
@@ -53,6 +60,10 @@ export default async function PublicQuizPage({ params }: Props) {
   }
 
   const intro = getConsumerQuizIntro(quiz.questions.length);
+  const isFeaturedLeadQuiz =
+    featuredLeadItem?.kind === "QUIZ" && featuredLeadItem.slug === params.slug;
+  const quizMode =
+    isFeaturedLeadQuiz && !session ? "public_signup_gate" : "public_consumer";
 
   return (
     <main className="min-h-screen">
@@ -119,7 +130,7 @@ export default async function PublicQuizPage({ params }: Props) {
           <QuizTaker
             quiz={quiz as any}
             submitUrl={`/api/public/quiz/${encodeURIComponent(params.slug)}/submit`}
-            mode="public_consumer"
+            mode={quizMode}
             resultPrimaryCta={{ href: "/contact?service=clinic", label: FEATURED_PUBLIC_QUIZ_RESULT_LABEL }}
             resultSecondaryCta={{ href: "/education", label: "Explore academy" }}
           />

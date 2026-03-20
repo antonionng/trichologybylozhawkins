@@ -6,6 +6,8 @@ import { prisma } from "@/server/db/client";
 import { Container } from "@/components/layout/Container";
 import { ButtonLink } from "@/components/ui/Button";
 import { VideoPurchaseButton } from "@/components/education/VideoPurchaseButton";
+import { FreeAcademyVideoPromoSection } from "@/components/sections/FreeAcademyVideoPromoSection";
+import { getCurrentFeaturedLeadItem } from "@/server/modules/education/featuredLeadItem";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
 import { videoLessons, videoDetailFallbacks, VIDEO_HERO_PLACEHOLDER_BY_SLUG, VIDEO_HERO_PLACEHOLDER_DEFAULT } from "@/lib/content";
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
@@ -24,6 +26,7 @@ type VideoCardData = {
   whoItsFor: string;
   highlights: string[];
   heroUrl: string | null;
+  isFreeOnSignup?: boolean;
   dbVideoProductId?: string;
   dbPriceId?: string;
   dbAmount?: number;
@@ -32,6 +35,8 @@ type VideoCardData = {
 
 async function getVideos(): Promise<VideoCardData[]> {
   try {
+    const lead = await getCurrentFeaturedLeadItem();
+    const freeSignupVideo = lead?.kind === "VIDEO" ? lead : null;
     const dbVideos = await prisma.videoProduct.findMany({
       where: { status: "PUBLISHED" },
       include: {
@@ -44,8 +49,11 @@ async function getVideos(): Promise<VideoCardData[]> {
       const cards: VideoCardData[] = [];
       for (const v of dbVideos) {
         const pp = v.pricing.find((p) => p.isPrimary) || v.pricing[0];
+        const isCurrentFreeSignupVideo = freeSignupVideo?.id === v.id;
         const priceLabel = pp
-          ? pp.currency === "GBP" ? `\u00A3${pp.amount}` : `${pp.currency} ${pp.amount}`
+          ? isCurrentFreeSignupVideo
+            ? "Free with signup"
+            : pp.currency === "GBP" ? `\u00A3${pp.amount}` : `${pp.currency} ${pp.amount}`
           : "Free";
         let heroUrl: string | null = null;
         if (v.heroMedia?.path) {
@@ -61,6 +69,7 @@ async function getVideos(): Promise<VideoCardData[]> {
           whoItsFor: pc?.whoItsFor?.[0] || v.subtitle || "",
           highlights: (pc?.learningOutcomes || []).slice(0, 3),
           heroUrl,
+          isFreeOnSignup: isCurrentFreeSignupVideo,
           dbVideoProductId: v.id, dbPriceId: pp?.id,
           dbAmount: pp ? Number(pp.amount) : undefined, dbCurrency: pp?.currency,
         });
@@ -81,12 +90,58 @@ async function getVideos(): Promise<VideoCardData[]> {
   });
 }
 
+async function getFreeSignupVideoPromo() {
+  try {
+    const lead = await getCurrentFeaturedLeadItem();
+    if (!lead) return null;
+
+    let heroUrl: string | null = null;
+    if (lead.kind === "VIDEO" && lead.heroMedia?.path) {
+      try {
+        heroUrl = await createSignedDownloadUrl(lead.heroMedia.path);
+      } catch {
+        heroUrl = null;
+      }
+    }
+    if (!heroUrl && lead.kind === "VIDEO") {
+      heroUrl = VIDEO_HERO_PLACEHOLDER_BY_SLUG[lead.slug] ?? VIDEO_HERO_PLACEHOLDER_DEFAULT;
+    }
+
+    return lead.kind === "QUIZ"
+      ? {
+          kind: "QUIZ" as const,
+          id: lead.id,
+          slug: lead.slug,
+          title: lead.title,
+          description: lead.description,
+          category: "Academy quiz",
+          heroUrl,
+        }
+      : {
+          kind: "VIDEO" as const,
+          id: lead.id,
+          slug: lead.slug,
+          title: lead.title,
+          subtitle: lead.subtitle,
+          description: lead.description,
+          category: lead.category,
+          durationLabel: lead.durationMinutes ? `${lead.durationMinutes} mins` : "Self-paced",
+          heroUrl,
+        };
+  } catch {
+    return null;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    Page
    ═══════════════════════════════════════════════════════════════════════ */
 
 export default async function VideoCatalogPage() {
-  const videos = await getVideos();
+  const [videos, freeSignupVideo] = await Promise.all([
+    getVideos(),
+    getFreeSignupVideoPromo(),
+  ]);
 
   return (
     <main className="min-h-screen">
@@ -152,6 +207,8 @@ export default async function VideoCatalogPage() {
           </div>
         </Container>
       </section>
+
+      {freeSignupVideo ? <FreeAcademyVideoPromoSection lead={freeSignupVideo} /> : null}
 
       {/* ── Course cards ─────────────────────────────────────────────── */}
       <section className="py-10 sm:py-14">

@@ -385,6 +385,7 @@ model VideoProduct {
   category        String?
   durationMinutes Int?
   heroMediaId     String?
+  isFreeOnSignup  Boolean          @default(false)
   status          CourseStatus     @default(DRAFT)
   videoSourceType VideoSourceType  @default(UPLOAD)
   // Either a Supabase storage path (for UPLOAD) or a public URL (for LINK)
@@ -1363,6 +1364,7 @@ model Quiz {
   status              QuizStatus     @default(DRAFT)
   // Lead gen fields
   isPublic            Boolean        @default(false)
+  isFeaturedLead      Boolean        @default(false)
   slug                String?        @unique
   resultsCopy         Json?          // { low: {headline, body}, medium: {...}, high: {...} }
   recommendedCourseId String?

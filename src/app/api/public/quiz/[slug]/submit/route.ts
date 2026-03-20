@@ -3,8 +3,10 @@ import { z } from "zod";
 import { prisma } from "@/server/db/client";
 import { submitQuizAttempt } from "@/server/modules/education/quiz";
 import { ensureFeaturedPublicQuizExists } from "@/server/modules/education/featuredPublicQuiz";
+import { getCurrentFeaturedLeadItem } from "@/server/modules/education/featuredLeadItem";
 import { generateQuizAiFeedback } from "@/server/modules/education/quizAi";
 import { getQuizUpsellCoursesWithReasons } from "@/server/modules/education/recommendations";
+import { getCurrentSession } from "@/server/security/auth";
 import { ActivityType } from "@prisma/client";
 import { sendNewQuizLeadEmail, sendQuizResultEmail } from "@/server/modules/email/transactional";
 import {
@@ -16,8 +18,8 @@ import {
 export const dynamic = "force-dynamic";
 
 const submitSchema = z.object({
-  name: z.string().min(1),
-  email: z.string().email(),
+  name: z.string().min(1).optional(),
+  email: z.string().email().optional(),
   answers: z.array(
     z.object({
       questionId: z.string(),
@@ -47,6 +49,10 @@ function splitName(full: string) {
   return { firstName: first || "Learner", lastName: rest.join(" ") || "" };
 }
 
+function buildQuizSignupPath(slug: string) {
+  return `/academy/signup?next=${encodeURIComponent(`/quiz/${slug}?unlock=1`)}`;
+}
+
 interface RouteParams {
   params: { slug: string };
 }
@@ -74,23 +80,84 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
     }
 
-    const email = data.email.toLowerCase();
-    const { firstName, lastName } = splitName(data.name);
+    const [featuredLeadItem, session] = await Promise.all([
+      getCurrentFeaturedLeadItem(),
+      getCurrentSession(),
+    ]);
+    const isFeaturedLeadQuiz =
+      featuredLeadItem?.kind === "QUIZ" && featuredLeadItem.slug === params.slug;
 
-    const contact = await prisma.contact.upsert({
-      where: { email },
-      update: {
-        firstName,
-        lastName,
-        source: "quiz",
-      },
-      create: {
-        email,
-        firstName,
-        lastName,
-        source: "quiz",
-      },
-    });
+    if (isFeaturedLeadQuiz && !session && (!data.name || !data.email)) {
+      return NextResponse.json({
+        requiresSignup: true,
+        teaserTitle: "Your full results are ready",
+        teaserBody:
+          "Create your free academy account to unlock your personalised guidance, next steps, and recommended training.",
+        signupPath: buildQuizSignupPath(params.slug),
+      });
+    }
+
+    let contact;
+
+    if (session) {
+      const user = await prisma.user.findUnique({
+        where: { id: session.uid },
+        include: {
+          contact: true,
+        },
+      });
+
+      if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      if (user.contact) {
+        contact = user.contact;
+      } else {
+        contact = await prisma.contact.upsert({
+          where: { email: user.email.toLowerCase() },
+          update: {
+            source: "quiz",
+          },
+          create: {
+            email: user.email.toLowerCase(),
+            firstName: "Learner",
+            lastName: "",
+            source: "quiz",
+          },
+        });
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { contactId: contact.id },
+        });
+      }
+    } else {
+      if (!data.name || !data.email) {
+        return NextResponse.json(
+          { error: "Name and email are required to unlock your results" },
+          { status: 400 },
+        );
+      }
+
+      const email = data.email.toLowerCase();
+      const { firstName, lastName } = splitName(data.name);
+
+      contact = await prisma.contact.upsert({
+        where: { email },
+        update: {
+          firstName,
+          lastName,
+          source: "quiz",
+        },
+        create: {
+          email,
+          firstName,
+          lastName,
+          source: "quiz",
+        },
+      });
+    }
 
     if (isFeaturedPublicScalpQuiz(params.slug)) {
       const submission = buildPublicScalpQuizSubmission({

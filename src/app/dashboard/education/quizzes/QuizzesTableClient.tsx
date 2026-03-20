@@ -12,6 +12,7 @@ type QuizRow = {
   passingScore: number;
   status: string;
   isPublic: boolean;
+  isFeaturedLead: boolean;
   slug: string | null;
   createdAt: string;
   course: { id: string; title: string; slug: string };
@@ -44,6 +45,7 @@ const columns: AdminColumn<QuizRow>[] = [
       <div className="flex items-center gap-1.5">
         <StatusBadge status={row.status} />
         {row.isPublic && <AdminBadge variant="accent">Public</AdminBadge>}
+        {row.isFeaturedLead && <AdminBadge variant="info">Lead</AdminBadge>}
       </div>
     ),
   },

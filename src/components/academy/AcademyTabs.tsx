@@ -44,6 +44,7 @@ type QuizCard = {
 
 type VideoCard = {
   id: string;
+  slug?: string;
   title: string;
   subtitle?: string | null;
   description?: string | null;
@@ -159,8 +160,14 @@ export function AcademyTabs({
   const hasActivity =
     stats.coursesEnrolled > 0 || stats.lessonsCompleted > 0;
 
+  const showContinueLearningColumn =
+    continueLesson != null || stats.coursesEnrolled > 0;
+
+  const hasRecentActivity = recentActivity.length > 0;
+  const hasMyCourses = myCourses.length > 0;
+
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       {/* Welcome Banner with Lorraine + Progress Ring */}
       <div className="relative overflow-hidden rounded-2xl border border-black/5 bg-gradient-to-br from-[#fab826]/8 via-white to-[#fab826]/5">
         <div className="grid items-center gap-6 p-6 sm:p-8 md:grid-cols-[1fr_auto]">
@@ -294,15 +301,23 @@ export function AcademyTabs({
 
       {/* ── MY LIBRARY (Dashboard) ── */}
       {tab === "library" ? (
-        <div className="space-y-6">
+        <div className="w-full space-y-6">
           {/* Continue Learning + Metrics side by side on large screens */}
           {hasActivity ? (
             <>
-              <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
-                <ContinueLearningCard
-                  continueLesson={continueLesson}
-                  hasEnrolledCourses={stats.coursesEnrolled > 0}
-                />
+              <div
+                className={
+                  showContinueLearningColumn
+                    ? "grid gap-6 lg:grid-cols-[1fr_1.2fr]"
+                    : "grid gap-6"
+                }
+              >
+                {showContinueLearningColumn && (
+                  <ContinueLearningCard
+                    continueLesson={continueLesson}
+                    hasEnrolledCourses={stats.coursesEnrolled > 0}
+                  />
+                )}
                 <LearningMetrics
                   weeklyStats={weeklyStats}
                   quizMetrics={quizMetrics}
@@ -314,22 +329,24 @@ export function AcademyTabs({
               </div>
 
               {/* Activity Feed + Course cards */}
-              <div className="grid gap-6 lg:grid-cols-[1fr_1.6fr]">
-                {recentActivity.length > 0 && (
-                  <ActivityFeed items={recentActivity} />
-                )}
-
+              {(hasRecentActivity || hasMyCourses) && (
                 <div
                   className={
-                    recentActivity.length > 0 ? "" : "lg:col-span-2"
+                    hasRecentActivity && hasMyCourses
+                      ? "grid gap-6 lg:grid-cols-[1fr_1.6fr]"
+                      : "grid gap-6"
                   }
                 >
-                  {myCourses.length > 0 && (
+                  {hasRecentActivity && (
+                    <ActivityFeed items={recentActivity} />
+                  )}
+
+                  {hasMyCourses && (
                     <div className="space-y-3">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-black/40">
                         My Courses
                       </p>
-                      <div className="grid gap-4 md:grid-cols-2">
+                      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                         {myCourses.map((course, i) => {
                           const completed = course.completedLessons ?? 0;
                           const total = course.totalLessons ?? 0;
@@ -409,7 +426,7 @@ export function AcademyTabs({
 
                                 <div className="mt-auto pt-3">
                                   <Link
-                                    href={`/academy/${course.id}`}
+                                    href={`/education/${course.slug}`}
                                     className={`inline-flex w-full items-center justify-center rounded-xl px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] transition ${
                                       isAllDone
                                         ? "bg-emerald-500 text-white hover:bg-emerald-600"
@@ -429,7 +446,7 @@ export function AcademyTabs({
                     </div>
                   )}
                 </div>
-              </div>
+              )}
             </>
           ) : (
             /* ── Empty state: no courses enrolled yet ── */
@@ -680,10 +697,10 @@ export function AcademyTabs({
 
                   <div className="mt-auto pt-5">
                     <Link
-                      href={`/academy/${course.id}`}
+                      href={`/education/${course.slug}`}
                       className="inline-flex w-full items-center justify-center rounded-xl bg-[#fab826] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-sm transition hover:bg-[#e5a820]"
                     >
-                      Start Course
+                      View course
                     </Link>
                   </div>
                 </div>
@@ -748,10 +765,10 @@ export function AcademyTabs({
                             : ""}
                         </span>
                         <Link
-                          href={`/academy/videos/${video.id}`}
+                          href={`/education/videos/${video.slug}`}
                           className="rounded-xl bg-brand-graphite px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-brand-graphite/85"
                         >
-                          Watch
+                          View video
                         </Link>
                       </div>
                     </div>
@@ -799,10 +816,10 @@ export function AcademyTabs({
                       </p>
                       <div className="mt-auto pt-4">
                         <Link
-                          href={`/academy/videos/${video.id}`}
+                          href={`/education/videos/${video.slug}`}
                           className="inline-flex w-full items-center justify-center rounded-xl bg-brand-graphite px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-brand-graphite/85"
                         >
-                          Watch
+                          View video
                         </Link>
                       </div>
                     </div>

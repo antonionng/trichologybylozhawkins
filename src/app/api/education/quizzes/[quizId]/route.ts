@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
+import { prisma } from "@/server/db/client";
 import { getQuiz, updateQuiz, deleteQuiz, quizUpdateSchema } from "@/server/modules/education/quiz";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +27,26 @@ export async function GET(_request: Request, { params }: RouteParams) {
 export async function PATCH(request: Request, { params }: RouteParams) {
   try {
     const body = await request.json();
-    const quiz = await updateQuiz(quizUpdateSchema.parse({ ...body, id: params.quizId }));
+    const input = quizUpdateSchema.parse({ ...body, id: params.quizId });
+
+    if (input.isFeaturedLead) {
+      await prisma.quiz.updateMany({
+        where: {
+          isFeaturedLead: true,
+          NOT: { id: params.quizId },
+        },
+        data: { isFeaturedLead: false },
+      });
+      await prisma.videoProduct.updateMany({
+        where: { isFreeOnSignup: true },
+        data: { isFreeOnSignup: false },
+      });
+    }
+
+    const quiz = await updateQuiz(input);
+    revalidatePath("/");
+    revalidatePath("/education");
+    revalidatePath(`/quiz/${quiz.slug ?? ""}`);
     return NextResponse.json(quiz);
   } catch (error) {
     return NextResponse.json(

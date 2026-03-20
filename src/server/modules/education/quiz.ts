@@ -13,6 +13,11 @@ export const quizCreateSchema = z.object({
   timeLimit: z.number().positive().optional(),
   isRequired: z.boolean().default(false),
   status: z.nativeEnum(QuizStatus).default(QuizStatus.DRAFT),
+  isPublic: z.boolean().optional(),
+  isFeaturedLead: z.boolean().optional(),
+  slug: z.string().min(1).optional(),
+  resultsCopy: z.any().optional(),
+  recommendedCourseId: z.string().cuid().nullable().optional(),
 });
 
 export const quizUpdateSchema = quizCreateSchema.partial().extend({

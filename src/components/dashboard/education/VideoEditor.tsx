@@ -43,6 +43,7 @@ export function VideoEditor({ video, heroUrl }: { video: any; heroUrl?: string |
     description: video.description ?? "",
     category: video.category ?? "",
     durationMinutes: video.durationMinutes ? String(video.durationMinutes) : "",
+    isFreeOnSignup: Boolean(video.isFreeOnSignup),
     status: video.status ?? "DRAFT",
     videoSourceType: video.videoSourceType ?? "UPLOAD",
     videoUrl: video.videoUrl ?? "",
@@ -114,6 +115,7 @@ export function VideoEditor({ video, heroUrl }: { video: any; heroUrl?: string |
         subtitle: form.subtitle || undefined, description: form.description || undefined,
         category: form.category || undefined,
         durationMinutes: form.durationMinutes ? Number(form.durationMinutes) : undefined,
+        isFreeOnSignup: form.isFreeOnSignup,
         status: form.status, videoSourceType: form.videoSourceType,
         videoUrl: form.videoSourceType === "LINK" ? (form.videoUrl.trim() || null) : null,
         videoPath: form.videoSourceType === "LINK" ? null : undefined,
@@ -215,6 +217,20 @@ export function VideoEditor({ video, heroUrl }: { video: any; heroUrl?: string |
                 ]}
               />
             </div>
+            <label className="flex items-start gap-3 rounded-lg border border-admin-border bg-admin-elevated/40 px-4 py-3">
+              <input
+                type="checkbox"
+                checked={form.isFreeOnSignup}
+                onChange={(e) => setForm((p) => ({ ...p, isFreeOnSignup: e.target.checked }))}
+                className="mt-0.5 h-4 w-4 rounded border-admin-border-strong bg-admin-elevated text-admin-accent focus:ring-admin-accent/40"
+              />
+              <span className="space-y-1">
+                <span className="block text-sm font-medium text-admin-text">Featured free signup video</span>
+                <span className="block text-xs text-admin-text-secondary">
+                  Make this the single academy lead video shown across the public site.
+                </span>
+              </span>
+            </label>
           </Panel>
         )}
 

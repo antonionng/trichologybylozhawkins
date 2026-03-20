@@ -15,6 +15,7 @@ async function getQuiz(id: string) {
       course: { select: { id: true, title: true, slug: true } },
       questions: { orderBy: { position: "asc" } },
       _count: { select: { attempts: true } },
+      recommendedCourse: { select: { id: true, title: true } },
     },
   });
 }
