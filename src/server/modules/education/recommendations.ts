@@ -149,7 +149,7 @@ function courseTextBlob(course: any) {
     ...(Array.isArray(course.learningOutcomes) ? course.learningOutcomes : []),
     ...(Array.isArray(course.targetAudience) ? course.targetAudience : []),
     ...(Array.isArray(course.requirements) ? course.requirements : []),
-    ...(Array.isArray(course.conditions) ? course.conditions.map((c: any) => c?.condition?.name ?? c?.condition?.title ?? c?.condition?.slug ?? "") : []),
+    ...(Array.isArray(course.conditions) ? course.conditions.map((c: any) => c?.condition?.name ?? c?.condition?.slug ?? "") : []),
   ]) {
     if (typeof v === "string" && v.trim()) parts.push(v.trim());
   }
@@ -338,7 +338,7 @@ export async function getQuizUpsellCoursesWithReasons(options: {
       targetAudience: true,
       conditions: {
         select: {
-          condition: { select: { slug: true, name: true, title: true } },
+          condition: { select: { slug: true, name: true } },
         },
       },
       pricing: {
