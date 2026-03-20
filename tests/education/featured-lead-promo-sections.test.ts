@@ -16,7 +16,7 @@ describe("featured lead promo sections", () => {
     const videoCatalogPage = readRepoFile("src/app/education/videos/page.tsx");
 
     expect(homeBanner).toContain('lead.kind === "QUIZ"');
-    expect(homeBanner).toContain("Start scalp quiz");
+    expect(homeBanner).toContain("Start quiz");
     expect(homeBanner).toContain("Email unlocks your guidance summary");
     expect(promoSection).toContain('lead.kind === "QUIZ"');
     expect(promoSection).toContain("Unlock full quiz results");

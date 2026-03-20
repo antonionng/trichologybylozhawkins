@@ -64,7 +64,7 @@ export function QuizPageShell({
   const imageAlt = heroUrl ? heroAlt : photography.consultation.alt;
 
   return (
-    <main className="min-h-screen">
+    <main className={clsx("min-h-screen", variant === "public" && "overflow-x-hidden")}>
       <PageSection
         tone={section.tone}
         texture={section.texture}
@@ -94,8 +94,15 @@ export function QuizPageShell({
           ],
         }}
       >
-        <Container className="grid gap-8 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-start">
-          <div className="space-y-6 lg:sticky lg:top-24">
+        <Container
+          className={clsx(
+            "relative z-10 grid gap-8 lg:items-start",
+            variant === "public"
+              ? "lg:grid-cols-1 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]"
+              : "lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]",
+          )}
+        >
+          <div className="min-w-0 space-y-6 xl:sticky xl:top-24">
             {backHref && backLabel ? (
               <Link
                 href={backHref}
@@ -170,7 +177,7 @@ export function QuizPageShell({
             </Surface>
           </div>
 
-          <div>{children}</div>
+          <div className="min-w-0">{children}</div>
         </Container>
       </PageSection>
     </main>

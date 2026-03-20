@@ -13,6 +13,14 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminBadge } from "@/components/admin/AdminBadge";
 import { useToast } from "@/components/admin/Toast";
 
+function slugify(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 type Quiz = {
   id: string;
   title: string;
@@ -298,7 +306,18 @@ export function QuizEditor({ quiz, courses, heroUrl }: Props) {
 
       {tab === "settings" && (
         <Panel variant="default" padding="lg" className="grid gap-4 lg:grid-cols-2">
-          <AdminInput label="Title" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} />
+          <AdminInput
+            label="Title"
+            value={form.title}
+            onChange={(e) => {
+              const value = e.target.value;
+              setForm((p) => ({
+                ...p,
+                title: value,
+                slug: p.slug.trim() ? p.slug : slugify(value),
+              }));
+            }}
+          />
           <AdminSelect label="Course" value={form.courseId} onChange={(e) => setForm((p) => ({ ...p, courseId: e.target.value }))}
             options={courses.map((c) => ({ value: c.id, label: c.title }))} />
           <div className="lg:col-span-2">
@@ -326,17 +345,22 @@ export function QuizEditor({ quiz, courses, heroUrl }: Props) {
             />
             <label htmlFor="isPublic" className="text-sm text-admin-text-secondary">Public quiz</label>
           </div>
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="isFeaturedLead"
-              checked={form.isFeaturedLead}
-              onChange={(e) => setForm((p) => ({ ...p, isFeaturedLead: e.target.checked }))}
-              className="h-4 w-4 rounded border-admin-border-strong bg-admin-elevated text-admin-accent focus:ring-admin-accent/40"
-            />
-            <label htmlFor="isFeaturedLead" className="text-sm text-admin-text-secondary">
-              Featured lead quiz
-            </label>
+          <div className="flex flex-col gap-1 lg:col-span-2">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="isFeaturedLead"
+                checked={form.isFeaturedLead}
+                onChange={(e) => setForm((p) => ({ ...p, isFeaturedLead: e.target.checked }))}
+                className="h-4 w-4 rounded border-admin-border-strong bg-admin-elevated text-admin-accent focus:ring-admin-accent/40"
+              />
+              <label htmlFor="isFeaturedLead" className="text-sm text-admin-text-secondary">
+                Featured lead quiz
+              </label>
+            </div>
+            <p className="pl-7 text-xs text-admin-text-muted sm:pl-0 sm:ml-7">
+              If enabled, this quiz replaces any currently featured quiz and turns off the featured free video for signup. Save to apply.
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <input type="checkbox" id="isRequired" checked={form.isRequired}

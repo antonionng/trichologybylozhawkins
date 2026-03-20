@@ -545,7 +545,7 @@ export function QuizTaker({
     const nextSteps = Array.isArray(result.aiFeedback?.nextSteps) ? result.aiFeedback?.nextSteps : [];
 
     return (
-      <div className="space-y-8">
+      <div className="w-full min-w-0 space-y-8 overflow-x-hidden">
         <Surface variant="glass" padding="lg" className="text-center">
           <div
             className={`mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full ${
@@ -582,7 +582,7 @@ export function QuizTaker({
 
         <Surface variant="card" padding="lg" className="space-y-4">
           <h2 className="text-lg font-semibold text-black">Your Results</h2>
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-1 gap-4 text-center sm:grid-cols-3">
             <div>
               <p className="text-3xl font-semibold text-black">{result.score}</p>
               <p className="text-xs text-black/50">Points</p>
@@ -606,7 +606,7 @@ export function QuizTaker({
               <p className="text-xs uppercase tracking-[0.3em] text-black/40">Recommended courses</p>
               <h2 className="mt-1 text-lg font-semibold text-black">Keep learning</h2>
             </div>
-            <div className="grid gap-4 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {visibleCourses.map((course) => (
                 <div
                   key={course.id}

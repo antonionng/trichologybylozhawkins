@@ -12,6 +12,7 @@ describe("homepage featured lead banner placement", () => {
   it("loads the featured public quiz and renders the homepage banner after the hero", () => {
     const appPage = readRepoFile("src/app/page.tsx");
 
+    expect(appPage).toContain("getCurrentFeaturedLeadItem");
     expect(appPage).toContain("FEATURED_PUBLIC_QUIZ_SLUG");
     expect(appPage).toContain("ensureFeaturedPublicQuizExists");
     expect(appPage).toContain("HomepageFreeVideoBanner");

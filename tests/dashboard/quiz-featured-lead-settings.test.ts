@@ -16,5 +16,9 @@ describe("quiz editor featured lead settings", () => {
     expect(quizEditor).toContain("isPublic");
     expect(quizEditor).toContain("slug");
     expect(quizEditor).toContain("Featured lead quiz");
+    expect(quizEditor).toContain("function slugify");
+    expect(quizEditor).toContain("slug: p.slug.trim() ? p.slug : slugify(");
+    expect(quizEditor).toContain("replaces any currently featured quiz");
+    expect(quizEditor).toContain("featured free video");
   });
 });

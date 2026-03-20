@@ -40,7 +40,7 @@ export function HomepageFreeVideoBanner({
   const eyebrow = lead.kind === "QUIZ" ? "Featured quiz" : "Free video";
   const headline =
     lead.kind === "QUIZ"
-      ? "Take the featured scalp quiz and get Lorraine's next steps."
+      ? "Take the featured quiz and get Lorraine's next steps."
       : "Join the academy. Watch the free lesson. Upgrade when you are ready.";
   const description =
     lead.kind === "QUIZ"
@@ -93,7 +93,7 @@ export function HomepageFreeVideoBanner({
 
             <div className="flex flex-wrap gap-3">
               <ButtonLink href={primaryHref} variant="primary" size="lg">
-                {lead.kind === "QUIZ" ? "Start scalp quiz" : "Create free academy account"}
+                {lead.kind === "QUIZ" ? "Start quiz" : "Create free academy account"}
               </ButtonLink>
               <ButtonLink href={secondaryHref} variant="ghost" size="lg" className="border-white/30 text-white hover:bg-white/10">
                 {secondaryLabel}

@@ -5,6 +5,7 @@ import { prisma } from "@/server/db/client";
 import { QuizTaker } from "@/components/education/QuizTaker";
 import { QuizPageShell } from "@/components/education/QuizPageShell";
 import { ensureFeaturedPublicQuizExists } from "@/server/modules/education/featuredPublicQuiz";
+import { findPublicQuizRecord, type PublicQuizRecord } from "@/server/modules/education/publicQuizLookup";
 import { getCurrentSession } from "@/server/security/auth";
 import {
   FEATURED_PUBLIC_QUIZ_RESULT_LABEL,
@@ -19,15 +20,7 @@ interface Props {
   params: { slug: string };
 }
 
-type PublicQuiz = {
-  id: string;
-  slug: string | null;
-  title: string;
-  description: string | null;
-  passingScore: number;
-  timeLimit: number | null;
-  heroMediaId: string | null;
-  cardImageUrl: string | null;
+type PublicQuiz = PublicQuizRecord & {
   course: { id: string; title: string; slug: string };
   questions: Array<{
     id: string;
@@ -40,9 +33,7 @@ type PublicQuiz = {
 };
 
 async function getPublicQuiz(slug: string): Promise<PublicQuiz | null> {
-  const quiz = await prisma.quiz.findFirst({
-    where: { slug, isPublic: true, status: "PUBLISHED" },
-  });
+  const quiz = await findPublicQuizRecord(slug);
 
   if (!quiz) {
     return null;
@@ -73,8 +64,6 @@ async function getPublicQuiz(slug: string): Promise<PublicQuiz | null> {
 
   return {
     ...quiz,
-    heroMediaId: (quiz as any).heroMediaId ?? null,
-    cardImageUrl: (quiz as any).cardImageUrl ?? null,
     course,
     questions,
   };

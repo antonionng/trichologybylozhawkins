@@ -297,10 +297,23 @@ export async function POST(request: Request, { params }: RouteParams) {
       },
     });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const band = bandFromPercentage(attempt.percentage);
+    const resultCopy = pickCopy(quiz.resultsCopy, band);
+    const recommendedCourses = await getQuizUpsellCoursesWithReasons({
+      quizId: quiz.id,
+      band,
+      aiFeedback: aiFeedback ?? null,
+    });
 
-    // Transactional emails (safe no-op if RESEND_API_KEY missing)
-    await Promise.allSettled([
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const recommendedCoursesForEmail = recommendedCourses.slice(0, 6).map((c) => ({
+      title: c.title,
+      slug: c.slug,
+      reason: c.reason,
+    }));
+
+    // Transactional emails (skipped when RESEND_API_KEY is missing)
+    const emailOutcomes = await Promise.allSettled([
       sendQuizResultEmail({
         to: contact.email,
         name: `${contact.firstName} ${contact.lastName}`.trim(),
@@ -313,6 +326,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         recommendedCourse: quiz.recommendedCourse
           ? { title: quiz.recommendedCourse.title, slug: quiz.recommendedCourse.slug }
           : null,
+        recommendedCourses: recommendedCoursesForEmail,
         appUrl,
       }),
       sendNewQuizLeadEmail({
@@ -327,6 +341,18 @@ export async function POST(request: Request, { params }: RouteParams) {
         appUrl,
       }),
     ]);
+
+    emailOutcomes.forEach((outcome, idx) => {
+      const label = idx === 0 ? "sendQuizResultEmail" : "sendNewQuizLeadEmail";
+      if (outcome.status === "rejected") {
+        console.error(`[public-quiz-submit] ${label} failed:`, outcome.reason);
+        return;
+      }
+      const val = outcome.value;
+      if (val && "skipped" in val && val.skipped && "reason" in val) {
+        console.warn(`[public-quiz-submit] ${label} skipped:`, val.reason);
+      }
+    });
 
     // Record email touchpoints in CRM timeline (even if delivery is skipped in dev).
     await prisma.activity.createMany({
@@ -344,14 +370,6 @@ export async function POST(request: Request, { params }: RouteParams) {
           body: `Sent to: ag@experrt.com`,
         },
       ],
-    });
-
-    const band = bandFromPercentage(attempt.percentage);
-    const resultCopy = pickCopy(quiz.resultsCopy, band);
-    const recommendedCourses = await getQuizUpsellCoursesWithReasons({
-      quizId: quiz.id,
-      band,
-      aiFeedback: aiFeedback ?? null,
     });
 
     return NextResponse.json({

@@ -1,5 +1,11 @@
 import { Resend } from "resend";
 
+type QuizResultEmailUpsellCourse = {
+  title: string;
+  slug: string;
+  reason?: string;
+};
+
 type QuizResultEmailInput = {
   to: string;
   name: string;
@@ -10,6 +16,8 @@ type QuizResultEmailInput = {
   passed: boolean;
   aiFeedback?: { headline?: string; summary?: string; nextSteps?: string[] } | null;
   recommendedCourse?: { title: string; slug: string } | null;
+  /** Extra courses shown on the quiz results page (optional list in email). */
+  recommendedCourses?: QuizResultEmailUpsellCourse[];
   appUrl: string;
 };
 
@@ -85,7 +93,7 @@ export async function sendQuizResultEmail(input: QuizResultEmailInput) {
   const client = getResend();
   if (!client) return { skipped: true as const, reason: "Missing RESEND_API_KEY" };
 
-  const subject = `${input.quizTitle} — your results (${Math.round(input.percentage)}%)`;
+  const subject = `${input.quizTitle} - your results (${Math.round(input.percentage)}%)`;
   const courseUrl = input.recommendedCourse
     ? `${input.appUrl}/academy/${encodeURIComponent(input.recommendedCourse.slug)}`
     : `${input.appUrl}/education`;
@@ -93,6 +101,25 @@ export async function sendQuizResultEmail(input: QuizResultEmailInput) {
   const headline = input.aiFeedback?.headline || (input.passed ? "Congratulations!" : "Keep learning");
   const summary = input.aiFeedback?.summary || "";
   const nextSteps = Array.isArray(input.aiFeedback?.nextSteps) ? input.aiFeedback?.nextSteps : [];
+  const upsellCourses = Array.isArray(input.recommendedCourses) ? input.recommendedCourses : [];
+  const upsellHtml =
+    upsellCourses.length > 0
+      ? `<div style="margin: 0 0 16px;">
+          <p style="margin: 0 0 8px;"><strong>Courses you may like</strong></p>
+          <ul style="margin: 0; padding-left: 18px;">
+            ${upsellCourses
+              .slice(0, 6)
+              .map((c) => {
+                const href = `${input.appUrl}/education/${encodeURIComponent(c.slug)}`;
+                return `<li style="margin-bottom: 8px;">
+                  <a href="${href}" style="color: #111; font-weight: 600;">${escapeHtml(c.title)}</a>
+                  ${c.reason ? `<br/><span style="font-size: 13px; color: #555;">${escapeHtml(c.reason)}</span>` : ""}
+                </li>`;
+              })
+              .join("")}
+          </ul>
+        </div>`
+      : "";
 
   const html = `
     <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
@@ -116,6 +143,7 @@ export async function sendQuizResultEmail(input: QuizResultEmailInput) {
       <p style="margin: 0 0 18px;">
         ${input.recommendedCourse ? `Recommended: <strong>${escapeHtml(input.recommendedCourse.title)}</strong>` : "Explore the academy for structured next steps."}
       </p>
+      ${upsellHtml}
       <p style="margin: 0;">
         <a href="${courseUrl}" style="display: inline-block; background: #fab826; color: #111; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 600;">
           Explore next steps
@@ -137,6 +165,12 @@ export async function sendQuizResultEmail(input: QuizResultEmailInput) {
     nextSteps.length ? "" : null,
     nextSteps.length ? "Next steps:" : null,
     ...nextSteps.slice(0, 5).map((s) => `- ${s}`),
+    "",
+    upsellCourses.length ? "Courses you may like:" : null,
+    ...upsellCourses.slice(0, 6).map((c) => {
+      const line = `- ${c.title} (${input.appUrl}/education/${c.slug})`;
+      return c.reason ? `${line}\n  ${c.reason}` : line;
+    }),
     "",
     `Explore next steps: ${courseUrl}`,
   ]

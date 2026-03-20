@@ -17,6 +17,8 @@ import {
 import { FEATURED_PUBLIC_QUIZ_SLUG } from "@/lib/publicQuiz";
 import { loadHomeShowcaseData } from "@/server/modules/home/showcase";
 import { ensureFeaturedPublicQuizExists } from "@/server/modules/education/featuredPublicQuiz";
+import { findHomepageFeaturedPublicQuizRecord } from "@/server/modules/education/publicQuizLookup";
+import { getCurrentFeaturedLeadItem } from "@/server/modules/education/featuredLeadItem";
 
 async function getShowcaseData() {
   return loadHomeShowcaseData({
@@ -61,45 +63,55 @@ async function getShowcaseData() {
   }) as Promise<{ videos: VideoRow[]; courses: CourseRow[]; products: any[] }>;
 }
 
+async function buildHomepageQuizBannerLead(slug: string) {
+  const quiz = await findHomepageFeaturedPublicQuizRecord(slug);
+  if (!quiz?.slug) return null;
+
+  let heroUrl: string | null = null;
+  if (quiz.heroMediaId) {
+    const heroMedia = await prisma.mediaAsset.findUnique({
+      where: { id: quiz.heroMediaId },
+      select: { path: true },
+    });
+    if (heroMedia?.path) {
+      try {
+        heroUrl = await createSignedDownloadUrl(heroMedia.path);
+      } catch {
+        heroUrl = null;
+      }
+    }
+  }
+
+  const category = slug === FEATURED_PUBLIC_QUIZ_SLUG ? "Scalp guidance" : null;
+
+  return {
+    kind: "QUIZ" as const,
+    slug: quiz.slug,
+    title: quiz.title,
+    description: quiz.description,
+    category,
+    heroUrl: heroUrl ?? quiz.cardImageUrl ?? null,
+  };
+}
+
 async function getHomepageFeaturedQuiz() {
   try {
-    await ensureFeaturedPublicQuizExists(FEATURED_PUBLIC_QUIZ_SLUG);
-    const quiz = await prisma.quiz.findFirst({
-      where: { slug: FEATURED_PUBLIC_QUIZ_SLUG, isPublic: true, status: "PUBLISHED" },
-      select: {
-        slug: true,
-        title: true,
-        description: true,
-        heroMediaId: true,
-        cardImageUrl: true,
-      },
-    });
+    const lead = await getCurrentFeaturedLeadItem();
+    if (lead?.kind === "QUIZ" && lead.slug) {
+      const fromAdmin = await buildHomepageQuizBannerLead(lead.slug);
+      if (fromAdmin) return fromAdmin;
+    }
+
+    let quiz = await findHomepageFeaturedPublicQuizRecord(FEATURED_PUBLIC_QUIZ_SLUG);
+
+    if (!quiz) {
+      await ensureFeaturedPublicQuizExists(FEATURED_PUBLIC_QUIZ_SLUG);
+      quiz = await findHomepageFeaturedPublicQuizRecord(FEATURED_PUBLIC_QUIZ_SLUG);
+    }
 
     if (!quiz?.slug) return null;
 
-    let heroUrl: string | null = null;
-    if (quiz.heroMediaId) {
-      const heroMedia = await prisma.mediaAsset.findUnique({
-        where: { id: quiz.heroMediaId },
-        select: { path: true },
-      });
-      if (heroMedia?.path) {
-        try {
-          heroUrl = await createSignedDownloadUrl(heroMedia.path);
-        } catch {
-          heroUrl = null;
-        }
-      }
-    }
-
-    return {
-      kind: "QUIZ" as const,
-      slug: quiz.slug,
-      title: quiz.title,
-      description: quiz.description,
-      category: "Scalp guidance",
-      heroUrl: heroUrl ?? quiz.cardImageUrl ?? null,
-    };
+    return buildHomepageQuizBannerLead(quiz.slug);
   } catch {
     return null;
   }

@@ -14,7 +14,7 @@ describe("HomepageFreeVideoBanner quiz funnel", () => {
 
     expect(banner).toContain('lead.kind === "QUIZ"');
     expect(banner).toContain('`/quiz/${lead.slug}`');
-    expect(banner).toContain('? "Start scalp quiz" : "Create free academy account"');
+    expect(banner).toContain('? "Start quiz" : "Create free academy account"');
     expect(banner).toContain('Email unlocks your guidance summary');
   });
 });
