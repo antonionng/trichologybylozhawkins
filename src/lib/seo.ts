@@ -5,6 +5,9 @@ export const SITE_NAME = "Trichology Academy";
 export const BRAND_NAME = "Lorraine Hawkins";
 export const DEFAULT_SITE_URL = "https://trichologyacademy.com";
 export const DEFAULT_OG_IMAGE_PATH = "/og-image.png";
+/** Pixel size of `public/og-image.png` (used in Open Graph metadata). */
+export const DEFAULT_OG_IMAGE_WIDTH = 1024;
+export const DEFAULT_OG_IMAGE_HEIGHT = 703;
 export const DEFAULT_OG_IMAGE_ALT = "Lorraine Hawkins social share image";
 export const DEFAULT_DESCRIPTION =
   "Clinical trichology education, scalp health guidance, consultations, and professional training with Lorraine Hawkins.";
@@ -104,10 +107,11 @@ function buildSocialImage(
       ? DEFAULT_OG_IMAGE_PATH
       : imagePath;
 
+  const useDefaultOgDimensions = stableImagePath === DEFAULT_OG_IMAGE_PATH;
   return {
     url: toAbsoluteUrl(stableImagePath),
-    width: 1200,
-    height: 630,
+    width: useDefaultOgDimensions ? DEFAULT_OG_IMAGE_WIDTH : 1200,
+    height: useDefaultOgDimensions ? DEFAULT_OG_IMAGE_HEIGHT : 630,
     alt: imageAlt,
   };
 }

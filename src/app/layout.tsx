@@ -11,7 +11,9 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import {
   BRAND_NAME,
   DEFAULT_DESCRIPTION,
+  DEFAULT_OG_IMAGE_HEIGHT,
   DEFAULT_OG_IMAGE_PATH,
+  DEFAULT_OG_IMAGE_WIDTH,
   SITE_NAME,
   buildOrganizationJsonLd,
   buildPersonJsonLd,
@@ -67,8 +69,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: DEFAULT_OG_IMAGE_PATH,
-        width: 1200,
-        height: 630,
+        width: DEFAULT_OG_IMAGE_WIDTH,
+        height: DEFAULT_OG_IMAGE_HEIGHT,
         alt: "Lorraine Hawkins social share image",
       },
     ],

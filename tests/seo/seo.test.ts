@@ -44,8 +44,8 @@ describe("seo helpers", () => {
     expect(metadata.openGraph?.images).toEqual([
       {
         url: "https://trichologyacademy.com/og-image.png",
-        width: 1200,
-        height: 630,
+        width: 1024,
+        height: 703,
         alt: "Lorraine Hawkins social share image",
       },
     ]);
@@ -66,8 +66,8 @@ describe("seo helpers", () => {
     expect(metadata.openGraph?.images).toEqual([
       {
         url: "https://trichologyacademy.com/og-image.png",
-        width: 1200,
-        height: 630,
+        width: 1024,
+        height: 703,
         alt: "Lorraine Hawkins social share image",
       },
     ]);

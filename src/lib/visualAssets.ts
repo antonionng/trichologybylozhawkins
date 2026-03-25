@@ -8,9 +8,15 @@ export const illustrationAssets = {
   strandOrbit: "/illustrations/strand-orbit.svg",
 };
 
+/** If set, home/about hero uses this URL; otherwise `public/images/hero-placeholder.png`. */
+const lorraineHeroSrc =
+  (typeof process.env.NEXT_PUBLIC_LORRAINE_HERO_URL === "string" &&
+    process.env.NEXT_PUBLIC_LORRAINE_HERO_URL.trim()) ||
+  "/images/hero-placeholder.png";
+
 export const photography = {
   hero: {
-    src: "/images/hero-placeholder.png",
+    src: lorraineHeroSrc,
     alt: "Lorraine Hawkins — clinical trichologist and educator.",
   },
   consultation: {
