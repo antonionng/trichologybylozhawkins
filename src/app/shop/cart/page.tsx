@@ -1,6 +1,14 @@
 import { CartPageClient, type CartCheckoutInitialState } from "@/components/shop/CartPageClient";
 import { prisma } from "@/server/db/client";
 import { getCurrentSession } from "@/server/security/auth";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  path: "/shop/cart",
+  title: "Cart",
+  description: "Your current shopping cart.",
+  noIndex: true,
+});
 
 export default async function CartPage() {
   const session = await getCurrentSession();

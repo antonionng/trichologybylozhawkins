@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -16,6 +17,13 @@ import { VideoPurchaseButton } from "@/components/education/VideoPurchaseButton"
 import { videoDetailFallbacks, videoLessons, VIDEO_HERO_PLACEHOLDER_BY_SLUG, VIDEO_HERO_PLACEHOLDER_DEFAULT } from "@/lib/content";
 import { getTopicAccent } from "@/lib/topicAccents";
 import { ArticleCta } from "@/components/sections/ArticleCta";
+import { JsonLd } from "@/components/seo/JsonLd";
+import {
+  buildBreadcrumbJsonLd,
+  buildCourseJsonLd,
+  buildFaqJsonLd,
+  buildPageMetadata,
+} from "@/lib/seo";
 
 type FaqItem = { question: string; answer: string };
 
@@ -195,6 +203,31 @@ async function getRelatedVideos(
     }));
 }
 
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const video =
+    (await getVideoFromDb(params.slug)) ?? getVideoFromFallback(params.slug);
+
+  if (!video) {
+    return buildPageMetadata({
+      path: `/education/videos/${params.slug}`,
+      title: "Video course not found",
+      description: "The requested video course could not be found.",
+      noIndex: true,
+    });
+  }
+
+  return buildPageMetadata({
+    path: `/education/videos/${params.slug}`,
+    title: video.title,
+    description: video.intro ?? video.headline ?? `${video.title} by Lorraine Hawkins.`,
+    imagePath: video.heroUrl || undefined,
+  });
+}
+
 /* ── Page component ─────────────────────────────────────────────────────── */
 
 export default async function VideoDetailPage({
@@ -207,29 +240,58 @@ export default async function VideoDetailPage({
     (await getVideoFromDb(params.slug)) ?? getVideoFromFallback(params.slug);
 
   if (!video) notFound();
+  const currentVideo = video;
 
   const [relatedVideos, session] = await Promise.all([
-    getRelatedVideos(video.slug, video.category),
+    getRelatedVideos(currentVideo.slug, currentVideo.category),
     getCurrentSession(),
   ]);
-  const accent = getTopicAccent(video.category);
+  const accent = getTopicAccent(currentVideo.category);
   const isLoggedIn = !!session;
   const featuredLeadItem = await getCurrentFeaturedLeadItem();
   const isCurrentFreeSignupVideo =
-    featuredLeadItem?.kind === "VIDEO" && !!video.dbId && featuredLeadItem.id === video.dbId;
+    featuredLeadItem?.kind === "VIDEO" && !!currentVideo.dbId && featuredLeadItem.id === currentVideo.dbId;
 
   async function claimFreeLesson() {
     "use server";
 
-    if (!video.dbId) {
+    if (!currentVideo.dbId) {
       throw new Error("Video not found");
     }
 
-    await enrollInVideo(video.dbId);
+    await enrollInVideo(currentVideo.dbId);
   }
 
   return (
-    <main className="min-h-screen">
+    <>
+      <JsonLd
+        data={buildCourseJsonLd({
+          path: `/education/videos/${params.slug}`,
+          name: currentVideo.title,
+          description: currentVideo.intro ?? currentVideo.headline ?? `${currentVideo.title} by Lorraine Hawkins.`,
+          image: currentVideo.heroUrl,
+        })}
+      />
+      <JsonLd
+        data={buildBreadcrumbJsonLd(`/education/videos/${params.slug}`, [
+          { name: "Home", path: "/" },
+          { name: "Education", path: "/education" },
+          { name: "Video Courses", path: "/education/videos" },
+          { name: currentVideo.title, path: `/education/videos/${params.slug}` },
+        ])}
+      />
+      {currentVideo.faqs.length > 0 ? (
+        <JsonLd
+          data={buildFaqJsonLd(
+            `/education/videos/${params.slug}`,
+            currentVideo.faqs.map((faq) => ({
+              question: faq.question,
+              answer: faq.answer,
+            })),
+          )}
+        />
+      ) : null}
+      <main className="min-h-screen">
       {/* ── Hero & content ──────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-gradient-to-b from-brand-sand/50 via-brand-linen/20 to-white pb-10 pt-8 sm:pb-14 sm:pt-10">
         <Container>
@@ -387,7 +449,7 @@ export default async function VideoDetailPage({
                   <ButtonLink href="/login" variant="secondary" size="sm" className="w-full justify-center">Sign in to watch</ButtonLink>
                 )}
                 <ul className="space-y-1.5 text-[11px] text-brand-graphite/45">
-                  {["Watch anytime — no expiry", "Instant Academy access"].map((item) => (
+                  {["Watch anytime, no expiry", "Instant Academy access"].map((item) => (
                     <li key={item} className="flex items-center gap-1.5">
                       <span className="text-brand-sage text-xs">&#10003;</span>
                       <span>{item}</span>
@@ -467,6 +529,7 @@ export default async function VideoDetailPage({
           </div>
         </Container>
       </section>
-    </main>
+      </main>
+    </>
   );
 }

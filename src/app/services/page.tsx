@@ -5,6 +5,20 @@ import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 import { Container } from "@/components/layout/Container";
 import { services } from "@/lib/content";
 import { photography } from "@/lib/visualAssets";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  path: "/services",
+  title: "Trichology Services",
+  description:
+    "Book clinical trichology consultations, scalp assessments, and salon team training with Lorraine Hawkins.",
+  keywords: [
+    "trichology consultation",
+    "scalp assessment",
+    "salon team training",
+    "hair loss consultation uk",
+  ],
+});
 
 const serviceMetrics = [
   { value: "18+", label: "Years" },

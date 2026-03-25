@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,11 +9,18 @@ import { SectionHeading } from "@/components/typography/SectionHeading";
 import { getCourseBySlug } from "@/app/actions/education";
 import { CurriculumAccordion } from "@/components/education/CurriculumAccordion";
 import { ArticleCta } from "@/components/sections/ArticleCta";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { photography } from "@/lib/visualAssets";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
 import { prisma } from "@/server/db/client";
 import { Prisma } from "@prisma/client";
 import { resolveQuizCardImageUrl } from "@/server/modules/education/quizHero";
+import {
+  buildBreadcrumbJsonLd,
+  buildCourseJsonLd,
+  buildFaqJsonLd,
+  buildPageMetadata,
+} from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -64,10 +72,47 @@ const MeetLorraine = () => (
       </div>
     </div>
     <p className="text-sm leading-relaxed text-black/70 italic">
-      "With over 20 years of clinical experience, I've designed this course to bridge the gap between complex science and practical application. My goal is to empower you with the rigor and empathy needed for exceptional care."
+      &ldquo;With over 20 years of clinical experience, I&apos;ve designed this course to bridge the gap between complex science and practical application. My goal is to empower you with the rigor and empathy needed for exceptional care.&rdquo;
     </p>
   </Surface>
 );
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const course = await getCourseBySlug(params.slug);
+
+  if (!course) {
+    return buildPageMetadata({
+      path: `/education/${params.slug}`,
+      title: "Course not found",
+      description: "The requested course could not be found.",
+      noIndex: true,
+    });
+  }
+
+  let heroUrl: string | null = null;
+  if (course.heroMedia?.path) {
+    try {
+      heroUrl = await createSignedDownloadUrl(course.heroMedia.path);
+    } catch {
+      heroUrl = null;
+    }
+  }
+
+  if (!heroUrl) {
+    heroUrl = ((course.meta ?? {}) as Record<string, unknown>).heroImage as string | null;
+  }
+
+  return buildPageMetadata({
+    path: `/education/${params.slug}`,
+    title: course.title,
+    description: course.subtitle ?? course.description ?? "Course details",
+    imagePath: heroUrl || undefined,
+  });
+}
 
 export default async function CourseDetailPage({ params }: { params: { slug: string } }) {
   const course = await getCourseBySlug(params.slug);
@@ -126,7 +171,34 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
   );
 
   return (
-    <main>
+    <>
+      <JsonLd
+        data={buildCourseJsonLd({
+          path: `/education/${params.slug}`,
+          name: course.title,
+          description: course.subtitle ?? course.description ?? "Course details",
+          image: heroUrl,
+        })}
+      />
+      <JsonLd
+        data={buildBreadcrumbJsonLd(`/education/${params.slug}`, [
+          { name: "Home", path: "/" },
+          { name: "Education", path: "/education" },
+          { name: course.title, path: `/education/${params.slug}` },
+        ])}
+      />
+      {faqs.length > 0 ? (
+        <JsonLd
+          data={buildFaqJsonLd(
+            `/education/${params.slug}`,
+            faqs.map((faq: { question: string; answer: string }) => ({
+              question: faq.question,
+              answer: faq.answer,
+            })),
+          )}
+        />
+      ) : null}
+      <main>
       <PageSection tone="sand" texture="linen" collage={{ parallax: true }}>
         <Container className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.6fr)] lg:items-start">
           <div className="space-y-12">
@@ -151,7 +223,7 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
               ) : null}
             </div>
 
-            {/* Is this course right for you? — prerequisites, who it's for, requirements */}
+            {/* Is this course right for you? Includes prerequisites, fit, and requirements */}
             {hasRightForYou && (
               <Surface variant="card" padding="lg" className="space-y-6 border-l-4 border-[#fab826]">
                 <h2 className="text-xs uppercase tracking-[0.3em] text-black/40 font-bold">Is this course right for you?</h2>
@@ -398,7 +470,7 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
                   {course.slug === "trichocare-phase-1"
                     ? "Add Trichology in Clinical Practice"
                     : "Add Hair & Scalp Foundation Phase 1"}
-                  {" "}— £700 for both
+                  {" "}for £700 total
                 </p>
               </Link>
             )}
@@ -436,6 +508,7 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
           </Link>
         </div>
       </div>
-    </main>
+      </main>
+    </>
   );
 }

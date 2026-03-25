@@ -3,6 +3,14 @@ import { Container } from "@/components/layout/Container";
 import { SectionHeading } from "@/components/typography/SectionHeading";
 import { Surface } from "@/components/layout/Surface";
 import { siteContact, siteContactLinks } from "@/lib/siteContact";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  path: "/terms",
+  title: "Terms and Conditions",
+  description:
+    "Review the terms and conditions for Lorraine Hawkins consultations, education programmes, workshops, and digital purchases.",
+});
 
 export default function Terms() {
   return (
@@ -35,7 +43,7 @@ export default function Terms() {
                 <li>Consultations must be booked in advance and require payment confirmation</li>
                 <li>Video courses are available for immediate download after purchase</li>
                 <li>Workshop bookings require a deposit and are subject to minimum participant numbers</li>
-                <li>Payment plans are available—contact us for details</li>
+                <li>Payment plans are available. Contact us for details</li>
               </ul>
             </div>
 

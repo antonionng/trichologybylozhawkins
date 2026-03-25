@@ -3,6 +3,49 @@ import { getAdminOrder } from "@/app/actions/shop";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { ShopOrderStatusForm } from "@/components/dashboard/shop/ShopOrderStatusForm";
 
+type AddressData = {
+  name?: string;
+  line1?: string;
+  line2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+} | null;
+
+function ShippingAddressCard({ address, title }: { address: unknown; title: string }) {
+  const addr = address as AddressData;
+  const hasAddress = addr && (addr.line1 || addr.city || addr.postalCode);
+
+  if (!hasAddress) {
+    return (
+      <div className="rounded-xl border border-admin-border bg-admin-elevated p-3">
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-admin-text-muted">
+          {title}
+        </h3>
+        <p className="text-xs text-admin-text-muted">No address provided yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-admin-border bg-admin-elevated p-3">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-admin-text-muted">
+        {title}
+      </h3>
+      <div className="space-y-0.5 text-sm text-admin-text">
+        {addr.name && <p className="font-medium">{addr.name}</p>}
+        {addr.line1 && <p>{addr.line1}</p>}
+        {addr.line2 && <p>{addr.line2}</p>}
+        <p>
+          {[addr.city, addr.state, addr.postalCode].filter(Boolean).join(", ")}
+        </p>
+        {addr.country && <p>{addr.country}</p>}
+      </div>
+    </div>
+  );
+}
+
 export default async function ShopOrderDetailPage({ params }: { params: { id: string } }) {
   const order = await getAdminOrder(params.id);
   if (!order) notFound();
@@ -39,8 +82,11 @@ export default async function ShopOrderDetailPage({ params }: { params: { id: st
               Customer: <span className="text-admin-text">{order.firstName} {order.lastName}</span>
             </p>
             <p>Email: {order.email}</p>
+            {order.phone && <p>Phone: {order.phone}</p>}
             <p>Total: £{Number(order.totalAmount).toFixed(2)}</p>
           </div>
+
+          <ShippingAddressCard address={order.shippingAddress} title="Shipping Address" />
 
           <div className="rounded-xl border border-admin-border bg-admin-elevated p-3">
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-admin-text-muted">Timeline</h3>

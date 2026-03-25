@@ -10,6 +10,7 @@ import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 import { PageSection } from "@/components/layout/PageSection";
 import { Container } from "@/components/layout/Container";
 import { Surface } from "@/components/layout/Surface";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { videoLessons, videoDetailFallbacks, inPersonIntensives, VIDEO_HERO_PLACEHOLDER_BY_SLUG, VIDEO_HERO_PLACEHOLDER_DEFAULT } from "@/lib/content";
 import { getCourses, getPublicQuizzes, getWorkshops } from "@/app/actions/education";
 import { PurchaseButton } from "@/components/education/PurchaseButton";
@@ -19,6 +20,7 @@ import { getCurrentFeaturedLeadItem } from "@/server/modules/education/featuredL
 import { getTopicAccent } from "@/lib/topicAccents";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
 import { photography } from "@/lib/visualAssets";
+import { buildFaqJsonLd, buildPageMetadata } from "@/lib/seo";
 
 /* ── Normalised video shape ────────────────────────────────────────────── */
 type VideoCard = {
@@ -44,6 +46,37 @@ type WorkshopCard = {
   location: string;
   outcomes: string[];
 };
+
+const educationFaqs = [
+  {
+    question: "What kind of video courses do you offer?",
+    answer:
+      "Condition-specific clinical training modules covering menopausal hair changes, postpartum shedding, stress-related hair loss, and scalp sensitivity.",
+  },
+  {
+    question: "Do I need a trichology qualification to benefit?",
+    answer:
+      "No. The training is designed for hair professionals, stylists, therapists, and practitioners who want a stronger clinical framework.",
+  },
+  {
+    question: "Can you train our salon team on-site?",
+    answer:
+      "Yes. Lorraine offers salon and practitioner training across the UK and can discuss wider travel requirements during booking.",
+  },
+];
+
+export const metadata = buildPageMetadata({
+  path: "/education",
+  title: "Trichology Education",
+  description:
+    "Professional trichology education with Lorraine Hawkins, including video courses, structured training, workshops, and clinical learning resources.",
+  keywords: [
+    "trichology education",
+    "trichology courses uk",
+    "hair professional training",
+    "scalp health education",
+  ],
+});
 
 export function selectFeaturedWorkshops(
   dbWorkshops: WorkshopCard[],
@@ -226,6 +259,7 @@ export default async function Education() {
 
   return (
     <main className="min-h-screen">
+      <JsonLd data={buildFaqJsonLd("/education", educationFaqs)} />
       {/* ── Hero ────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-gradient-to-b from-brand-sand/60 via-brand-linen/20 to-white">
         <div className="absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-brand-salmon/[0.04]" />
@@ -270,7 +304,7 @@ export default async function Education() {
               <div className="overflow-hidden rounded-2xl">
                 <Image
                   src={photography.hero.src}
-                  alt="Lorraine Hawkins — clinical trichologist and educator."
+                  alt="Lorraine Hawkins, clinical trichologist and educator."
                   width={600} height={780}
                   className="h-full w-full object-cover saturate-[0.92] contrast-[1.05]"
                   priority

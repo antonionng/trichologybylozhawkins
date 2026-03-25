@@ -257,7 +257,25 @@ export async function createShopCheckoutSession(input: z.infer<typeof shopChecko
     });
 
     await sendShopOrderLifecycleEmails({
-      order,
+      order: {
+        id: order.id,
+        email: order.email,
+        firstName: order.firstName,
+        lastName: order.lastName,
+        status: order.status,
+        subtotalAmount: Number(order.subtotalAmount),
+        shippingAmount: Number(order.shippingAmount),
+        totalAmount: Number(order.totalAmount),
+        currency: order.currency,
+        trackingNumber: order.trackingNumber,
+        trackingUrl: order.trackingUrl,
+        items: order.items.map((item) => ({
+          productName: item.productName,
+          quantity: item.quantity,
+          unitPrice: Number(item.unitPrice),
+          currency: item.currency,
+        })),
+      },
       previousStatus: ShopOrderStatus.PENDING,
       appUrl: getBaseUrl(),
     });
@@ -349,12 +367,77 @@ export async function handleShopCheckoutFulfillment(options: {
 
   if (order.status === nextStatus) return;
 
+  // Extract shipping/billing details from Stripe session if available
+  type StripeSession = {
+    data?: {
+      object?: {
+        shipping_details?: {
+          name?: string;
+          phone?: string;
+          address?: {
+            line1?: string;
+            line2?: string;
+            city?: string;
+            state?: string;
+            postal_code?: string;
+            country?: string;
+          };
+        };
+        customer_details?: {
+          name?: string;
+          email?: string;
+          phone?: string;
+          address?: {
+            line1?: string;
+            line2?: string;
+            city?: string;
+            state?: string;
+            postal_code?: string;
+            country?: string;
+          };
+        };
+      };
+    };
+  };
+  const stripeEvent = options.payload as StripeSession | undefined;
+  const stripeShipping = stripeEvent?.data?.object?.shipping_details;
+  const stripeCustomer = stripeEvent?.data?.object?.customer_details;
+
+  const shippingAddress = stripeShipping?.address
+    ? {
+        name: stripeShipping.name ?? undefined,
+        line1: stripeShipping.address.line1 ?? "",
+        line2: stripeShipping.address.line2 ?? undefined,
+        city: stripeShipping.address.city ?? "",
+        state: stripeShipping.address.state ?? undefined,
+        postalCode: stripeShipping.address.postal_code ?? "",
+        country: stripeShipping.address.country ?? "",
+      }
+    : undefined;
+
+  const billingAddress = stripeCustomer?.address
+    ? {
+        name: stripeCustomer.name ?? undefined,
+        line1: stripeCustomer.address.line1 ?? "",
+        line2: stripeCustomer.address.line2 ?? undefined,
+        city: stripeCustomer.address.city ?? "",
+        state: stripeCustomer.address.state ?? undefined,
+        postalCode: stripeCustomer.address.postal_code ?? "",
+        country: stripeCustomer.address.country ?? "",
+      }
+    : undefined;
+
+  const phoneFromStripe = stripeShipping?.phone ?? stripeCustomer?.phone;
+
   await prisma.$transaction(async (tx) => {
     await tx.shopOrder.update({
       where: { id: order.id },
       data: {
         status: nextStatus,
         providerPaymentIntentId: options.paymentIntentId ?? undefined,
+        ...(shippingAddress ? { shippingAddress } : {}),
+        ...(billingAddress ? { billingAddress } : {}),
+        ...(phoneFromStripe && !order.phone ? { phone: phoneFromStripe } : {}),
       },
     });
 
@@ -391,8 +474,23 @@ export async function handleShopCheckoutFulfillment(options: {
 
   await sendShopOrderLifecycleEmails({
     order: {
-      ...order,
+      id: order.id,
+      email: order.email,
+      firstName: order.firstName,
+      lastName: order.lastName,
       status: nextStatus,
+      subtotalAmount: Number(order.subtotalAmount),
+      shippingAmount: Number(order.shippingAmount),
+      totalAmount: Number(order.totalAmount),
+      currency: order.currency,
+      trackingNumber: order.trackingNumber,
+      trackingUrl: order.trackingUrl,
+      items: order.items.map((item) => ({
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPrice: Number(item.unitPrice),
+        currency: item.currency,
+      })),
     },
     previousStatus: order.status,
     previousTrackingNumber: order.trackingNumber,
@@ -470,8 +568,23 @@ export async function updateOrderStatus(id: string, input: z.infer<typeof shopOr
   if (existing) {
     await sendShopOrderLifecycleEmails({
       order: {
-        ...existing,
-        ...updated,
+        id: updated.id,
+        email: updated.email,
+        firstName: updated.firstName,
+        lastName: updated.lastName,
+        status: updated.status,
+        subtotalAmount: Number(updated.subtotalAmount),
+        shippingAmount: Number(updated.shippingAmount),
+        totalAmount: Number(updated.totalAmount),
+        currency: updated.currency,
+        trackingNumber: updated.trackingNumber,
+        trackingUrl: updated.trackingUrl,
+        items: existing.items.map((item) => ({
+          productName: item.productName,
+          quantity: item.quantity,
+          unitPrice: Number(item.unitPrice),
+          currency: item.currency,
+        })),
       },
       previousStatus: existing.status,
       previousTrackingNumber: existing.trackingNumber,

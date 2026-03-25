@@ -1,11 +1,19 @@
 export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 import EducationSuccessClient from "./EducationSuccessClient";
+import { buildPageMetadata } from "@/lib/seo";
 
 type ClaimResponse =
   | { ok: true; mode: "login" }
   | { ok: true; mode: "set-password"; token: string }
   | { error: string };
+
+export const metadata = buildPageMetadata({
+  path: "/education/success",
+  title: "Education purchase confirmed",
+  description: "Your education purchase has been confirmed.",
+  noIndex: true,
+});
 
 export default function EducationSuccessPage() {
   return (

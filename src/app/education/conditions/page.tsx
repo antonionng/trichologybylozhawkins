@@ -5,6 +5,7 @@ import { Container } from "@/components/layout/Container";
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { getTopicAccent } from "@/lib/topicAccents";
 import Link from "next/link";
+import { buildPageMetadata } from "@/lib/seo";
 
 async function getPublishedConditions() {
   try {
@@ -127,3 +128,16 @@ export default async function ConditionLibraryPage() {
     </main>
   );
 }
+
+export const metadata = buildPageMetadata({
+  path: "/education/conditions",
+  title: "Hair and Scalp Conditions",
+  description:
+    "Read quick-reference guides to common hair loss and scalp conditions, including symptoms, causes, treatment options, and prognosis.",
+  keywords: [
+    "hair and scalp conditions",
+    "scalp condition guide",
+    "hair loss information",
+    "trichology reference library",
+  ],
+});

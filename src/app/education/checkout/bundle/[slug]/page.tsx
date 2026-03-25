@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getBundleBySlug } from "@/server/modules/education/service";
@@ -7,8 +8,22 @@ import { PageSection } from "@/components/layout/PageSection";
 import { Surface } from "@/components/layout/Surface";
 import { CheckoutAuthClient } from "@/components/education/CheckoutAuthClient";
 import { BundleCheckoutCta } from "@/components/education/BundleCheckoutCta";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  return buildPageMetadata({
+    path: `/education/checkout/bundle/${params.slug}`,
+    title: "Bundle checkout",
+    description: "Secure bundle checkout.",
+    noIndex: true,
+  });
+}
 
 export default async function BundleCheckoutPage({
   params,

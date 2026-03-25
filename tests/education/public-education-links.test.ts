@@ -35,6 +35,6 @@ describe("public education purchase links", () => {
     const videoDetailPage = readRepoFile("src/app/education/videos/[slug]/page.tsx");
 
     expect(videoDetailPage).toContain("Unlock free lesson");
-    expect(videoDetailPage).toContain("enrollInVideo(video.dbId)");
+    expect(videoDetailPage).toContain("enrollInVideo(currentVideo.dbId)");
   });
 });

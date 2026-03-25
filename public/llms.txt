@@ -1,0 +1,25 @@
+# Trichology Academy
+
+> Clinical trichology education, consultations, and scalp health guidance from Lorraine Hawkins for UK hair professionals and clients.
+
+## Core pages
+
+- [Home](https://trichologyacademy.com/) - Main overview of Lorraine Hawkins, education, consultations, and featured resources.
+- [About Lorraine Hawkins](https://trichologyacademy.com/about) - Background, credentials, and approach.
+- [Services](https://trichologyacademy.com/services) - Clinical consultations, scalp assessments, and salon training.
+- [Contact](https://trichologyacademy.com/contact) - Consultation and training enquiries.
+
+## Education
+
+- [Education Hub](https://trichologyacademy.com/education) - Main training hub for courses, workshops, and professional development.
+- [Video Courses](https://trichologyacademy.com/education/videos) - Condition-specific video training for hair professionals.
+- [Workshops](https://trichologyacademy.com/education/workshops) - In-person workshop catalogue.
+- [Condition Library](https://trichologyacademy.com/education/conditions) - Reference guides to common hair and scalp conditions.
+
+## Knowledge hub
+
+- [Knowledge Hub](https://trichologyacademy.com/blog) - Evidence-based articles on scalp health, hair loss, and consultations.
+
+## Optional
+
+- [Shop](https://trichologyacademy.com/shop) - Scalp care and supporting products.

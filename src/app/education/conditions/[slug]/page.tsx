@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/server/db/client";
 import { Container } from "@/components/layout/Container";
@@ -8,6 +9,8 @@ import { ArticleCta } from "@/components/sections/ArticleCta";
 import { ButtonLink } from "@/components/ui/Button";
 import { getTopicAccent } from "@/lib/topicAccents";
 import Link from "next/link";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { buildBreadcrumbJsonLd, buildPageMetadata } from "@/lib/seo";
 
 interface Props {
   params: { slug: string };
@@ -28,6 +31,30 @@ async function getCondition(slug: string) {
   }
 }
 
+export async function generateMetadata({
+  params,
+}: Props): Promise<Metadata> {
+  const condition = await getCondition(params.slug);
+
+  if (!condition) {
+    return buildPageMetadata({
+      path: `/education/conditions/${params.slug}`,
+      title: "Condition guide not found",
+      description: "The requested condition guide could not be found.",
+      noIndex: true,
+    });
+  }
+
+  return buildPageMetadata({
+    path: `/education/conditions/${params.slug}`,
+    title: condition.name,
+    description:
+      condition.description ||
+      (condition.whatIsIt as string | null) ||
+      "Hair and scalp condition guide from Lorraine Hawkins.",
+  });
+}
+
 export default async function ConditionDetailPage({ params }: Props) {
   const condition = await getCondition(params.slug);
   if (!condition) notFound();
@@ -39,7 +66,16 @@ export default async function ConditionDetailPage({ params }: Props) {
   const keyFacts = Array.isArray(condition.keyFacts) ? (condition.keyFacts as string[]) : [];
 
   return (
-    <main className="min-h-screen">
+    <>
+      <JsonLd
+        data={buildBreadcrumbJsonLd(`/education/conditions/${params.slug}`, [
+          { name: "Home", path: "/" },
+          { name: "Education", path: "/education" },
+          { name: "Conditions", path: "/education/conditions" },
+          { name: condition.name, path: `/education/conditions/${params.slug}` },
+        ])}
+      />
+      <main className="min-h-screen">
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-gradient-to-b from-brand-sand/60 via-brand-linen/20 to-white pb-8 pt-8 sm:pb-10 sm:pt-10">
         <Container>
@@ -161,6 +197,7 @@ export default async function ConditionDetailPage({ params }: Props) {
 
       <ArticleCta category={condition.category || "Scalp Health"} />
       <ConsultationCta />
-    </main>
+      </main>
+    </>
   );
 }

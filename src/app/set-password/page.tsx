@@ -1,6 +1,14 @@
 export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 import SetPasswordClient from "./SetPasswordClient";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  path: "/set-password",
+  title: "Set password",
+  description: "Set your account password.",
+  noIndex: true,
+});
 
 export default function SetPasswordPage() {
   return (

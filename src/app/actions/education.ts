@@ -58,7 +58,8 @@ export async function getAdminCourses() {
 
 export async function getCourseBySlug(slug: string) {
   const courses = await educationService.getCourseCatalog(slug);
-  return courses[0] ?? null;
+  const course = courses[0] ?? null;
+  return course?.status === "PUBLISHED" ? course : null;
 }
 
 export async function getVideos() {

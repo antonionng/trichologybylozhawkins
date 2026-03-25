@@ -3,6 +3,14 @@ import { Container } from "@/components/layout/Container";
 import { SectionHeading } from "@/components/typography/SectionHeading";
 import { Surface } from "@/components/layout/Surface";
 import { siteContact, siteContactLinks } from "@/lib/siteContact";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  path: "/privacy",
+  title: "Privacy Policy",
+  description:
+    "Read how Lorraine Hawkins collects, uses, and protects personal information across consultations, education, and website use.",
+});
 
 export default function Privacy() {
   return (

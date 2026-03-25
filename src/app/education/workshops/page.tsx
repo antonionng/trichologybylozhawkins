@@ -7,8 +7,20 @@ import { ButtonLink } from "@/components/ui/Button";
 import { inPersonIntensives, type IntensiveProgramme } from "@/lib/content";
 import { prisma } from "@/server/db/client";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+export const metadata = buildPageMetadata({
+  path: "/education/workshops",
+  title: "In-Person Trichology Workshops",
+  description:
+    "Explore Lorraine Hawkins in-person workshops for salon teams, trichologists, and hair professionals who want practical clinical training.",
+  keywords: [
+    "trichology workshops",
+    "salon team training uk",
+    "in person scalp training",
+  ],
+});
 
 type WorkshopCard = {
   slug: string;
@@ -50,7 +62,7 @@ async function getWorkshops(): Promise<WorkshopCard[]> {
       );
     }
   } catch {
-    // DB not available — fall through to static
+    // DB not available. Fall through to static
   }
 
   return inPersonIntensives.map((w) => ({

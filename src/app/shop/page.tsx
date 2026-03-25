@@ -3,8 +3,20 @@ import { ProductGrid } from "@/components/shop/ProductGrid";
 import { ShopHero } from "@/components/shop/ShopHero";
 import { listCategories, listPublishedProducts } from "@/server/modules/shop/service";
 import { createSignedDownloadUrl, getPublicUrl } from "@/server/storage/supabase";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+export const metadata = buildPageMetadata({
+  path: "/shop",
+  title: "Shop",
+  description:
+    "Browse scalp care products and supporting essentials selected for healthy routines and professional trichology care.",
+  keywords: [
+    "scalp care products",
+    "hair care shop",
+    "trichology products",
+  ],
+});
 
 async function resolveImage(product: any) {
   const tryPath = (path: string) =>

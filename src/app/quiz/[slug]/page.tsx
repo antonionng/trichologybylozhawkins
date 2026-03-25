@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/server/db/client";
 import { QuizTaker } from "@/components/education/QuizTaker";
@@ -15,6 +16,8 @@ import {
 import { Surface } from "@/components/layout/Surface";
 import { getConsumerQuizIntro } from "@/lib/consumerQuizPresentation";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { buildBreadcrumbJsonLd, buildPageMetadata } from "@/lib/seo";
 
 interface Props {
   params: { slug: string };
@@ -89,6 +92,44 @@ async function resolvePublicQuizHeroUrl(quiz: PublicQuiz): Promise<string | null
   return external || null;
 }
 
+export async function generateMetadata({
+  params,
+}: Props): Promise<Metadata> {
+  let quiz = await getPublicQuiz(params.slug);
+
+  if (!quiz) {
+    const attempted = await ensureFeaturedPublicQuizExists(params.slug);
+    if (attempted) {
+      quiz = await getPublicQuiz(params.slug);
+    }
+  }
+
+  if (!quiz) {
+    return buildPageMetadata({
+      path: `/quiz/${params.slug}`,
+      title: "Quiz not found",
+      description: "The requested quiz could not be found.",
+      noIndex: true,
+    });
+  }
+
+  const intro =
+    params.slug === FEATURED_PUBLIC_QUIZ_SLUG
+      ? getConsumerQuizIntro(quiz.questions.length)
+      : null;
+  const heroUrl = await resolvePublicQuizHeroUrl(quiz);
+
+  return buildPageMetadata({
+    path: `/quiz/${params.slug}`,
+    title: intro?.title ?? quiz.title,
+    description:
+      intro?.body ??
+      quiz.description ??
+      "Assess your trichology knowledge and get tailored next steps.",
+    imagePath: heroUrl || undefined,
+  });
+}
+
 export default async function PublicQuizPage({ params }: Props) {
   const session = await getCurrentSession();
 
@@ -145,38 +186,46 @@ export default async function PublicQuizPage({ params }: Props) {
     : { href: "/academy", label: "Back to academy" };
 
   return (
-    <QuizPageShell
-      variant="public"
-      eyebrow={intro?.eyebrow ?? "Professional trichology quiz"}
-      title={title}
-      description={description}
-      heroUrl={quizHeroUrl}
-      heroAlt={quiz.title}
-      highlights={highlights}
-      stats={[
-        { label: "Questions", value: quiz.questions.length },
-        { label: "Results", value: resultsLabel },
-        { label: "Guidance", value: guidanceLabel },
-      ]}
-      supportingPanel={
-        <Surface variant="glass" padding="md" className="space-y-3">
-          <p className="text-xs font-bold uppercase tracking-[0.28em] text-brand-graphite/40">
-            What to expect
-          </p>
-          <p className="text-sm leading-relaxed text-brand-graphite/70">
-            {reassurance}
-          </p>
-        </Surface>
-      }
-    >
-      <QuizTaker
-        quiz={quiz as any}
-        submitUrl={`/api/public/quiz/${encodeURIComponent(params.slug)}/submit`}
-        mode={quizMode}
-        resultPrimaryCta={resultPrimaryCta}
-        resultSecondaryCta={resultSecondaryCta}
+    <>
+      <JsonLd
+        data={buildBreadcrumbJsonLd(`/quiz/${params.slug}`, [
+          { name: "Home", path: "/" },
+          { name: "Quiz", path: `/quiz/${params.slug}` },
+        ])}
       />
-    </QuizPageShell>
+      <QuizPageShell
+        variant="public"
+        eyebrow={intro?.eyebrow ?? "Professional trichology quiz"}
+        title={title}
+        description={description}
+        heroUrl={quizHeroUrl}
+        heroAlt={quiz.title}
+        highlights={highlights}
+        stats={[
+          { label: "Questions", value: quiz.questions.length },
+          { label: "Results", value: resultsLabel },
+          { label: "Guidance", value: guidanceLabel },
+        ]}
+        supportingPanel={
+          <Surface variant="glass" padding="md" className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-brand-graphite/40">
+              What to expect
+            </p>
+            <p className="text-sm leading-relaxed text-brand-graphite/70">
+              {reassurance}
+            </p>
+          </Surface>
+        }
+      >
+        <QuizTaker
+          quiz={quiz as any}
+          submitUrl={`/api/public/quiz/${encodeURIComponent(params.slug)}/submit`}
+          mode={quizMode}
+          resultPrimaryCta={resultPrimaryCta}
+          resultSecondaryCta={resultSecondaryCta}
+        />
+      </QuizPageShell>
+    </>
   );
 }
 

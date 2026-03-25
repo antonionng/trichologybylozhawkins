@@ -6,6 +6,20 @@ import { Container } from "@/components/layout/Container";
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { blogHighlights, BlogHighlight } from "@/lib/content";
 import { getTopicAccent } from "@/lib/topicAccents";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  path: "/blog",
+  title: "Knowledge Hub",
+  description:
+    "Evidence-based articles from Lorraine Hawkins on scalp health, hair loss, consultations, and trichology practice.",
+  keywords: [
+    "trichology blog",
+    "scalp health articles",
+    "hair loss advice",
+    "knowledge hub",
+  ],
+});
 
 type BlogEntryRecord = {
   id: string;
@@ -149,7 +163,7 @@ export default async function Blog() {
               </h1>
               <p className="text-sm leading-relaxed text-brand-graphite/60">
                 Evidence-based articles on hair loss, scalp health, and
-                trichology practice — written by Lorraine from 18 years of
+                trichology practice, written by Lorraine from 18 years of
                 clinical experience.
               </p>
             </div>

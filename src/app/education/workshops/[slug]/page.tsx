@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -6,10 +7,17 @@ import { Container } from "@/components/layout/Container";
 import { PageSection } from "@/components/layout/PageSection";
 import { SectionHeading } from "@/components/typography/SectionHeading";
 import { ButtonLink } from "@/components/ui/Button";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { photography } from "@/lib/visualAssets";
 import { inPersonIntensives } from "@/lib/content";
 import { prisma } from "@/server/db/client";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
+import {
+  buildBreadcrumbJsonLd,
+  buildCourseJsonLd,
+  buildFaqJsonLd,
+  buildPageMetadata,
+} from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -143,6 +151,30 @@ async function getWorkshopData(slug: string) {
   };
 }
 
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const workshop = await getWorkshopData(params.slug);
+
+  if (!workshop) {
+    return buildPageMetadata({
+      path: `/education/workshops/${params.slug}`,
+      title: "Workshop not found",
+      description: "The requested workshop could not be found.",
+      noIndex: true,
+    });
+  }
+
+  return buildPageMetadata({
+    path: `/education/workshops/${params.slug}`,
+    title: workshop.title,
+    description: workshop.headline || workshop.summary || workshop.longDescription || "Workshop details",
+    imagePath: workshop.heroUrl || undefined,
+  });
+}
+
 export default async function WorkshopDetailPage({
   params,
 }: {
@@ -159,7 +191,35 @@ export default async function WorkshopDetailPage({
   const ctaLabel = workshop.ctaLabel || "Reserve your place";
 
   return (
-    <main>
+    <>
+      <JsonLd
+        data={buildCourseJsonLd({
+          path: `/education/workshops/${params.slug}`,
+          name: workshop.title,
+          description: workshop.headline || workshop.summary || workshop.longDescription || "Workshop details",
+          image: workshop.heroUrl,
+        })}
+      />
+      <JsonLd
+        data={buildBreadcrumbJsonLd(`/education/workshops/${params.slug}`, [
+          { name: "Home", path: "/" },
+          { name: "Education", path: "/education" },
+          { name: "Workshops", path: "/education/workshops" },
+          { name: workshop.title, path: `/education/workshops/${params.slug}` },
+        ])}
+      />
+      {workshop.faqs.length > 0 ? (
+        <JsonLd
+          data={buildFaqJsonLd(
+            `/education/workshops/${params.slug}`,
+            workshop.faqs.map((faq) => ({
+              question: faq.question,
+              answer: faq.answer,
+            })),
+          )}
+        />
+      ) : null}
+      <main>
       {/* ── Hero Section ── */}
       <PageSection tone="sand" texture="linen" collage={{ parallax: true }}>
         <Container className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.6fr)] lg:items-start">
@@ -522,6 +582,7 @@ export default async function WorkshopDetailPage({
           </div>
         </Container>
       </PageSection>
-    </main>
+      </main>
+    </>
   );
 }

@@ -11,7 +11,7 @@ function readRepoFile(relativePath: string) {
 
 describe("Lorraine content revisions", () => {
   it("updates contact availability copy", () => {
-    const contactPage = readRepoFile("src/app/contact/page.tsx");
+    const contactPage = readRepoFile("src/app/contact/ContactPageClient.tsx");
 
     expect(contactPage).toContain("Training\", detail: \"Mon & Tue · 9am–6pm GMT");
     expect(contactPage).toContain("Consultations\", detail: \"Wed & Thu · 10am–5pm GMT");

@@ -8,17 +8,34 @@ import { BlogHighlightsSection } from "@/components/sections/BlogHighlightsSecti
 import { FaqSection } from "@/components/sections/FaqSection";
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { HomepageFreeVideoBanner } from "@/components/sections/HomepageFreeVideoBanner";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
 import {
   HOME_PRODUCT_FALLBACKS,
   VIDEO_HERO_PLACEHOLDER_BY_SLUG,
   VIDEO_HERO_PLACEHOLDER_DEFAULT,
+  faqItems,
 } from "@/lib/content";
 import { FEATURED_PUBLIC_QUIZ_SLUG } from "@/lib/publicQuiz";
 import { loadHomeShowcaseData } from "@/server/modules/home/showcase";
 import { ensureFeaturedPublicQuizExists } from "@/server/modules/education/featuredPublicQuiz";
 import { findHomepageFeaturedPublicQuizRecord } from "@/server/modules/education/publicQuizLookup";
 import { getCurrentFeaturedLeadItem } from "@/server/modules/education/featuredLeadItem";
+import { buildFaqJsonLd, buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  path: "/",
+  title: "Lorraine Hawkins",
+  description:
+    "Clinical trichology education, scalp health guidance, consultations, and professional training for UK hair professionals and clients.",
+  keywords: [
+    "lorraine hawkins",
+    "trichologist uk",
+    "scalp health consultation",
+    "trichology education",
+    "hair loss support",
+  ],
+});
 
 async function getShowcaseData() {
   return loadHomeShowcaseData({
@@ -125,6 +142,7 @@ export default async function Home() {
 
   return (
     <main>
+      <JsonLd data={buildFaqJsonLd("/", faqItems)} />
       <HomeHero />
       {featuredQuiz ? <HomepageFreeVideoBanner lead={featuredQuiz} /> : null}
       <EducationShowcase videos={videos} courses={courses} />

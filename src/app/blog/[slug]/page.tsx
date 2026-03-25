@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { prisma } from "@/server/db/client";
@@ -9,7 +10,13 @@ import { Surface } from "@/components/layout/Surface";
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { ArticleCta } from "@/components/sections/ArticleCta";
 import { ButtonLink } from "@/components/ui/Button";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { blogHighlights } from "@/lib/content";
+import {
+  buildArticleJsonLd,
+  buildBreadcrumbJsonLd,
+  buildPageMetadata,
+} from "@/lib/seo";
 
 /* ─── Hardcoded fallback posts ─── */
 
@@ -38,7 +45,7 @@ const blogPosts: Record<
       { type: "paragraph", text: "Hormonal hair loss is one of the most common concerns clients bring to trichologists and hair care professionals. Understanding the patterns, triggers, and appropriate responses can transform your consultations from uncertain to confident." },
       { type: "heading", text: "Recognizing the patterns" },
       { type: "paragraph", text: "Hormonal hair loss typically presents with specific patterns that differ from other forms of hair loss. The most common presentation is diffuse thinning across the crown and top of the scalp, while the hairline often remains relatively intact." },
-      { type: "list", items: ["Gradual thinning over months or years rather than sudden shedding", "Increased hair fall during washing or brushing", "Visible scalp becoming more apparent, especially under bright light", "Changes in hair texture—often becoming finer or less dense"] },
+      { type: "list", items: ["Gradual thinning over months or years rather than sudden shedding", "Increased hair fall during washing or brushing", "Visible scalp becoming more apparent, especially under bright light", "Changes in hair texture, often becoming finer or less dense"] },
       { type: "heading", text: "Common hormonal triggers" },
       { type: "paragraph", text: "Several hormonal transitions can trigger hair loss. Understanding these helps you ask the right questions during consultations:" },
       { type: "subheading", text: "Post-pregnancy changes" },
@@ -74,7 +81,7 @@ const blogPosts: Record<
       { type: "subheading", text: "3. Enzyme exfoliation" },
       { type: "paragraph", text: "Fruit enzymes gently break down dead skin cells without mechanical scrubbing. Look for products with papain or bromelain." },
       { type: "heading", text: "What to avoid" },
-      { type: "list", items: ["Harsh sulfate shampoos", "Overly acidic apple cider vinegar rinses", "Baking soda scrubs", "Aggressive physical scrubs", "Frequent detoxing—once a month is plenty"] },
+      { type: "list", items: ["Harsh sulfate shampoos", "Overly acidic apple cider vinegar rinses", "Baking soda scrubs", "Aggressive physical scrubs", "Frequent detoxing. Once a month is plenty"] },
       { type: "callout", text: "The best scalp detox is one your client doesn't even notice. They should feel refreshed, not stripped or irritated." },
     ],
   },
@@ -88,7 +95,7 @@ const blogPosts: Record<
     heroImage:
       "https://images.unsplash.com/photo-1559599101-f09722fb4948?auto=format&fit=crop&w=1200&q=80",
     content: [
-      { type: "paragraph", text: "A consultation isn't just a prelude to treatment—it's where trust is built or broken." },
+      { type: "paragraph", text: "A consultation is not just a prelude to treatment. It is where trust is built or broken." },
       { type: "heading", text: "Why consultations matter" },
       { type: "paragraph", text: "Clients who value consultations are the ones who stay with you long-term." },
       { type: "list", items: ["Makes the client feel heard and understood", "Educates without overwhelming", "Creates clear next steps that feel collaborative, not prescribed"] },
@@ -98,7 +105,7 @@ const blogPosts: Record<
       { type: "subheading", text: "2. Assessment and education" },
       { type: "paragraph", text: "This is where your expertise shines. Explain what you're seeing as you go." },
       { type: "subheading", text: "3. Collaborative planning" },
-      { type: "paragraph", text: "This isn't where you sell—it's where you co-create a plan." },
+      { type: "paragraph", text: "This is not where you sell. It is where you co-create a plan." },
       { type: "heading", text: "Documentation and follow-up" },
       { type: "list", items: ["Take detailed notes", "Send a follow-up email", "Schedule the next appointment before they leave", "Follow up in 2-3 days"] },
       { type: "callout", text: "A rushed free consultation attracts price shoppers. A thorough paid consultation attracts clients who value expertise." },
@@ -242,138 +249,182 @@ function formatPublishedDate(isoDate: string) {
   return `${(day ?? "01").padStart(2, "0")} ${monthLabel} ${year}`;
 }
 
+async function getPostBySlug(slug: string) {
+  const cmsPost = await getArticleFromCms(slug);
+  const slotPost = cmsPost ? null : await getArticleFromContentSlot(slug);
+  return cmsPost || slotPost || blogPosts[slug] || null;
+}
+
 /* ─── Page ─── */
 
 type BlogPostProps = {
   params: Promise<{ slug: string }>;
 };
 
+export async function generateMetadata({ params }: BlogPostProps): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getPostBySlug(slug);
+
+  if (!post) {
+    return buildPageMetadata({
+      path: `/blog/${slug}`,
+      title: "Article not found",
+      description: "The requested article could not be found.",
+      noIndex: true,
+    });
+  }
+
+  return buildPageMetadata({
+    path: `/blog/${slug}`,
+    title: post.title,
+    description: post.excerpt,
+    imagePath: post.heroImage || undefined,
+    openGraphType: "article",
+    publishedTime: post.published,
+  });
+}
+
 export default async function BlogPost({ params }: BlogPostProps) {
   const { slug } = await params;
-
-  const cmsPost = await getArticleFromCms(slug);
-  const slotPost = cmsPost ? null : await getArticleFromContentSlot(slug);
-  const post = cmsPost || slotPost || blogPosts[slug];
+  const post = await getPostBySlug(slug);
 
   if (!post) {
     notFound();
   }
 
   return (
-    <main>
-      {/* Hero */}
-      <PageSection tone="sand" texture="linen" className="relative">
-        <Container className="max-w-4xl">
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <ButtonLink href="/blog" variant="ghost" size="sm">
-                &larr; Back to articles
-              </ButtonLink>
-              <span className="inline-flex rounded-full bg-brand-salmon/60 px-4 py-1.5 text-xs uppercase tracking-[0.32em] text-brand-ivory">
-                {post.category}
-              </span>
-              <h1 className="font-display text-4xl leading-tight text-brand-graphite lg:text-5xl">
-                {post.title}
-              </h1>
-              <div className="flex flex-wrap gap-4 text-sm text-brand-graphite/60">
-                <span>{formatPublishedDate(post.published)}</span>
-                <span>&bull;</span>
-                <span>{post.readTime}</span>
-              </div>
-            </div>
-          </div>
-        </Container>
-      </PageSection>
-
-      {/* Hero image */}
-      {post.heroImage && (
-        <PageSection tone="transparent" className="!py-0">
+    <>
+      <JsonLd
+        data={buildArticleJsonLd({
+          path: `/blog/${slug}`,
+          headline: post.title,
+          description: post.excerpt,
+          image: post.heroImage,
+          datePublished: post.published,
+        })}
+      />
+      <JsonLd
+        data={buildBreadcrumbJsonLd(`/blog/${slug}`, [
+          { name: "Home", path: "/" },
+          { name: "Knowledge Hub", path: "/blog" },
+          { name: post.title, path: `/blog/${slug}` },
+        ])}
+      />
+      <main>
+        {/* Hero */}
+        <PageSection tone="sand" texture="linen" className="relative">
           <Container className="max-w-4xl">
-            <div className="overflow-hidden rounded-2xl">
-              <img
-                src={post.heroImage}
-                alt={post.title}
-                className="h-64 w-full object-cover sm:h-80 lg:h-96"
-              />
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <ButtonLink href="/blog" variant="ghost" size="sm">
+                  &larr; Back to articles
+                </ButtonLink>
+                <span className="inline-flex rounded-full bg-brand-salmon/60 px-4 py-1.5 text-xs uppercase tracking-[0.32em] text-brand-ivory">
+                  {post.category}
+                </span>
+                <h1 className="font-display text-4xl leading-tight text-brand-graphite lg:text-5xl">
+                  {post.title}
+                </h1>
+                <div className="flex flex-wrap gap-4 text-sm text-brand-graphite/60">
+                  <span>{formatPublishedDate(post.published)}</span>
+                  <span>&bull;</span>
+                  <span>{post.readTime}</span>
+                </div>
+              </div>
             </div>
           </Container>
         </PageSection>
-      )}
 
-      {/* Content */}
-      <PageSection tone="transparent">
-        <Container className="max-w-3xl">
-          <Surface variant="card" padding="lg" className="prose prose-lg max-w-none">
-            <div className="space-y-6">
-              {post.content.map(
-                (section: ContentSection, index: number) => {
-                  if (section.type === "paragraph") {
-                    return (
-                      <p
-                        key={index}
-                        className="text-base leading-relaxed text-brand-graphite/80"
-                      >
-                        {section.text}
-                      </p>
-                    );
-                  }
-                  if (section.type === "heading") {
-                    return (
-                      <h2
-                        key={index}
-                        className="mt-12 font-display text-2xl text-brand-graphite first:mt-0"
-                      >
-                        {section.text}
-                      </h2>
-                    );
-                  }
-                  if (section.type === "subheading") {
-                    return (
-                      <h3
-                        key={index}
-                        className="mt-8 font-display text-xl text-brand-graphite"
-                      >
-                        {section.text}
-                      </h3>
-                    );
-                  }
-                  if (section.type === "list" && section.items) {
-                    return (
-                      <ul key={index} className="space-y-3">
-                        {section.items.map((item, itemIndex) => (
-                          <li
-                            key={itemIndex}
-                            className="flex gap-3 text-base leading-relaxed text-brand-graphite/80"
-                          >
-                            <span className="mt-2 inline-flex h-1.5 w-1.5 flex-none rounded-full bg-brand-salmon/60" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    );
-                  }
-                  if (section.type === "callout") {
-                    return (
-                      <div
-                        key={index}
-                        className="my-8 rounded-lg border-l-4 border-brand-salmon/60 bg-brand-salmon/5 p-6"
-                      >
-                        <p className="text-base italic leading-relaxed text-brand-graphite/90">
+        {/* Hero image */}
+        {post.heroImage && (
+          <PageSection tone="transparent" className="!py-0">
+            <Container className="max-w-4xl">
+              <div className="overflow-hidden rounded-2xl">
+                <img
+                  src={post.heroImage}
+                  alt={post.title}
+                  className="h-64 w-full object-cover sm:h-80 lg:h-96"
+                />
+              </div>
+            </Container>
+          </PageSection>
+        )}
+
+        {/* Content */}
+        <PageSection tone="transparent">
+          <Container className="max-w-3xl">
+            <Surface variant="card" padding="lg" className="prose prose-lg max-w-none">
+              <div className="space-y-6">
+                {post.content.map(
+                  (section: ContentSection, index: number) => {
+                    if (section.type === "paragraph") {
+                      return (
+                        <p
+                          key={index}
+                          className="text-base leading-relaxed text-brand-graphite/80"
+                        >
                           {section.text}
                         </p>
-                      </div>
-                    );
+                      );
+                    }
+                    if (section.type === "heading") {
+                      return (
+                        <h2
+                          key={index}
+                          className="mt-12 font-display text-2xl text-brand-graphite first:mt-0"
+                        >
+                          {section.text}
+                        </h2>
+                      );
+                    }
+                    if (section.type === "subheading") {
+                      return (
+                        <h3
+                          key={index}
+                          className="mt-8 font-display text-xl text-brand-graphite"
+                        >
+                          {section.text}
+                        </h3>
+                      );
+                    }
+                    if (section.type === "list" && section.items) {
+                      return (
+                        <ul key={index} className="space-y-3">
+                          {section.items.map((item, itemIndex) => (
+                            <li
+                              key={itemIndex}
+                              className="flex gap-3 text-base leading-relaxed text-brand-graphite/80"
+                            >
+                              <span className="mt-2 inline-flex h-1.5 w-1.5 flex-none rounded-full bg-brand-salmon/60" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      );
+                    }
+                    if (section.type === "callout") {
+                      return (
+                        <div
+                          key={index}
+                          className="my-8 rounded-lg border-l-4 border-brand-salmon/60 bg-brand-salmon/5 p-6"
+                        >
+                          <p className="text-base italic leading-relaxed text-brand-graphite/90">
+                            {section.text}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
                   }
-                  return null;
-                }
-              )}
-            </div>
-          </Surface>
-        </Container>
-      </PageSection>
+                )}
+              </div>
+            </Surface>
+          </Container>
+        </PageSection>
 
-      <ArticleCta category={post.category} />
-      <ConsultationCta />
-    </main>
+        <ArticleCta category={post.category} />
+        <ConsultationCta />
+      </main>
+    </>
   );
 }

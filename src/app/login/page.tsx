@@ -1,6 +1,14 @@
 export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 import LoginClient from "./LoginClient";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  path: "/login",
+  title: "Login",
+  description: "Login to your account.",
+  noIndex: true,
+});
 
 export default function LoginPage() {
   return (

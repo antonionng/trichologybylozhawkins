@@ -13,6 +13,7 @@ import { videoLessons, videoDetailFallbacks, VIDEO_HERO_PLACEHOLDER_BY_SLUG, VID
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { getTopicAccent } from "@/lib/topicAccents";
 import { photography } from "@/lib/visualAssets";
+import { buildPageMetadata } from "@/lib/seo";
 
 /* ── Normalised card shape ─────────────────────────────────────────────── */
 
@@ -283,6 +284,19 @@ export default async function VideoCatalogPage() {
     </main>
   );
 }
+
+export const metadata = buildPageMetadata({
+  path: "/education/videos",
+  title: "Trichology Video Courses",
+  description:
+    "Browse Lorraine Hawkins video courses on hair loss, scalp health, hormonal change, and consultation confidence for hair professionals.",
+  keywords: [
+    "trichology video courses",
+    "hair loss training",
+    "scalp health video training",
+    "professional hair education",
+  ],
+});
 
 /* ═══════════════════════════════════════════════════════════════════════════
    VideoCard

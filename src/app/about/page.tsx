@@ -4,6 +4,20 @@ import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { ButtonLink } from "@/components/ui/Button";
 import { photography } from "@/lib/visualAssets";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  path: "/about",
+  title: "About Lorraine Hawkins",
+  description:
+    "Learn about Lorraine Hawkins, her clinical trichology background, education work, and evidence-led approach to scalp health and hair loss support.",
+  keywords: [
+    "about lorraine hawkins",
+    "clinical trichologist",
+    "trichology educator",
+    "scalp health expert",
+  ],
+});
 
 const aboutMetrics = [
   { value: "25+", label: "Years practice" },
@@ -14,13 +28,13 @@ const aboutMetrics = [
 const careerMilestones = [
   { year: "2007", title: "Clinical foundations", description: "Qualified as a trichologist through Tricocare (tricocare.co.uk). Began working alongside dermatologists in London clinics, focusing on complex scalp conditions and diagnostics.", color: "bg-rose-400" },
   { year: "2013", title: "Training professionals", description: "Started teaching salon teams how to assess scalp health, deliver treatments, and have supportive conversations with clients.", color: "bg-amber-400" },
-  { year: "2018", title: "Building education programs", description: "Created structured training programs — hands-on workshops and online courses — making trichology education accessible to more practitioners.", color: "bg-emerald-400" },
+  { year: "2018", title: "Building education programs", description: "Created structured training programs, hands-on workshops, and online courses that made trichology education accessible to more practitioners.", color: "bg-emerald-400" },
   { year: "2025", title: "Video education", description: "Launched condition-specific video training modules for hair professionals. Evidence-based clinical education accessible to practitioners everywhere.", color: "bg-sky-400" },
 ];
 
 const philosophyPillars = [
   { num: "01", title: "Evidence-based", description: "Every recommendation grounded in research and clinical experience. Lorraine won't tell you something works unless she's seen it work.", accent: "border-rose-200" },
-  { num: "02", title: "Honest and clear", description: "No miracle cures, no jargon. What's happening, what helps, what doesn't — in language anyone can understand.", accent: "border-amber-200" },
+  { num: "02", title: "Honest and clear", description: "No miracle cures and no jargon. Lorraine explains what is happening, what helps, and what does not in language anyone can understand.", accent: "border-amber-200" },
   { num: "03", title: "Practical", description: "Education you can use immediately. Whether managing your own concerns or building a trichology practice.", accent: "border-emerald-200" },
 ];
 
@@ -59,7 +73,7 @@ export default function About() {
               <div className="overflow-hidden rounded-2xl">
                 <Image
                   src={photography.hero.src}
-                  alt="Lorraine Hawkins — clinical trichologist and educator."
+                  alt="Lorraine Hawkins, clinical trichologist and educator."
                   width={600} height={780}
                   className="h-full w-full object-cover saturate-[0.92] contrast-[1.05]"
                   priority

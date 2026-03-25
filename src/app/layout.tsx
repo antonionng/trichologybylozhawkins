@@ -7,6 +7,17 @@ import { getCurrentSession } from "@/server/security/auth";
 import dynamic from "next/dynamic";
 import { CartProvider } from "@/components/shop/CartProvider";
 import { CartDrawer } from "@/components/shop/CartDrawer";
+import { JsonLd } from "@/components/seo/JsonLd";
+import {
+  BRAND_NAME,
+  DEFAULT_DESCRIPTION,
+  DEFAULT_OG_IMAGE_PATH,
+  SITE_NAME,
+  buildOrganizationJsonLd,
+  buildPersonJsonLd,
+  buildWebsiteJsonLd,
+  getSiteUrlObject,
+} from "@/lib/seo";
 
 const ChatWidget = dynamic(
   () => import("@/components/chat/ChatWidget").then((mod) => ({ default: mod.ChatWidget })),
@@ -18,17 +29,78 @@ const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"
 const gentium = Gentium_Plus({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-gentium", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Trichology by Lorraine Hawkins",
-  description:
-    "Clinical trichology consultations, immersive education, and AI-enabled marketing for scalp health leaders.",
+  metadataBase: getSiteUrlObject(),
+  title: {
+    default: `${BRAND_NAME} | ${SITE_NAME}`,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: DEFAULT_DESCRIPTION,
+  applicationName: SITE_NAME,
+  manifest: "/manifest.webmanifest",
+  alternates: {
+    canonical: "/",
+  },
+  category: "health",
+  keywords: [
+    "trichology education",
+    "scalp health",
+    "hair loss education",
+    "clinical trichology",
+    "lorraine hawkins",
+    "trichology courses uk",
+  ],
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png" }],
+    shortcut: ["/favicon.ico"],
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_GB",
+    url: "/",
+    siteName: SITE_NAME,
+    title: `${BRAND_NAME} | ${SITE_NAME}`,
+    description: DEFAULT_DESCRIPTION,
+    images: [
+      {
+        url: DEFAULT_OG_IMAGE_PATH,
+        width: 1200,
+        height: 630,
+        alt: "Lorraine Hawkins social share image",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${BRAND_NAME} | ${SITE_NAME}`,
+    description: DEFAULT_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE_PATH],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await getCurrentSession();
 
   return (
-    <html lang="en" className={`${inter.variable} ${dmSans.variable} ${gentium.variable}`}>
+    <html lang="en-GB" className={`${inter.variable} ${dmSans.variable} ${gentium.variable}`}>
       <body>
+        <JsonLd data={buildWebsiteJsonLd()} />
+        <JsonLd data={buildOrganizationJsonLd()} />
+        <JsonLd data={buildPersonJsonLd()} />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:rounded-full focus:bg-brand-graphite focus:px-4 focus:py-2 focus:text-sm focus:text-brand-ivory"

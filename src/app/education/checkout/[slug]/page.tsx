@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getCourseBySlug } from "@/app/actions/education";
 import { getCurrentSession } from "@/server/security/auth";
@@ -5,8 +6,22 @@ import { Container } from "@/components/layout/Container";
 import { PageSection } from "@/components/layout/PageSection";
 import { Surface } from "@/components/layout/Surface";
 import { CheckoutAuthClient } from "@/components/education/CheckoutAuthClient";
+import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  return buildPageMetadata({
+    path: `/education/checkout/${params.slug}`,
+    title: "Course checkout",
+    description: "Secure course checkout.",
+    noIndex: true,
+  });
+}
 
 export default async function CheckoutPage({ params }: { params: { slug: string } }) {
   const session = await getCurrentSession();

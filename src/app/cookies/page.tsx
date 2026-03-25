@@ -3,6 +3,14 @@ import { Container } from "@/components/layout/Container";
 import { SectionHeading } from "@/components/typography/SectionHeading";
 import { Surface } from "@/components/layout/Surface";
 import { siteContact, siteContactLinks } from "@/lib/siteContact";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  path: "/cookies",
+  title: "Cookie Policy",
+  description:
+    "Learn how cookies and similar technologies are used across the Lorraine Hawkins website, education platform, and shop.",
+});
 
 export default function Cookies() {
   return (

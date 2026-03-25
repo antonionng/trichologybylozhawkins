@@ -1,4 +1,12 @@
 import Link from "next/link";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  path: "/shop/success",
+  title: "Order confirmed",
+  description: "Your order has been confirmed.",
+  noIndex: true,
+});
 
 export default function ShopSuccessPage() {
   return (
