@@ -15,6 +15,7 @@ import {
 import { EnrollmentStatus, PaymentEventType } from "@prisma/client";
 import Stripe from "stripe";
 import { z } from "zod";
+import { sendEducationPurchaseNotifications } from "@/server/modules/education/notifications";
 
 const getVideoProductDelegate = () =>
   (prisma as any).videoProduct as
@@ -766,9 +767,17 @@ export const handleCheckoutFulfillment = async (options: {
   status: "succeeded" | "failed";
   payload?: Record<string, unknown>;
 }) => {
-  const order = await prisma.order.findUnique({
+  const order = await prisma.order.findFirst({
     where: { providerSessionId: options.providerSessionId },
-    include: { items: true },
+    include: {
+      contact: true,
+      items: {
+        include: {
+          course: { select: { title: true } },
+          videoProduct: { select: { title: true } },
+        },
+      },
+    },
   });
 
   if (!order) {
@@ -838,6 +847,21 @@ export const handleCheckoutFulfillment = async (options: {
         }
       }
     }
+
+    await sendEducationPurchaseNotifications({
+      orderId: order.id,
+      email: order.contact.email,
+      firstName: order.contact.firstName,
+      lastName: order.contact.lastName,
+      totalAmount: Number(order.totalAmount),
+      currency: order.currency,
+      items: order.items.map((item) => ({
+        name: item.course?.title ?? item.videoProduct?.title ?? "Education purchase",
+        quantity: item.quantity,
+        unitAmount: Number(item.unitAmount),
+        currency: item.currency,
+      })),
+    });
   }
 };
 

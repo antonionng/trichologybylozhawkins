@@ -79,6 +79,30 @@ type ShopAdminOrderNotificationEmailInput = {
   items: ShopOrderEmailItem[];
 };
 
+type AcademySignupWelcomeEmailInput = {
+  to: string;
+  appUrl: string;
+  firstName?: string;
+  videoTitle?: string;
+};
+
+type EducationPurchaseEmailItem = {
+  name: string;
+  quantity: number;
+  unitAmount: number;
+  currency: string;
+};
+
+type EducationPurchaseConfirmationEmailInput = {
+  to: string;
+  appUrl: string;
+  orderId: string;
+  customerName: string;
+  totalAmount: number;
+  currency: string;
+  items: EducationPurchaseEmailItem[];
+};
+
 function getResend() {
   const key = process.env.RESEND_API_KEY;
   if (!key) return null;
@@ -305,6 +329,107 @@ export async function sendNewChatLeadEmail(input: NewChatLeadEmailInput) {
   return { skipped: false as const, id: res.data?.id ?? null };
 }
 
+export async function sendAcademySignupWelcomeEmail(input: AcademySignupWelcomeEmailInput) {
+  const client = getResend();
+  if (!client) return { skipped: true as const, reason: "Missing RESEND_API_KEY" };
+
+  const subject = "Welcome to the academy";
+  const academyUrl = `${input.appUrl}/academy`;
+  const greeting = input.firstName ? `Hi ${input.firstName},` : "Hello,";
+  const bonusLine = input.videoTitle
+    ? `Your free welcome lesson, ${input.videoTitle}, is now waiting for you in the academy.`
+    : "Your academy access is ready.";
+
+  const html = `
+    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+      <h2 style="margin: 0 0 12px;">Welcome to Lorraine Hawkins Academy</h2>
+      <p style="margin: 0 0 16px;">${escapeHtml(greeting)}<br/>${escapeHtml(bonusLine)}</p>
+      <p style="margin: 0 0 16px;">You can now sign in to view your training and continue your learning journey.</p>
+      <p style="margin: 0;">
+        <a href="${academyUrl}" style="display: inline-block; background: #fab826; color: #111; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 600;">
+          Go to the academy
+        </a>
+      </p>
+    </div>
+  `.trim();
+
+  const text = [
+    "Welcome to Lorraine Hawkins Academy",
+    "",
+    greeting,
+    bonusLine,
+    "You can now sign in to view your training and continue your learning journey.",
+    "",
+    `Academy: ${academyUrl}`,
+  ].join("\n");
+
+  const res = await client.emails.send({
+    from: fromAddress(),
+    to: input.to,
+    subject,
+    html,
+    text,
+  });
+
+  return { skipped: false as const, id: res.data?.id ?? null };
+}
+
+export async function sendEducationPurchaseConfirmationEmail(
+  input: EducationPurchaseConfirmationEmailInput,
+) {
+  const client = getResend();
+  if (!client) return { skipped: true as const, reason: "Missing RESEND_API_KEY" };
+
+  const subject = `Education purchase confirmed: ${input.orderId}`;
+  const academyUrl = `${input.appUrl}/academy`;
+  const itemListHtml = renderEducationItemsHtml(input.items);
+  const itemListText = renderEducationItemsText(input.items);
+
+  const html = `
+    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+      <h2 style="margin: 0 0 12px;">Thanks for your purchase</h2>
+      <p style="margin: 0 0 16px;">
+        Hi ${escapeHtml(input.customerName)},<br/>
+        Your education order <strong>${escapeHtml(input.orderId)}</strong> has been confirmed.
+      </p>
+      <div style="margin: 0 0 16px;">
+        <p style="margin: 0 0 8px;"><strong>Items</strong></p>
+        ${itemListHtml}
+      </div>
+      <p style="margin: 0 0 18px;"><strong>Total:</strong> ${escapeHtml(formatMoney(input.currency, input.totalAmount))}</p>
+      <p style="margin: 0;">
+        <a href="${academyUrl}" style="display: inline-block; background: #fab826; color: #111; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 600;">
+          Open the academy
+        </a>
+      </p>
+    </div>
+  `.trim();
+
+  const text = [
+    "Thanks for your purchase",
+    "",
+    `Hi ${input.customerName},`,
+    `Your education order ${input.orderId} has been confirmed.`,
+    "",
+    "Items:",
+    itemListText,
+    "",
+    `Total: ${formatMoney(input.currency, input.totalAmount)}`,
+    "",
+    `Academy: ${academyUrl}`,
+  ].join("\n");
+
+  const res = await client.emails.send({
+    from: fromAddress(),
+    to: input.to,
+    subject,
+    html,
+    text,
+  });
+
+  return { skipped: false as const, id: res.data?.id ?? null };
+}
+
 export async function sendShopOrderConfirmationEmail(input: ShopOrderConfirmationEmailInput) {
   const client = getResend();
   if (!client) return { skipped: true as const, reason: "Missing RESEND_API_KEY" };
@@ -463,6 +588,27 @@ function renderOrderTotalsText(currency: string, subtotalAmount: number, shippin
     `Shipping: ${formatMoney(currency, shippingAmount)}`,
     `Total: ${formatMoney(currency, totalAmount)}`,
   ].join("\n");
+}
+
+function renderEducationItemsHtml(items: EducationPurchaseEmailItem[]) {
+  return `
+    <ul style="margin: 0; padding-left: 18px;">
+      ${items
+        .map(
+          (item) =>
+            `<li>${escapeHtml(item.name)} x${item.quantity} (${escapeHtml(
+              formatMoney(item.currency, item.unitAmount)
+            )})</li>`
+        )
+        .join("")}
+    </ul>
+  `.trim();
+}
+
+function renderEducationItemsText(items: EducationPurchaseEmailItem[]) {
+  return items
+    .map((item) => `- ${item.name} x${item.quantity} (${formatMoney(item.currency, item.unitAmount)})`)
+    .join("\n");
 }
 
 function formatMoney(currency: string, amount: number) {
