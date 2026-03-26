@@ -751,7 +751,7 @@ export const blogHighlights: BlogHighlight[] = [
     slug: "ethical-consultations",
     published: "2025-09-10",
     heroImage:
-      "https://images.unsplash.com/photo-1559599101-f09722fb4948?auto=format&fit=crop&w=1200&q=80",
+      "/images/video-diagnostics-placeholder.png",
   },
 ];
 
