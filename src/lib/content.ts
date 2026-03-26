@@ -88,18 +88,16 @@ export type HomeProductFallback = {
 
 // ── Video hero placeholder by slug (used when heroMedia is missing or signed URL fails) ───
 
-/** Single placeholder used until you add slug-specific PNGs under public/images/ */
-const VIDEO_PLACEHOLDER_ASSET = "/images/video-placeholder.svg";
-
+/** Files in public/images/; one artwork per module slug. */
 export const VIDEO_HERO_PLACEHOLDER_BY_SLUG: Record<string, string> = {
-  "menopause-hair-loss": VIDEO_PLACEHOLDER_ASSET,
-  "postpartum-hair-loss": VIDEO_PLACEHOLDER_ASSET,
-  "stress-hair-loss": VIDEO_PLACEHOLDER_ASSET,
-  "sensitive-scalps": VIDEO_PLACEHOLDER_ASSET,
+  "menopause-hair-loss": "/images/video-menopause-placeholder.png",
+  "postpartum-hair-loss": "/images/video-postpartum-placeholder.png",
+  "stress-hair-loss": "/images/video-stress-placeholder.png",
+  "sensitive-scalps": "/images/video-scalp-placeholder.png",
 };
 
-/** Fallback when no hero image and slug not in VIDEO_HERO_PLACEHOLDER_BY_SLUG */
-export const VIDEO_HERO_PLACEHOLDER_DEFAULT = VIDEO_PLACEHOLDER_ASSET;
+/** Fallback for unknown slugs or missing map entries */
+export const VIDEO_HERO_PLACEHOLDER_DEFAULT = "/images/video-placeholder.svg";
 
 export const HOME_PRODUCT_FALLBACKS: HomeProductFallback[] = [
   {

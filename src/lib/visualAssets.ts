@@ -17,7 +17,7 @@ const lorraineHeroSrc =
 export const photography = {
   hero: {
     src: lorraineHeroSrc,
-    alt: "Lorraine Hawkins — clinical trichologist and educator.",
+    alt: "Lorraine Hawkins, clinical trichologist and educator.",
   },
   consultation: {
     src: "/images/cta-consultation-placeholder.png",

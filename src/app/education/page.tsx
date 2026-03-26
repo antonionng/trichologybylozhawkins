@@ -304,7 +304,7 @@ export default async function Education() {
               <div className="overflow-hidden rounded-2xl">
                 <Image
                   src={photography.hero.src}
-                  alt="Lorraine Hawkins, clinical trichologist and educator."
+                  alt={photography.hero.alt}
                   width={600} height={780}
                   className="h-full w-full object-cover saturate-[0.92] contrast-[1.05]"
                   priority
@@ -324,7 +324,7 @@ export default async function Education() {
             <div className="shrink-0">
               <Image
                 src={photography.hero.src}
-                alt="Lorraine Hawkins"
+                alt={photography.hero.alt}
                 width={120}
                 height={120}
                 className="h-28 w-28 rounded-full object-cover shadow-md ring-4 ring-white"

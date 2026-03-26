@@ -234,7 +234,7 @@ export default async function VideoCatalogPage() {
             <div className="shrink-0">
               <Image
                 src={photography.hero.src}
-                alt="Lorraine Hawkins"
+                alt={photography.hero.alt}
                 width={120}
                 height={120}
                 className="h-28 w-28 rounded-full object-cover shadow-md ring-4 ring-white"
