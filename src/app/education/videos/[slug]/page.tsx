@@ -444,6 +444,7 @@ export default async function VideoDetailPage({
                     priceId={video.dbPriceId}
                     amount={video.dbAmount}
                     currency={video.dbCurrency}
+                    checkoutHref={`/education/videos/checkout/${video.slug}`}
                   />
                 ) : (
                   <ButtonLink href="/login" variant="secondary" size="sm" className="w-full justify-center">Sign in to watch</ButtonLink>

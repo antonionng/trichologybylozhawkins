@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { startCheckout, startBundleCheckout } from "@/app/actions/education";
+import { startCheckout, startBundleCheckout, startVideoCheckout } from "@/app/actions/education";
 import { Button } from "@/components/ui/Button";
 
 type Tab = "login" | "signup";
@@ -12,12 +12,24 @@ type CheckoutAuthClientProps =
       priceId?: string;
       courseSlug: string;
       bundleSlug?: never;
+      videoProductId?: never;
+      videoSlug?: never;
     }
   | {
       courseId?: never;
       priceId?: never;
       courseSlug?: never;
       bundleSlug: string;
+      videoProductId?: never;
+      videoSlug?: never;
+    }
+  | {
+      courseId?: never;
+      bundleSlug?: never;
+      courseSlug?: never;
+      videoProductId: string;
+      priceId?: string;
+      videoSlug: string;
     };
 
 export function CheckoutAuthClient({
@@ -25,6 +37,7 @@ export function CheckoutAuthClient({
   priceId,
   courseSlug,
   bundleSlug,
+  videoProductId,
 }: CheckoutAuthClientProps) {
   const [tab, setTab] = useState<Tab>("signup");
   const [loading, setLoading] = useState(false);
@@ -40,8 +53,10 @@ export function CheckoutAuthClient({
       await startBundleCheckout(bundleSlug);
     } else if (courseId) {
       await startCheckout(courseId, priceId);
+    } else if (videoProductId) {
+      await startVideoCheckout(videoProductId, priceId);
     } else {
-      throw new Error("Missing course or bundle");
+      throw new Error("Missing checkout target");
     }
   };
 

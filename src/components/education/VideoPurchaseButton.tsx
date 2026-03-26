@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { startVideoCheckout } from "@/app/actions/education";
 
 export function VideoPurchaseButton({
@@ -9,11 +9,13 @@ export function VideoPurchaseButton({
   priceId,
   amount,
   currency,
+  checkoutHref,
 }: {
   videoProductId: string;
   priceId?: string;
   amount: number;
   currency: string;
+  checkoutHref?: string;
 }) {
   const [loading, setLoading] = useState(false);
 
@@ -31,6 +33,19 @@ export function VideoPurchaseButton({
 
   const label =
     currency === "GBP" ? `£${amount}` : `${currency} ${amount}`;
+
+  if (checkoutHref) {
+    return (
+      <ButtonLink
+        href={checkoutHref}
+        variant="secondary"
+        size="md"
+        className="w-full justify-center"
+      >
+        {`Buy for ${label}`}
+      </ButtonLink>
+    );
+  }
 
   return (
     <Button

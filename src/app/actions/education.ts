@@ -370,12 +370,53 @@ export async function startVideoCheckout(videoProductId: string, priceId?: strin
   const video = await prisma.videoProduct.findUnique({ where: { id: videoProductId } });
   if (!video) throw new Error("Video not found");
 
+  const { getCurrentSession } = await import("@/server/security/auth");
+  const userSession = await getCurrentSession();
+  if (!userSession) {
+    throw new Error("Please sign in or create an account to purchase this video.");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userSession.uid },
+    select: { id: true, email: true, contactId: true },
+  });
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  let contactId = user.contactId;
+  const metadata: Record<string, string> = {
+    userId: user.id,
+    userEmail: user.email,
+  };
+
+  if (!contactId) {
+    const contact = await prisma.contact.upsert({
+      where: { email: user.email },
+      update: {},
+      create: {
+        email: user.email,
+        firstName: "Learner",
+        lastName: "",
+        source: "video-checkout",
+      },
+    });
+    contactId = contact.id;
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { contactId: contact.id },
+    });
+  }
+
   const session = await educationService.createCheckoutSession({
     productType: "VIDEO",
     productId: videoProductId,
     priceId,
+    contactId,
     successUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/education/success?session_id={CHECKOUT_SESSION_ID}`,
     cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/education/videos`,
+    metadata,
   });
 
   if (session.url) {

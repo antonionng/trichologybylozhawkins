@@ -352,7 +352,13 @@ function VideoCard({ video }: { video: VideoCardData }) {
         <div className="flex items-center gap-3 border-t border-brand-graphite/6 pt-4">
           <div className="flex-1">
             {video.dbVideoProductId && video.dbPriceId ? (
-              <VideoPurchaseButton videoProductId={video.dbVideoProductId} priceId={video.dbPriceId} amount={video.dbAmount!} currency={video.dbCurrency!} />
+              <VideoPurchaseButton
+                videoProductId={video.dbVideoProductId}
+                priceId={video.dbPriceId}
+                amount={video.dbAmount!}
+                currency={video.dbCurrency!}
+                checkoutHref={`/education/videos/checkout/${video.slug}`}
+              />
             ) : (
               <ButtonLink href={`/education/videos/${video.slug}`} variant="secondary" size="sm" className="w-full justify-center">Learn more</ButtonLink>
             )}
