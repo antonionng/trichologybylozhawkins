@@ -181,13 +181,14 @@ export function AcademyTabs({
   );
 
   const hasActivity =
-    stats.coursesEnrolled > 0 || stats.lessonsCompleted > 0;
+    stats.coursesEnrolled > 0 || stats.lessonsCompleted > 0 || myVideos.length > 0;
 
   const showContinueLearningColumn =
     continueLesson != null || stats.coursesEnrolled > 0;
 
   const hasRecentActivity = recentActivity.length > 0;
   const hasMyCourses = myCourses.length > 0;
+  const hasMyVideos = myVideos.length > 0;
   const [selectedLockedVideo, setSelectedLockedVideo] = useState<VideoCard | null>(
     null,
   );
@@ -379,10 +380,10 @@ export function AcademyTabs({
               </div>
 
               {/* Activity Feed + Course cards */}
-              {(hasRecentActivity || hasMyCourses) && (
+              {(hasRecentActivity || hasMyCourses || hasMyVideos) && (
                 <div
                   className={
-                    hasRecentActivity && hasMyCourses
+                    hasRecentActivity && (hasMyCourses || hasMyVideos)
                       ? "grid gap-6 lg:grid-cols-[1fr_1.6fr]"
                       : "grid gap-6"
                   }
@@ -391,108 +392,167 @@ export function AcademyTabs({
                     <ActivityFeed items={recentActivity} />
                   )}
 
-                  {hasMyCourses && (
-                    <div className="space-y-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-black/40">
-                        My Courses
-                      </p>
-                      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                        {myCourses.map((course, i) => {
-                          const completed = course.completedLessons ?? 0;
-                          const total = course.totalLessons ?? 0;
-                          const pct =
-                            total > 0
-                              ? Math.round((completed / total) * 100)
-                              : 0;
-                          const isAllDone =
-                            total > 0 && completed >= total;
+                  {(hasMyCourses || hasMyVideos) && (
+                    <div className="space-y-6">
+                      {hasMyCourses && (
+                        <div className="space-y-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-black/40">
+                            My Courses
+                          </p>
+                          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                            {myCourses.map((course, i) => {
+                              const completed = course.completedLessons ?? 0;
+                              const total = course.totalLessons ?? 0;
+                              const pct =
+                                total > 0
+                                  ? Math.round((completed / total) * 100)
+                                  : 0;
+                              const isAllDone =
+                                total > 0 && completed >= total;
 
-                          return (
-                            <div
-                              key={course.id}
-                              className="group relative flex flex-col overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition hover:shadow-card"
-                            >
-                              <div
-                                className={`relative h-36 w-full overflow-hidden bg-gradient-to-br ${GRADIENTS[i % GRADIENTS.length]}`}
-                              >
-                                {course.heroUrl && (
-                                  <img
-                                    src={course.heroUrl}
-                                    alt={course.title}
-                                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                  />
-                                )}
-                                <div className="absolute top-3 left-3 flex gap-2">
-                                  <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-black/60 backdrop-blur-sm">
-                                    {course.enrollmentType?.replace(
-                                      /_/g,
-                                      " ",
-                                    ) ?? "Course"}
-                                  </span>
-                                  {isAllDone && (
-                                    <span className="rounded-full bg-emerald-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
-                                      Completed
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div className="flex flex-1 flex-col p-4">
-                                <h2 className="text-base font-semibold text-black leading-snug">
-                                  {course.title}
-                                </h2>
-                                <p className="mt-1 text-sm text-black/55 line-clamp-1">
-                                  {course.subtitle ??
-                                    course.description ??
-                                    ""}
-                                </p>
-
-                                {total > 0 && (
-                                  <div className="mt-3 space-y-1">
-                                    <div className="flex items-center justify-between text-xs">
-                                      <span className="text-black/50">
-                                        {completed} of {total} lessons
-                                      </span>
-                                      <span
-                                        className={`font-semibold ${isAllDone ? "text-emerald-600" : "text-[#b67400]"}`}
-                                      >
-                                        {pct}%
-                                      </span>
-                                    </div>
-                                    <div className="h-1.5 overflow-hidden rounded-full bg-black/5">
-                                      <div
-                                        className={`h-full rounded-full transition-all ${
-                                          isAllDone
-                                            ? "bg-emerald-500"
-                                            : "bg-[#fab826]"
-                                        }`}
-                                        style={{
-                                          width: `${pct}%`,
-                                        }}
+                              return (
+                                <div
+                                  key={course.id}
+                                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition hover:shadow-card"
+                                >
+                                  <div
+                                    className={`relative h-36 w-full overflow-hidden bg-gradient-to-br ${GRADIENTS[i % GRADIENTS.length]}`}
+                                  >
+                                    {course.heroUrl && (
+                                      <img
+                                        src={course.heroUrl}
+                                        alt={course.title}
+                                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                       />
+                                    )}
+                                    <div className="absolute top-3 left-3 flex gap-2">
+                                      <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-black/60 backdrop-blur-sm">
+                                        {course.enrollmentType?.replace(
+                                          /_/g,
+                                          " ",
+                                        ) ?? "Course"}
+                                      </span>
+                                      {isAllDone && (
+                                        <span className="rounded-full bg-emerald-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+                                          Completed
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
-                                )}
 
-                                <div className="mt-auto pt-3">
-                                  <Link
-                                    href={`/education/${course.slug}`}
-                                    className={`inline-flex w-full items-center justify-center rounded-xl px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] transition ${
-                                      isAllDone
-                                        ? "bg-emerald-500 text-white hover:bg-emerald-600"
-                                        : "bg-[#fab826] text-white shadow-sm hover:bg-[#e5a820]"
-                                    }`}
-                                  >
-                                    {isAllDone
-                                      ? "Review Course"
-                                      : "Continue"}
-                                  </Link>
+                                  <div className="flex flex-1 flex-col p-4">
+                                    <h2 className="text-base font-semibold text-black leading-snug">
+                                      {course.title}
+                                    </h2>
+                                    <p className="mt-1 text-sm text-black/55 line-clamp-1">
+                                      {course.subtitle ??
+                                        course.description ??
+                                        ""}
+                                    </p>
+
+                                    {total > 0 && (
+                                      <div className="mt-3 space-y-1">
+                                        <div className="flex items-center justify-between text-xs">
+                                          <span className="text-black/50">
+                                            {completed} of {total} lessons
+                                          </span>
+                                          <span
+                                            className={`font-semibold ${isAllDone ? "text-emerald-600" : "text-[#b67400]"}`}
+                                          >
+                                            {pct}%
+                                          </span>
+                                        </div>
+                                        <div className="h-1.5 overflow-hidden rounded-full bg-black/5">
+                                          <div
+                                            className={`h-full rounded-full transition-all ${
+                                              isAllDone
+                                                ? "bg-emerald-500"
+                                                : "bg-[#fab826]"
+                                            }`}
+                                            style={{
+                                              width: `${pct}%`,
+                                            }}
+                                          />
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    <div className="mt-auto pt-3">
+                                      <Link
+                                        href={`/education/${course.slug}`}
+                                        className={`inline-flex w-full items-center justify-center rounded-xl px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] transition ${
+                                          isAllDone
+                                            ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                                            : "bg-[#fab826] text-white shadow-sm hover:bg-[#e5a820]"
+                                        }`}
+                                      >
+                                        {isAllDone
+                                          ? "Review Course"
+                                          : "Continue"}
+                                      </Link>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {hasMyVideos && (
+                        <div className="space-y-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-black/40">
+                            My Videos
+                          </p>
+                          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                            {myVideos.map((video, i) => (
+                              <div
+                                key={video.id}
+                                className="group relative flex flex-col overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition hover:shadow-card"
+                              >
+                                <div
+                                  className={`relative h-36 w-full overflow-hidden bg-gradient-to-br ${GRADIENTS[i % GRADIENTS.length]}`}
+                                >
+                                  {video.heroUrl && (
+                                    <img
+                                      src={video.heroUrl}
+                                      alt={video.title}
+                                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    />
+                                  )}
+                                  <div className="absolute top-3 left-3">
+                                    <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-black/60 backdrop-blur-sm">
+                                      {video.category ?? "Video"}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-1 flex-col p-4">
+                                  <h2 className="text-base font-semibold text-black leading-snug">
+                                    {video.title}
+                                  </h2>
+                                  <p className="mt-1 text-sm text-black/55 line-clamp-2">
+                                    {video.subtitle ?? video.description ?? ""}
+                                  </p>
+                                  <div className="mt-auto flex items-center justify-between pt-4 text-xs text-black/40">
+                                    <span>
+                                      {video.durationMinutes
+                                        ? `${video.durationMinutes} mins`
+                                        : ""}
+                                    </span>
+                                    <Link
+                                      href={`/academy/videos/${video.id}`}
+                                      className="rounded-xl bg-brand-graphite px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-brand-graphite/85"
+                                    >
+                                      View video
+                                    </Link>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
