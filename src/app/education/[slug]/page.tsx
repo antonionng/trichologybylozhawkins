@@ -7,9 +7,11 @@ import { Container } from "@/components/layout/Container";
 import { PageSection } from "@/components/layout/PageSection";
 import { SectionHeading } from "@/components/typography/SectionHeading";
 import { getCourseBySlug } from "@/app/actions/education";
+import { CourseBundleChoice } from "@/components/education/CourseBundleChoice";
 import { CurriculumAccordion } from "@/components/education/CurriculumAccordion";
 import { ArticleCta } from "@/components/sections/ArticleCta";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { getCourseBundleOffer } from "@/lib/educationBundles";
 import { photography } from "@/lib/visualAssets";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
 import { prisma } from "@/server/db/client";
@@ -131,6 +133,7 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
   );
 
   const primaryPrice = course.pricing.find((p: any) => p.isPrimary) || course.pricing[0];
+  const bundleOffer = getCourseBundleOffer(course.slug);
   const courseMeta = (course.meta ?? {}) as Record<string, unknown>;
   const launchOffer = courseMeta.launchOffer as { amount?: number; standardAmount?: number } | undefined;
   const priceLabel = primaryPrice
@@ -409,12 +412,25 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
               </div>
 
               <div className="space-y-4">
-                <Link
-                  href={`/education/checkout/${course.slug}`}
-                  className="inline-flex w-full items-center justify-center rounded-xl bg-[#fab826] px-6 py-3 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-sm transition hover:bg-[#e5a820]"
-                >
-                  Start Course
-                </Link>
+                {bundleOffer ? (
+                  <CourseBundleChoice
+                    mode="modal"
+                    triggerLabel="Start Course"
+                    triggerClassName="inline-flex w-full items-center justify-center rounded-xl bg-[#fab826] px-6 py-3 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-sm transition hover:bg-[#e5a820]"
+                    companionTitle={bundleOffer.companionTitle}
+                    bundleHref={bundleOffer.bundleHref}
+                    checkoutHref={`/education/checkout/${course.slug}`}
+                    singleCourseLabel="Continue with this course"
+                    bundleLabel="Upgrade to bundle"
+                  />
+                ) : (
+                  <Link
+                    href={`/education/checkout/${course.slug}`}
+                    className="inline-flex w-full items-center justify-center rounded-xl bg-[#fab826] px-6 py-3 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-sm transition hover:bg-[#e5a820]"
+                  >
+                    Start Course
+                  </Link>
+                )}
               </div>
 
               {/* What's Included */}
@@ -458,18 +474,16 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
             </Surface>
 
             {/* Bundle CTA for Phase 1 + Clinical Practice */}
-            {(course.slug === "trichocare-phase-1" || course.slug === "trichology-clinical-practice") && (
+            {bundleOffer && (
               <Link
-                href="/education/checkout/bundle/phase-1-clinical-practice"
+                href={bundleOffer.bundleHref}
                 className="block rounded-2xl border-2 border-[#b67400]/30 bg-[#fab826]/10 px-5 py-4 text-center transition hover:border-[#b67400]/50 hover:bg-[#fab826]/15"
               >
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#b67400]">
                   Bundle and save
                 </p>
                 <p className="mt-1 text-sm font-semibold text-black">
-                  {course.slug === "trichocare-phase-1"
-                    ? "Add Trichology in Clinical Practice"
-                    : "Add Hair & Scalp Foundation Phase 1"}
+                  Add {bundleOffer.companionTitle}
                   {" "}for £700 total
                 </p>
               </Link>
@@ -500,12 +514,25 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
           <div>
             <p className="text-xs text-black/50 leading-tight">{course.title}</p>
           </div>
-          <Link
-            href={`/education/checkout/${course.slug}`}
-            className="inline-flex items-center justify-center rounded-xl bg-[#fab826] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-sm transition hover:bg-[#e5a820]"
-          >
-            Start Course
-          </Link>
+          {bundleOffer ? (
+            <CourseBundleChoice
+              mode="modal"
+              triggerLabel="Start Course"
+              triggerClassName="inline-flex items-center justify-center rounded-xl bg-[#fab826] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-sm transition hover:bg-[#e5a820]"
+              companionTitle={bundleOffer.companionTitle}
+              bundleHref={bundleOffer.bundleHref}
+              checkoutHref={`/education/checkout/${course.slug}`}
+              singleCourseLabel="Continue with this course"
+              bundleLabel="Upgrade to bundle"
+            />
+          ) : (
+            <Link
+              href={`/education/checkout/${course.slug}`}
+              className="inline-flex items-center justify-center rounded-xl bg-[#fab826] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-sm transition hover:bg-[#e5a820]"
+            >
+              Start Course
+            </Link>
+          )}
         </div>
       </div>
       </main>

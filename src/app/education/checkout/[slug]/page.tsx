@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getCourseBySlug } from "@/app/actions/education";
 import { getCurrentSession } from "@/server/security/auth";
 import { Container } from "@/components/layout/Container";
 import { PageSection } from "@/components/layout/PageSection";
 import { Surface } from "@/components/layout/Surface";
 import { CheckoutAuthClient } from "@/components/education/CheckoutAuthClient";
+import { PurchaseButton } from "@/components/education/PurchaseButton";
+import { CourseBundleChoice } from "@/components/education/CourseBundleChoice";
+import { getCourseBundleOffer } from "@/lib/educationBundles";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -25,15 +28,13 @@ export async function generateMetadata({
 
 export default async function CheckoutPage({ params }: { params: { slug: string } }) {
   const session = await getCurrentSession();
-
-  if (session) {
-    redirect(`/education/${params.slug}`);
-  }
-
   const course = await getCourseBySlug(params.slug);
   if (!course) notFound();
 
   const primaryPrice = course.pricing.find((p: any) => p.isPrimary) || course.pricing[0];
+  if (!primaryPrice) notFound();
+
+  const bundleOffer = getCourseBundleOffer(course.slug);
   const priceLabel = primaryPrice
     ? primaryPrice.currency === "GBP"
       ? `£${primaryPrice.amount}`
@@ -59,15 +60,59 @@ export default async function CheckoutPage({ params }: { params: { slug: string 
                 </div>
               )}
               <p className="text-sm text-black/60">
-                Create an account or sign in to complete your purchase.
+                {session
+                  ? "Continue to secure Stripe checkout."
+                  : "Create an account or sign in to complete your purchase."}
               </p>
             </div>
 
-            <CheckoutAuthClient
-              courseId={course.id}
-              priceId={primaryPrice?.id}
-              courseSlug={course.slug}
-            />
+            {bundleOffer ? (
+              <div className="space-y-5">
+                {session ? (
+                  <CourseBundleChoice
+                    companionTitle={bundleOffer.companionTitle}
+                    bundleHref={bundleOffer.bundleHref}
+                    courseId={course.id}
+                    priceId={primaryPrice.id}
+                    amount={Number(primaryPrice.amount)}
+                    currency={primaryPrice.currency}
+                    singleCourseLabel="Continue with this course"
+                    bundleLabel="Upgrade to bundle"
+                  />
+                ) : (
+                  <CourseBundleChoice
+                    companionTitle={bundleOffer.companionTitle}
+                    bundleHref={bundleOffer.bundleHref}
+                    checkoutHref={`/education/checkout/${course.slug}#course-checkout-auth`}
+                    singleCourseLabel="Continue with this course"
+                    bundleLabel="Upgrade to bundle"
+                  />
+                )}
+
+                {!session ? (
+                  <div id="course-checkout-auth">
+                    <CheckoutAuthClient
+                      courseId={course.id}
+                      priceId={primaryPrice.id}
+                      courseSlug={course.slug}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ) : session ? (
+              <PurchaseButton
+                courseId={course.id}
+                priceId={primaryPrice.id}
+                amount={Number(primaryPrice.amount)}
+                currency={primaryPrice.currency}
+              />
+            ) : (
+              <CheckoutAuthClient
+                courseId={course.id}
+                priceId={primaryPrice.id}
+                courseSlug={course.slug}
+              />
+            )}
           </Surface>
         </Container>
       </PageSection>
