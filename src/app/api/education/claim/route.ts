@@ -45,16 +45,28 @@ export async function POST(request: Request) {
         where: { id: currentSession.uid },
       });
       if (existingUser) {
+        if (order.contactId && existingUser.contactId !== order.contactId) {
+          await prisma.user.update({
+            where: { id: existingUser.id },
+            data: { contactId: order.contactId },
+          });
+        }
         return NextResponse.json({ ok: true, mode: "already-authenticated" });
       }
     }
 
     const email = order.contact.email.toLowerCase();
-    const user =
-      (await prisma.user.findUnique({ where: { email } })) ??
-      (await prisma.user.create({
-        data: { email, role: "LEARNER", contactId: order.contactId },
-      }));
+    const existingEmailUser = await prisma.user.findUnique({ where: { email } });
+    const user = existingEmailUser
+      ? order.contactId && existingEmailUser.contactId !== order.contactId
+        ? await prisma.user.update({
+            where: { id: existingEmailUser.id },
+            data: { contactId: order.contactId },
+          })
+        : existingEmailUser
+      : await prisma.user.create({
+          data: { email, role: "LEARNER", contactId: order.contactId },
+        });
 
     if (user.passwordHash) {
       return NextResponse.json({ ok: true, mode: "login" });

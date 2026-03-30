@@ -20,7 +20,10 @@ describe("public education purchase links", () => {
     const academyTabs = readRepoFile("src/components/academy/AcademyTabs.tsx");
 
     expect(academyTabs).toContain("href={`/education/${course.slug}`}");
-    expect(academyTabs).toContain("href={`/education/videos/${video.slug}`}");
+    expect(academyTabs).not.toContain("href={`/education/videos/${video.slug}`}");
+    expect(academyTabs).toContain("href={`/academy/videos/${video.id}`}");
+    expect(academyTabs).toContain("selectedLockedVideo");
+    expect(academyTabs).toContain("VideoPurchaseButton");
     expect(academyTabs).toContain("View course");
     expect(academyTabs).toContain("View video");
   });

@@ -1285,6 +1285,7 @@ async function main() {
         "A clinical training module for practitioners working with clients experiencing hair thinning, shedding, or texture changes during perimenopause or menopause. Lorraine explains the pathophysiology, evidence-based interventions, and when to refer for further support.",
       category: "Hormonal Health",
       durationMinutes: 30,
+      isFreeOnSignup: true,
       status: CourseStatus.PUBLISHED,
       videoSourceType: VideoSourceType.LINK,
       publicContent: {
@@ -1491,6 +1492,7 @@ async function main() {
         description: video.description,
         category: video.category,
         durationMinutes: video.durationMinutes,
+        isFreeOnSignup: video.isFreeOnSignup ?? false,
         status: video.status,
         videoSourceType: video.videoSourceType,
         publicContent: video.publicContent,
@@ -1502,6 +1504,7 @@ async function main() {
         description: video.description,
         category: video.category,
         durationMinutes: video.durationMinutes,
+        isFreeOnSignup: video.isFreeOnSignup ?? false,
         status: video.status,
         videoSourceType: video.videoSourceType,
         publicContent: video.publicContent,

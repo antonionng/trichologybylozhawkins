@@ -5,6 +5,7 @@ import { prisma } from "@/server/db/client";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
 import { AcademyTabs } from "@/components/academy/AcademyTabs";
 import { resolveQuizCardImageUrl } from "@/server/modules/education/quizHero";
+import { getCurrentFeaturedLeadItem } from "@/server/modules/education/featuredLeadItem";
 
 export const dynamic = "force-dynamic";
 
@@ -44,10 +45,24 @@ function computeStreak(dates: Date[]): number {
   return streak;
 }
 
+function formatPriceLabel(
+  pricing?: Array<{ amount: { toString(): string } | number | string; currency: string }> | null,
+) {
+  const primaryPrice = pricing?.[0];
+  if (!primaryPrice) return "Free";
+
+  const amount = Number(primaryPrice.amount);
+  if (!Number.isFinite(amount)) return "Free";
+
+  return primaryPrice.currency === "GBP"
+    ? `£${amount}`
+    : `${primaryPrice.currency} ${amount}`;
+}
+
 export default async function AcademyHome() {
   const { user } = await requireUserOrRedirect();
 
-  const [myCourses, catalogCourses, quizzes, myVideos, catalogVideos] =
+  const [myCourses, catalogCourses, quizzes, myVideos, catalogVideos, featuredLead] =
     await Promise.all([
       listEnrolledCourses({ userId: user.id }),
       prisma.course.findMany({
@@ -90,6 +105,7 @@ export default async function AcademyHome() {
         },
         orderBy: { createdAt: "desc" },
       }),
+      getCurrentFeaturedLeadItem(),
     ]);
 
   // Progress counts per course
@@ -356,6 +372,8 @@ export default async function AcademyHome() {
   const browseVideos = catalogVideos.filter(
     (v: any) => !myVideoIds.has(v.id),
   );
+  const featuredFreeVideoId =
+    featuredLead?.kind === "VIDEO" ? featuredLead.id : null;
 
   const withHeroUrls = async (courses: any[]) =>
     Promise.all(
@@ -370,10 +388,29 @@ export default async function AcademyHome() {
 
   const withVideoHeroUrls = async (videos: any[]) =>
     Promise.all(
-      videos.map(async (v) => ({
-        ...v,
-        heroUrl: await resolveHeroUrl(v),
-      })),
+      videos.map(async (v) => {
+        const publicContent = (v.publicContent as Record<string, any> | null) ?? null;
+
+        return {
+          ...v,
+          heroUrl: await resolveHeroUrl(v),
+          priceLabel: formatPriceLabel(v.pricing),
+          headline:
+            typeof publicContent?.headline === "string"
+              ? publicContent.headline
+              : null,
+          intro:
+            typeof publicContent?.intro === "string"
+              ? publicContent.intro
+              : null,
+          learningOutcomes: Array.isArray(publicContent?.learningOutcomes)
+            ? publicContent.learningOutcomes
+            : [],
+          benefits: Array.isArray(publicContent?.benefits)
+            ? publicContent.benefits
+            : [],
+        };
+      }),
     );
 
   const [
@@ -403,6 +440,7 @@ export default async function AcademyHome() {
         quizzes={enrichedQuizzes as any}
         myVideos={enrichedMyVideos as any}
         browseVideos={enrichedBrowseVideos as any}
+        featuredFreeVideoId={featuredFreeVideoId}
         userName={userName}
         stats={{
           coursesEnrolled: myCourses.length,

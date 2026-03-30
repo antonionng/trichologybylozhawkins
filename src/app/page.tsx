@@ -111,12 +111,51 @@ async function buildHomepageQuizBannerLead(slug: string) {
   };
 }
 
-async function getHomepageFeaturedQuiz() {
+async function buildHomepageVideoBannerLead(
+  lead: Extract<
+    Awaited<ReturnType<typeof getCurrentFeaturedLeadItem>>,
+    { kind: "VIDEO" }
+  >,
+) {
+  let heroUrl: string | null = null;
+
+  if (lead.heroMedia?.path) {
+    try {
+      heroUrl = await createSignedDownloadUrl(lead.heroMedia.path);
+    } catch {
+      heroUrl = null;
+    }
+  }
+
+  if (!heroUrl) {
+    heroUrl =
+      VIDEO_HERO_PLACEHOLDER_BY_SLUG[lead.slug] ??
+      VIDEO_HERO_PLACEHOLDER_DEFAULT;
+  }
+
+  return {
+    kind: "VIDEO" as const,
+    slug: lead.slug,
+    title: lead.title,
+    subtitle: lead.subtitle,
+    description: lead.description,
+    category: lead.category,
+    durationLabel: lead.durationMinutes
+      ? `${lead.durationMinutes} mins`
+      : "Self-paced",
+    heroUrl,
+  };
+}
+
+async function getHomepageFeaturedLead() {
   try {
     const lead = await getCurrentFeaturedLeadItem();
     if (lead?.kind === "QUIZ" && lead.slug) {
       const fromAdmin = await buildHomepageQuizBannerLead(lead.slug);
       if (fromAdmin) return fromAdmin;
+    }
+    if (lead?.kind === "VIDEO") {
+      return buildHomepageVideoBannerLead(lead);
     }
 
     let quiz = await findHomepageFeaturedPublicQuizRecord(FEATURED_PUBLIC_QUIZ_SLUG);
@@ -135,16 +174,16 @@ async function getHomepageFeaturedQuiz() {
 }
 
 export default async function Home() {
-  const [{ videos, courses, products }, featuredQuiz] = await Promise.all([
+  const [{ videos, courses, products }, featuredLead] = await Promise.all([
     getShowcaseData(),
-    getHomepageFeaturedQuiz(),
+    getHomepageFeaturedLead(),
   ]);
 
   return (
     <main>
       <JsonLd data={buildFaqJsonLd("/", faqItems)} />
       <HomeHero />
-      {featuredQuiz ? <HomepageFreeVideoBanner lead={featuredQuiz} /> : null}
+      {featuredLead ? <HomepageFreeVideoBanner lead={featuredLead} /> : null}
       <EducationShowcase videos={videos} courses={courses} />
       <ProductsShowcase products={products as any} />
       <ServicesShowcase />

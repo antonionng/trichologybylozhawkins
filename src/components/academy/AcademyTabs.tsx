@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { Surface } from "@/components/layout/Surface";
+import { Modal } from "@/components/ui/Modal";
 import { photography } from "@/lib/visualAssets";
 import { PROFESSIONAL_GATED_QUIZ_HREF } from "@/lib/publicQuiz";
+import { VideoPurchaseButton } from "@/components/education/VideoPurchaseButton";
 import { ProgressRing } from "./ProgressRing";
 import { ContinueLearningCard } from "./ContinueLearningCard";
 import { LearningMetrics } from "./LearningMetrics";
@@ -53,6 +55,11 @@ type VideoCard = {
   category?: string | null;
   durationMinutes?: number | null;
   heroUrl?: string | null;
+  priceLabel?: string | null;
+  headline?: string | null;
+  intro?: string | null;
+  learningOutcomes?: string[];
+  benefits?: string[];
   pricing?: Array<{
     id: string;
     amount: any;
@@ -76,6 +83,7 @@ type Props = {
   quizzes: QuizCard[];
   myVideos: VideoCard[];
   browseVideos: VideoCard[];
+  featuredFreeVideoId?: string | null;
   userName?: string | null;
   stats: {
     coursesEnrolled: number;
@@ -112,6 +120,18 @@ function formatLevel(level?: string | null) {
   return level.charAt(0) + level.slice(1).toLowerCase();
 }
 
+function getVideoSummary(video: VideoCard) {
+  return video.intro ?? video.subtitle ?? video.description ?? "";
+}
+
+function getVideoHighlights(video: VideoCard) {
+  if (video.learningOutcomes && video.learningOutcomes.length > 0) {
+    return video.learningOutcomes;
+  }
+
+  return video.benefits ?? [];
+}
+
 const GRADIENTS = [
   "from-brand-salmon/20 to-brand-clay/20",
   "from-brand-sage/25 to-brand-mist/20",
@@ -135,6 +155,7 @@ export function AcademyTabs({
   quizzes,
   myVideos,
   browseVideos,
+  featuredFreeVideoId,
   userName,
   stats,
   continueLesson,
@@ -167,6 +188,33 @@ export function AcademyTabs({
 
   const hasRecentActivity = recentActivity.length > 0;
   const hasMyCourses = myCourses.length > 0;
+  const [selectedLockedVideo, setSelectedLockedVideo] = useState<VideoCard | null>(
+    null,
+  );
+  const featuredVideo =
+    (featuredFreeVideoId
+      ? myVideos.find((video) => video.id === featuredFreeVideoId) ??
+        browseVideos.find((video) => video.id === featuredFreeVideoId)
+      : null) ?? null;
+  const featuredVideoIsPurchased = !!(
+    featuredVideo && myVideos.some((video) => video.id === featuredVideo.id)
+  );
+  const featuredVideoHref =
+    featuredVideo && featuredVideoIsPurchased
+      ? `/academy/videos/${featuredVideo.id}`
+      : null;
+  const remainingMyVideos = featuredVideo
+    ? myVideos.filter((video) => video.id !== featuredVideo.id)
+    : myVideos;
+  const remainingBrowseVideos = featuredVideo
+    ? browseVideos.filter((video) => video.id !== featuredVideo.id)
+    : browseVideos;
+  const selectedLockedVideoPrice =
+    selectedLockedVideo?.pricing?.find((price) => price.isPrimary) ??
+    selectedLockedVideo?.pricing?.[0];
+  const selectedLockedVideoHighlights = selectedLockedVideo
+    ? getVideoHighlights(selectedLockedVideo).slice(0, 3)
+    : [];
 
   return (
     <div className="w-full space-y-6">
@@ -726,13 +774,89 @@ export function AcademyTabs({
       {/* ── VIDEOS ── */}
       {tab === "videos" ? (
         <div className="space-y-10">
-          {myVideos.length > 0 && (
+          {featuredVideo ? (
+            <Surface variant="glass" padding="lg" className="overflow-hidden">
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_240px] lg:items-center">
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-[#fab826] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.28em] text-white">
+                      Featured free lesson
+                    </span>
+                    <span className="rounded-full bg-black/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-black/55">
+                      Free with academy signup
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-semibold text-black">
+                      {featuredVideo.title}
+                    </h2>
+                    <p className="max-w-2xl text-sm leading-relaxed text-black/60">
+                      {getVideoSummary(featuredVideo) ||
+                        "Start with Lorraine's featured free academy lesson."}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.22em] text-black/45">
+                    <span>{featuredVideo.category ?? "Video"}</span>
+                    {featuredVideo.durationMinutes ? <span>/</span> : null}
+                    {featuredVideo.durationMinutes ? (
+                      <span>{featuredVideo.durationMinutes} mins</span>
+                    ) : null}
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {featuredVideoHref ? (
+                      <Link
+                        href={featuredVideoHref}
+                        className="inline-flex items-center justify-center rounded-xl bg-brand-graphite px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-brand-graphite/85"
+                      >
+                        Watch free lesson
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedLockedVideo(featuredVideo)}
+                        className="inline-flex items-center justify-center rounded-xl bg-brand-graphite px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-brand-graphite/85"
+                      >
+                        Watch free lesson
+                      </button>
+                    )}
+                    <Link
+                      href="/academy/signup"
+                      className="inline-flex items-center justify-center rounded-xl border border-black/10 bg-white px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-black/70 transition hover:bg-black/[0.03]"
+                    >
+                      Share free signup link
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="relative h-48 overflow-hidden rounded-2xl bg-gradient-to-br from-brand-salmon/15 via-brand-sage/10 to-brand-mist/20">
+                  {featuredVideo.heroUrl ? (
+                    <img
+                      src={featuredVideo.heroUrl}
+                      alt={featuredVideo.title}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  ) : null}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
+                  <div className="absolute inset-x-4 bottom-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white/75">
+                      Free academy video
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-white">
+                      {featuredVideo.title}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Surface>
+          ) : null}
+
+          {remainingMyVideos.length > 0 && (
             <div className="space-y-4">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-black/40">
                 My videos
               </p>
               <div className="grid gap-6 lg:grid-cols-3">
-                {myVideos.map((video, i) => (
+                {remainingMyVideos.map((video, i) => (
                   <div
                     key={video.id}
                     className="group relative flex flex-col overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition hover:shadow-card"
@@ -767,7 +891,7 @@ export function AcademyTabs({
                             : ""}
                         </span>
                         <Link
-                          href={`/education/videos/${video.slug}`}
+                          href={`/academy/videos/${video.id}`}
                           className="rounded-xl bg-brand-graphite px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-brand-graphite/85"
                         >
                           View video
@@ -780,15 +904,15 @@ export function AcademyTabs({
             </div>
           )}
 
-          {browseVideos.length > 0 && (
+          {remainingBrowseVideos.length > 0 && (
             <div className="space-y-4">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-black/40">
-                {myVideos.length > 0
+                {remainingMyVideos.length > 0
                   ? "More videos to explore"
                   : "Video courses"}
               </p>
               <div className="grid gap-6 lg:grid-cols-3">
-                {browseVideos.map((video, i) => (
+                {remainingBrowseVideos.map((video, i) => (
                   <div
                     key={video.id}
                     className="group relative flex flex-col overflow-hidden rounded-2xl border border-black/5 bg-white shadow-sm transition hover:shadow-card"
@@ -814,15 +938,26 @@ export function AcademyTabs({
                         {video.title}
                       </h2>
                       <p className="mt-1.5 text-sm text-black/55 line-clamp-2">
-                        {video.subtitle ?? video.description ?? ""}
+                        {getVideoSummary(video)}
                       </p>
-                      <div className="mt-auto pt-4">
-                        <Link
-                          href={`/education/videos/${video.slug}`}
+                      <div className="mt-auto space-y-3 pt-4">
+                        <div className="flex items-center justify-between text-xs text-black/40">
+                          <span>
+                            {video.durationMinutes
+                              ? `${video.durationMinutes} mins`
+                              : ""}
+                          </span>
+                          <span className="font-semibold text-[#b67400]">
+                            {video.priceLabel ?? "Buy now"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedLockedVideo(video)}
                           className="inline-flex w-full items-center justify-center rounded-xl bg-brand-graphite px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-brand-graphite/85"
                         >
-                          View video
-                        </Link>
+                          View details
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -831,7 +966,9 @@ export function AcademyTabs({
             </div>
           )}
 
-          {myVideos.length === 0 && browseVideos.length === 0 ? (
+          {remainingMyVideos.length === 0 &&
+          remainingBrowseVideos.length === 0 &&
+          !featuredVideo ? (
             <div className="flex flex-col items-center rounded-2xl border border-dashed border-black/10 bg-white/50 px-8 py-14 text-center">
               <p className="text-base font-medium text-black/70">
                 No video courses available right now.
@@ -841,6 +978,114 @@ export function AcademyTabs({
               </p>
             </div>
           ) : null}
+
+          <Modal
+            isOpen={!!selectedLockedVideo}
+            onClose={() => setSelectedLockedVideo(null)}
+            size="lg"
+          >
+            {selectedLockedVideo ? (
+              <div className="space-y-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-[#fab826]/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#b67400]">
+                        {selectedLockedVideo.category ?? "Video"}
+                      </span>
+                      {selectedLockedVideo.durationMinutes ? (
+                        <span className="rounded-full bg-black/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-black/45">
+                          {selectedLockedVideo.durationMinutes} mins
+                        </span>
+                      ) : null}
+                    </div>
+                    <h2 className="text-2xl font-semibold text-black">
+                      {selectedLockedVideo.headline ?? selectedLockedVideo.title}
+                    </h2>
+                    <p className="max-w-2xl text-sm leading-relaxed text-black/60">
+                      {getVideoSummary(selectedLockedVideo) ||
+                        "A focused training module designed for immediate practical use."}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedLockedVideo(null)}
+                    className="rounded-full border border-black/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-black/55 transition hover:bg-black/[0.03]"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_280px]">
+                  <div className="space-y-4">
+                    <div className="relative h-56 overflow-hidden rounded-2xl bg-gradient-to-br from-brand-salmon/15 via-brand-sage/10 to-brand-mist/20">
+                      {selectedLockedVideo.heroUrl ? (
+                        <img
+                          src={selectedLockedVideo.heroUrl}
+                          alt={selectedLockedVideo.title}
+                          className="absolute inset-0 h-full w-full object-cover"
+                        />
+                      ) : null}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/5 to-transparent" />
+                    </div>
+
+                    {selectedLockedVideoHighlights.length > 0 ? (
+                      <div className="rounded-2xl border border-black/5 bg-white p-5">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-black/40">
+                          What you&apos;ll learn
+                        </p>
+                        <ul className="mt-3 space-y-2">
+                          {selectedLockedVideoHighlights.map((item, index) => (
+                            <li
+                              key={`${selectedLockedVideo.id}-${index}`}
+                              className="flex items-start gap-2 text-sm leading-relaxed text-black/60"
+                            >
+                              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#fab826]" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-4 rounded-2xl border border-black/5 bg-[#faf7f1] p-5">
+                    <div className="space-y-1 text-center">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-black/35">
+                        Instant access
+                      </p>
+                      <p className="text-3xl font-semibold text-black">
+                        {selectedLockedVideo.priceLabel ?? "Buy now"}
+                      </p>
+                    </div>
+
+                    {selectedLockedVideo.slug && selectedLockedVideoPrice ? (
+                      <VideoPurchaseButton
+                        videoProductId={selectedLockedVideo.id}
+                        priceId={selectedLockedVideoPrice.id}
+                        amount={Number(selectedLockedVideoPrice.amount)}
+                        currency={selectedLockedVideoPrice.currency}
+                        checkoutHref={`/education/videos/checkout/${selectedLockedVideo.slug}`}
+                      />
+                    ) : null}
+
+                    <div className="space-y-2 text-xs text-black/50">
+                      <p>Inside your academy access:</p>
+                      <ul className="space-y-1.5">
+                        <li className="flex items-center gap-2">
+                          <span className="text-[#b67400]">•</span>
+                          <span>Watch on demand as many times as you need</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="text-[#b67400]">•</span>
+                          <span>Open the full player straight from your library after purchase</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </Modal>
         </div>
       ) : null}
 

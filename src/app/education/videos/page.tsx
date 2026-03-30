@@ -9,6 +9,7 @@ import { VideoPurchaseButton } from "@/components/education/VideoPurchaseButton"
 import { FreeAcademyVideoPromoSection } from "@/components/sections/FreeAcademyVideoPromoSection";
 import { getCurrentFeaturedLeadItem } from "@/server/modules/education/featuredLeadItem";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
+import { getCurrentSession } from "@/server/security/auth";
 import { videoLessons, videoDetailFallbacks, VIDEO_HERO_PLACEHOLDER_BY_SLUG, VIDEO_HERO_PLACEHOLDER_DEFAULT } from "@/lib/content";
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { getTopicAccent } from "@/lib/topicAccents";
@@ -32,6 +33,7 @@ type VideoCardData = {
   dbPriceId?: string;
   dbAmount?: number;
   dbCurrency?: string;
+  isOwned?: boolean;
 };
 
 async function getVideos(): Promise<VideoCardData[]> {
@@ -139,10 +141,35 @@ async function getFreeSignupVideoPromo() {
    ═══════════════════════════════════════════════════════════════════════ */
 
 export default async function VideoCatalogPage() {
-  const [videos, freeSignupVideo] = await Promise.all([
+  const [videos, freeSignupVideo, session] = await Promise.all([
     getVideos(),
     getFreeSignupVideoPromo(),
+    getCurrentSession(),
   ]);
+  const ownedVideoIds = new Set<string>();
+
+  if (session) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.uid },
+      select: { contactId: true },
+    });
+
+    if (user?.contactId) {
+      const accesses = await prisma.videoAccess.findMany({
+        where: { contactId: user.contactId, status: "ACTIVE" },
+        select: { videoProductId: true },
+      });
+
+      for (const access of accesses) {
+        ownedVideoIds.add(access.videoProductId);
+      }
+    }
+  }
+
+  const decoratedVideos = videos.map((video) => ({
+    ...video,
+    isOwned: !!video.dbVideoProductId && ownedVideoIds.has(video.dbVideoProductId),
+  }));
 
   return (
     <main className="min-h-screen">
@@ -220,7 +247,7 @@ export default async function VideoCatalogPage() {
             </div>
           )}
           <div className="grid gap-6 sm:grid-cols-2">
-            {videos.map((video) => (
+            {decoratedVideos.map((video) => (
               <VideoCard key={video.id} video={video} />
             ))}
           </div>
@@ -351,7 +378,9 @@ function VideoCard({ video }: { video: VideoCardData }) {
         <div className="flex-1" />
         <div className="flex items-center gap-3 border-t border-brand-graphite/6 pt-4">
           <div className="flex-1">
-            {video.dbVideoProductId && video.dbPriceId ? (
+            {video.isOwned && video.dbVideoProductId ? (
+              <ButtonLink href={`/academy/videos/${video.dbVideoProductId}`} variant="secondary" size="sm" className="w-full justify-center">View video</ButtonLink>
+            ) : video.dbVideoProductId && video.dbPriceId ? (
               <VideoPurchaseButton
                 videoProductId={video.dbVideoProductId}
                 priceId={video.dbPriceId}

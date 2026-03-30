@@ -20,10 +20,18 @@ describe("homepage featured lead banner placement", () => {
     expect(appPage).toContain("<HomepageFreeVideoBanner");
   });
 
+  it("supports featured free video leads instead of always falling back to the quiz flow", () => {
+    const appPage = readRepoFile("src/app/page.tsx");
+
+    expect(appPage).toContain('lead?.kind === "VIDEO"');
+    expect(appPage).toContain("buildHomepageVideoBannerLead");
+    expect(appPage).toContain("durationLabel");
+  });
+
   it("keeps the homepage resilient when the featured public quiz lookup fails", () => {
     const appPage = readRepoFile("src/app/page.tsx");
 
-    expect(appPage).toContain("async function getHomepageFeaturedQuiz() {\n  try {");
+    expect(appPage).toContain("async function getHomepageFeaturedLead() {\n  try {");
     expect(appPage).toContain("} catch {\n    return null;");
   });
 });
