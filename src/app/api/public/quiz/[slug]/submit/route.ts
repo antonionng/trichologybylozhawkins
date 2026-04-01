@@ -8,6 +8,7 @@ import { getQuizUpsellCoursesWithReasons } from "@/server/modules/education/reco
 import { getCurrentSession } from "@/server/security/auth";
 import { ActivityType } from "@prisma/client";
 import { sendNewQuizLeadEmail, sendQuizResultEmail } from "@/server/modules/email/transactional";
+import { getOperationalAdminRecipients } from "@/server/modules/settings/notifications";
 import {
   buildPublicScalpQuizSubmission,
   getPublicScalpQuizLeadSummary,
@@ -224,6 +225,60 @@ export async function POST(request: Request, { params }: RouteParams) {
         },
       });
 
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+      const adminRecipients = await getOperationalAdminRecipients();
+      const scalpEmailJobs = [
+        sendQuizResultEmail({
+          to: contact.email,
+          name: `${contact.firstName} ${contact.lastName}`.trim(),
+          quizTitle: quiz.title,
+          percentage,
+          score: concernScore,
+          maxScore,
+          passed,
+          aiFeedback: {
+            headline: submission.result.headline,
+            summary: submission.result.summary,
+            nextSteps: submission.result.nextSteps,
+          },
+          recommendedCourse: quiz.recommendedCourse
+            ? { title: quiz.recommendedCourse.title, slug: quiz.recommendedCourse.slug }
+            : null,
+          appUrl,
+        }),
+        ...adminRecipients.map((recipient) =>
+          sendNewQuizLeadEmail({
+            to: recipient,
+            contactId: contact.id,
+            name: `${contact.firstName} ${contact.lastName}`.trim(),
+            email: contact.email,
+            quizTitle: quiz.title,
+            percentage,
+            passed,
+            aiHeadline: submission.result.headline,
+            appUrl,
+          })
+        ),
+      ];
+      await Promise.allSettled(scalpEmailJobs);
+
+      await prisma.activity.createMany({
+        data: [
+          {
+            type: ActivityType.EMAIL,
+            contactId: contact.id,
+            subject: `Quiz results email: ${quiz.title}`,
+            body: `Sent to: ${contact.email}`,
+          },
+          {
+            type: ActivityType.EMAIL,
+            contactId: contact.id,
+            subject: `Admin notification: new quiz lead`,
+            body: `Sent to: ${adminRecipients.join(", ") || "(none)"}`,
+          },
+        ],
+      });
+
       return NextResponse.json({
         resultMode: submission.result.resultMode,
         headline: submission.result.headline,
@@ -305,15 +360,16 @@ export async function POST(request: Request, { params }: RouteParams) {
       aiFeedback: aiFeedback ?? null,
     });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
     const recommendedCoursesForEmail = recommendedCourses.slice(0, 6).map((c) => ({
       title: c.title,
       slug: c.slug,
       reason: c.reason,
     }));
+    const adminRecipients = await getOperationalAdminRecipients();
 
     // Transactional emails (skipped when RESEND_API_KEY is missing)
-    const emailOutcomes = await Promise.allSettled([
+    const emailJobs = [
       sendQuizResultEmail({
         to: contact.email,
         name: `${contact.firstName} ${contact.lastName}`.trim(),
@@ -329,21 +385,24 @@ export async function POST(request: Request, { params }: RouteParams) {
         recommendedCourses: recommendedCoursesForEmail,
         appUrl,
       }),
-      sendNewQuizLeadEmail({
-        to: "ag@experrt.com",
-        contactId: contact.id,
-        name: `${contact.firstName} ${contact.lastName}`.trim(),
-        email: contact.email,
-        quizTitle: quiz.title,
-        percentage: updatedAttempt.percentage,
-        passed: updatedAttempt.passed,
-        aiHeadline: aiFeedback?.headline ?? null,
-        appUrl,
-      }),
-    ]);
+      ...adminRecipients.map((recipient) =>
+        sendNewQuizLeadEmail({
+          to: recipient,
+          contactId: contact.id,
+          name: `${contact.firstName} ${contact.lastName}`.trim(),
+          email: contact.email,
+          quizTitle: quiz.title,
+          percentage: updatedAttempt.percentage,
+          passed: updatedAttempt.passed,
+          aiHeadline: aiFeedback?.headline ?? null,
+          appUrl,
+        })
+      ),
+    ];
+    const emailOutcomes = await Promise.allSettled(emailJobs);
 
     emailOutcomes.forEach((outcome, idx) => {
-      const label = idx === 0 ? "sendQuizResultEmail" : "sendNewQuizLeadEmail";
+      const label = idx === 0 ? "sendQuizResultEmail" : `sendNewQuizLeadEmail[${idx - 1}]`;
       if (outcome.status === "rejected") {
         console.error(`[public-quiz-submit] ${label} failed:`, outcome.reason);
         return;
@@ -367,7 +426,7 @@ export async function POST(request: Request, { params }: RouteParams) {
           type: ActivityType.EMAIL,
           contactId: contact.id,
           subject: `Admin notification: new quiz lead`,
-          body: `Sent to: ag@experrt.com`,
+          body: `Sent to: ${adminRecipients.join(", ") || "(none)"}`,
         },
       ],
     });

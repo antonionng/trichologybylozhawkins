@@ -73,6 +73,13 @@ model AuthToken {
   @@index([userId, type])
 }
 
+model NotificationSettings {
+  id                     String   @id
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  adminNotificationEmails String[] @default([])
+}
+
 model Company {
   id         String    @id @default(cuid())
   createdAt  DateTime  @default(now())

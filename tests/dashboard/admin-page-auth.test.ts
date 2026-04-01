@@ -13,6 +13,7 @@ vi.mock("@/server/db/client", () => ({
     entry: { findMany: vi.fn() },
     contentSlot: { findMany: vi.fn() },
     contentPlan: { findMany: vi.fn(), findUnique: vi.fn() },
+    notificationSettings: { findUnique: vi.fn() },
   },
 }));
 
@@ -51,6 +52,17 @@ describe("admin dashboard page auth", () => {
     expect(requireUserOrRedirectMock).toHaveBeenCalledWith({
       role: "ADMIN",
       next: "/dashboard/content",
+    });
+  });
+
+  it("guards the email dashboard page", async () => {
+    requireUserOrRedirectMock.mockRejectedValueOnce(new Error("Forbidden"));
+    const { default: EmailDashboardPage } = await import("@/app/dashboard/email/page");
+
+    await expect(EmailDashboardPage()).rejects.toThrow("Forbidden");
+    expect(requireUserOrRedirectMock).toHaveBeenCalledWith({
+      role: "ADMIN",
+      next: "/dashboard/email",
     });
   });
 });

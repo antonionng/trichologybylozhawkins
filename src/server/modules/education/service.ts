@@ -15,7 +15,12 @@ import {
 import { EnrollmentStatus, PaymentEventType } from "@prisma/client";
 import Stripe from "stripe";
 import { z } from "zod";
+import {
+  sendCourseEnquiryAdminEmail,
+  sendCourseEnquiryConfirmationEmail,
+} from "@/server/modules/email/transactional";
 import { sendEducationPurchaseNotifications } from "@/server/modules/education/notifications";
+import { getOperationalAdminRecipients } from "@/server/modules/settings/notifications";
 
 const getVideoProductDelegate = () =>
   (prisma as any).videoProduct as
@@ -942,6 +947,33 @@ export const createCourseEnquiry = async (
 
     return created;
   });
+
+  const firstName = contact.firstName || data.name.split(" ")[0] || data.name;
+  const appUrl = getServerEnv().NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+  const adminRecipients = await getOperationalAdminRecipients();
+
+  await Promise.allSettled([
+    sendCourseEnquiryConfirmationEmail({
+      to: data.email,
+      appUrl,
+      firstName,
+      courseTitle: course?.title ?? "Lorraine Hawkins Program",
+    }),
+    ...(adminRecipients.length > 0
+      ? [
+          sendCourseEnquiryAdminEmail({
+            to: adminRecipients,
+            appUrl,
+            contactId: contact.id,
+            customerName: data.name,
+            customerEmail: data.email,
+            courseTitle: course?.title ?? "Lorraine Hawkins Program",
+            message: data.message,
+            phone: data.phone,
+          }),
+        ]
+      : []),
+  ]);
 
   return enquiry;
 };

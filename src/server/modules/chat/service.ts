@@ -11,6 +11,8 @@ import { buildSystemPrompt } from "@/lib/chatPrompts";
 import { upsertContact } from "@/server/modules/crm/service";
 import { prisma as db } from "@/server/db/client";
 import { sendNewChatLeadEmail } from "@/server/modules/email/transactional";
+import { getOperationalAdminRecipients } from "@/server/modules/settings/notifications";
+import { getServerEnv } from "@/server/schema/env";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -254,8 +256,8 @@ export async function sendMessage(input: z.infer<typeof sendMessageSchema>) {
 
     // Email admin with context (non-blocking failure)
     try {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
-      const adminTo = process.env.CHAT_ADMIN_NOTIFY_EMAIL || "ag@experrt.com";
+      const appUrl = getServerEnv().NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+      const adminTo = await getOperationalAdminRecipients();
 
       // Pull a small transcript (first user message + system note)
       const recent = await prisma.chatMessage.findMany({
@@ -264,20 +266,22 @@ export async function sendMessage(input: z.infer<typeof sendMessageSchema>) {
         take: 10,
       });
 
-      await sendNewChatLeadEmail({
-        to: adminTo,
-        appUrl,
-        conversationId: conversation.id,
-        contactId,
-        sessionId: data.sessionId || null,
-        firstMessage: data.message,
-        recentMessages: recent
-          .filter((m) => m.role === ChatRole.USER || m.role === ChatRole.ASSISTANT)
-          .map((m) => ({
-            role: m.role === ChatRole.USER ? "user" : "assistant",
-            content: m.content,
-          })),
-      });
+      if (adminTo.length > 0) {
+        await sendNewChatLeadEmail({
+          to: adminTo,
+          appUrl,
+          conversationId: conversation.id,
+          contactId,
+          sessionId: data.sessionId || null,
+          firstMessage: data.message,
+          recentMessages: recent
+            .filter((m) => m.role === ChatRole.USER || m.role === ChatRole.ASSISTANT)
+            .map((m) => ({
+              role: m.role === ChatRole.USER ? "user" : "assistant",
+              content: m.content,
+            })),
+        });
+      }
     } catch (e) {
       // Intentionally swallow: lead + chat should still be captured even if email fails.
       console.warn("Admin chat lead email failed:", e);
