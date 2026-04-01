@@ -8,6 +8,7 @@ import { PageSection } from "@/components/layout/PageSection";
 import { SectionHeading } from "@/components/typography/SectionHeading";
 import { getCourseBySlug } from "@/app/actions/education";
 import { CourseBundleChoice } from "@/components/education/CourseBundleChoice";
+import { EducationCourseStickyCta } from "@/components/education/EducationCourseStickyCta";
 import { CurriculumAccordion } from "@/components/education/CurriculumAccordion";
 import { ArticleCta } from "@/components/sections/ArticleCta";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -411,7 +412,7 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
                 )}
               </div>
 
-              <div className="space-y-4">
+              <div className="hidden space-y-4 lg:block">
                 {bundleOffer ? (
                   <CourseBundleChoice
                     mode="modal"
@@ -508,33 +509,11 @@ export default async function CourseDetailPage({ params }: { params: { slug: str
 
       <ArticleCta category="Professional Development" />
 
-      {/* Mobile sticky CTA */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white/95 px-4 py-3 backdrop-blur-lg lg:hidden">
-        <div className="mx-auto flex max-w-lg items-center justify-between gap-4">
-          <div>
-            <p className="text-xs text-black/50 leading-tight">{course.title}</p>
-          </div>
-          {bundleOffer ? (
-            <CourseBundleChoice
-              mode="modal"
-              triggerLabel="Start Course"
-              triggerClassName="inline-flex items-center justify-center rounded-xl bg-[#fab826] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-sm transition hover:bg-[#e5a820]"
-              companionTitle={bundleOffer.companionTitle}
-              bundleHref={bundleOffer.bundleHref}
-              checkoutHref={`/education/checkout/${course.slug}`}
-              singleCourseLabel="Continue with this course"
-              bundleLabel="Upgrade to bundle"
-            />
-          ) : (
-            <Link
-              href={`/education/checkout/${course.slug}`}
-              className="inline-flex items-center justify-center rounded-xl bg-[#fab826] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-sm transition hover:bg-[#e5a820]"
-            >
-              Start Course
-            </Link>
-          )}
-        </div>
-      </div>
+      <EducationCourseStickyCta
+        courseTitle={course.title}
+        courseSlug={course.slug}
+        bundleOffer={bundleOffer}
+      />
       </main>
     </>
   );

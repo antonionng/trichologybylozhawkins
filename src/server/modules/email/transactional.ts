@@ -113,6 +113,37 @@ function fromAddress() {
   return process.env.RESEND_FROM_EMAIL || "Lorraine Hawkins <no-reply@trichologybylorrainehawkins.co.uk>";
 }
 
+type ResendPayload = {
+  from: string;
+  to: string | string[];
+  subject: string;
+  html: string;
+  text: string;
+  reply_to?: string;
+};
+
+/**
+ * Resend returns `{ data, error }` and does not throw on API errors (invalid from domain, etc.).
+ * Without this check, callers assumed delivery succeeded.
+ */
+async function sendThroughResend(
+  client: NonNullable<ReturnType<typeof getResend>>,
+  payload: ResendPayload,
+  context: string,
+): Promise<string> {
+  const result = await client.emails.send(payload);
+  if (result.error) {
+    const { message, name } = result.error;
+    console.error(`[resend:${context}] API error`, { name, message });
+    throw new Error(`Resend (${context}): ${message}`);
+  }
+  if (!result.data?.id) {
+    console.error(`[resend:${context}] missing id in success response`, result);
+    throw new Error(`Resend (${context}): no message id returned`);
+  }
+  return result.data.id;
+}
+
 export async function sendQuizResultEmail(input: QuizResultEmailInput) {
   const client = getResend();
   if (!client) return { skipped: true as const, reason: "Missing RESEND_API_KEY" };
@@ -201,15 +232,13 @@ export async function sendQuizResultEmail(input: QuizResultEmailInput) {
     .filter(Boolean)
     .join("\n");
 
-  const res = await client.emails.send({
-    from: fromAddress(),
-    to: input.to,
-    subject,
-    html,
-    text,
-  });
+  const id = await sendThroughResend(
+    client,
+    { from: fromAddress(), to: input.to, subject, html, text },
+    "quiz-result",
+  );
 
-  return { skipped: false as const, id: res.data?.id ?? null };
+  return { skipped: false as const, id };
 }
 
 export async function sendNewQuizLeadEmail(input: NewLeadEmailInput) {
@@ -247,15 +276,13 @@ export async function sendNewQuizLeadEmail(input: NewLeadEmailInput) {
     .filter(Boolean)
     .join("\n");
 
-  const res = await client.emails.send({
-    from: fromAddress(),
-    to: input.to,
-    subject,
-    html,
-    text,
-  });
+  const id = await sendThroughResend(
+    client,
+    { from: fromAddress(), to: input.to, subject, html, text },
+    "quiz-lead-admin",
+  );
 
-  return { skipped: false as const, id: res.data?.id ?? null };
+  return { skipped: false as const, id };
 }
 
 export async function sendNewChatLeadEmail(input: NewChatLeadEmailInput) {
@@ -318,15 +345,13 @@ export async function sendNewChatLeadEmail(input: NewChatLeadEmailInput) {
     .filter(Boolean)
     .join("\n");
 
-  const res = await client.emails.send({
-    from: fromAddress(),
-    to: input.to,
-    subject,
-    html,
-    text,
-  });
+  const id = await sendThroughResend(
+    client,
+    { from: fromAddress(), to: input.to, subject, html, text },
+    "chat-lead-admin",
+  );
 
-  return { skipped: false as const, id: res.data?.id ?? null };
+  return { skipped: false as const, id };
 }
 
 export async function sendAcademySignupWelcomeEmail(input: AcademySignupWelcomeEmailInput) {
@@ -363,15 +388,13 @@ export async function sendAcademySignupWelcomeEmail(input: AcademySignupWelcomeE
     `Academy: ${academyUrl}`,
   ].join("\n");
 
-  const res = await client.emails.send({
-    from: fromAddress(),
-    to: input.to,
-    subject,
-    html,
-    text,
-  });
+  const id = await sendThroughResend(
+    client,
+    { from: fromAddress(), to: input.to, subject, html, text },
+    "academy-signup-welcome",
+  );
 
-  return { skipped: false as const, id: res.data?.id ?? null };
+  return { skipped: false as const, id };
 }
 
 export async function sendEducationPurchaseConfirmationEmail(
@@ -419,15 +442,13 @@ export async function sendEducationPurchaseConfirmationEmail(
     `Academy: ${academyUrl}`,
   ].join("\n");
 
-  const res = await client.emails.send({
-    from: fromAddress(),
-    to: input.to,
-    subject,
-    html,
-    text,
-  });
+  const id = await sendThroughResend(
+    client,
+    { from: fromAddress(), to: input.to, subject, html, text },
+    "education-purchase-confirmation",
+  );
 
-  return { skipped: false as const, id: res.data?.id ?? null };
+  return { skipped: false as const, id };
 }
 
 export async function sendShopOrderConfirmationEmail(input: ShopOrderConfirmationEmailInput) {
@@ -486,15 +507,13 @@ export async function sendShopOrderConfirmationEmail(input: ShopOrderConfirmatio
     .filter(Boolean)
     .join("\n");
 
-  const res = await client.emails.send({
-    from: fromAddress(),
-    to: input.to,
-    subject,
-    html,
-    text,
-  });
+  const id = await sendThroughResend(
+    client,
+    { from: fromAddress(), to: input.to, subject, html, text },
+    "shop-order-confirmation",
+  );
 
-  return { skipped: false as const, id: res.data?.id ?? null };
+  return { skipped: false as const, id };
 }
 
 export async function sendShopAdminOrderNotificationEmail(input: ShopAdminOrderNotificationEmailInput) {
@@ -550,15 +569,13 @@ export async function sendShopAdminOrderNotificationEmail(input: ShopAdminOrderN
     .filter(Boolean)
     .join("\n");
 
-  const res = await client.emails.send({
-    from: fromAddress(),
-    to: input.to,
-    subject,
-    html,
-    text,
-  });
+  const id = await sendThroughResend(
+    client,
+    { from: fromAddress(), to: input.to, subject, html, text },
+    "shop-order-admin",
+  );
 
-  return { skipped: false as const, id: res.data?.id ?? null };
+  return { skipped: false as const, id };
 }
 
 function renderOrderItemsHtml(items: ShopOrderEmailItem[]) {

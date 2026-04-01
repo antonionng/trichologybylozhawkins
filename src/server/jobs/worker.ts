@@ -68,6 +68,10 @@ const emailHandler = async (job: Job<EmailJobData>) => {
           ...(campaign.replyTo ? { reply_to: campaign.replyTo } : {}),
         });
 
+        if (result.error) {
+          throw new Error(`Resend: ${result.error.message} (${result.error.name})`);
+        }
+
         await prisma.emailSend.upsert({
           where: {
             campaignId_audienceMemberId: {

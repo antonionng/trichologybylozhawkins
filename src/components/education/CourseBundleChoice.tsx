@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { PurchaseButton } from "@/components/education/PurchaseButton";
 import { ButtonLink } from "@/components/ui/Button";
 
@@ -55,6 +56,27 @@ export function CourseBundleChoice({
   currency,
 }: CourseBundleChoiceProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(
+      new CustomEvent("education:bundle-modal", { detail: { open: isOpen } }),
+    );
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
 
   const bodyCopy =
     description ??
@@ -115,6 +137,30 @@ export function CourseBundleChoice({
     return content;
   }
 
+  const overlay =
+    isOpen && mounted ? (
+      <div
+        role="presentation"
+        className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 px-3 py-3 sm:items-center sm:px-4 sm:py-6"
+        onClick={() => setIsOpen(false)}
+      >
+        <div
+          className="relative w-full max-w-md"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={() => setIsOpen(false)}
+            className="absolute right-4 top-4 z-10 inline-flex h-9 items-center justify-center rounded-full border border-black/10 bg-white/95 px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-black/55"
+            aria-label="Close bundle choice"
+          >
+            Close
+          </button>
+          {content}
+        </div>
+      </div>
+    ) : null;
+
   return (
     <>
       <button
@@ -125,27 +171,7 @@ export function CourseBundleChoice({
         {triggerLabel}
       </button>
 
-      {isOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 px-3 py-3 sm:items-center sm:px-4 sm:py-6"
-          onClick={() => setIsOpen(false)}
-        >
-          <div
-            className="relative w-full max-w-md"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="absolute right-4 top-4 z-10 inline-flex h-9 items-center justify-center rounded-full border border-black/10 bg-white/95 px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-black/55"
-              aria-label="Close bundle choice"
-            >
-              Close
-            </button>
-            {content}
-          </div>
-        </div>
-      ) : null}
+      {mounted && overlay ? createPortal(overlay, document.body) : null}
     </>
   );
 }

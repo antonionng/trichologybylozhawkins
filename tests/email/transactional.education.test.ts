@@ -62,4 +62,21 @@ describe("education transactional emails", () => {
       }),
     );
   });
+
+  it("throws when Resend returns an API error so callers can log real failures", async () => {
+    sendMock.mockResolvedValue({
+      data: null,
+      error: { name: "invalid_from_address", message: "Domain not verified" },
+    });
+
+    const { sendAcademySignupWelcomeEmail } = await import("@/server/modules/email/transactional");
+
+    await expect(
+      sendAcademySignupWelcomeEmail({
+        to: "learner@example.com",
+        appUrl: "https://example.com",
+        firstName: "Jane",
+      }),
+    ).rejects.toThrow(/Resend \(academy-signup-welcome\): Domain not verified/);
+  });
 });

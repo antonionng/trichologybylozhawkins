@@ -1,4 +1,3 @@
-import { getServerEnv } from "@/server/schema";
 import {
   sendAcademySignupWelcomeEmail,
   sendEducationPurchaseConfirmationEmail,
@@ -27,19 +26,24 @@ type EducationPurchaseNotificationInput = {
   }>;
 };
 
+/** Read directly so a strict getServerEnv() parse never blocks sending mail. */
 const getAppUrl = () =>
-  getServerEnv().NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
 
 export async function sendAcademySignupNotifications(
   input: AcademySignupNotificationInput,
 ) {
   try {
-    return await sendAcademySignupWelcomeEmail({
+    const result = await sendAcademySignupWelcomeEmail({
       to: input.email,
       appUrl: getAppUrl(),
       firstName: input.firstName ?? undefined,
       videoTitle: input.videoTitle ?? undefined,
     });
+    if (result.skipped) {
+      console.warn("[education:email] academy signup welcome not delivered:", result.reason);
+    }
+    return result;
   } catch (error) {
     console.error("[education:email] failed to send academy signup email", error);
     return { skipped: true as const, reason: "Send failed" };
@@ -52,7 +56,7 @@ export async function sendEducationPurchaseNotifications(
   try {
     const customerName =
       `${input.firstName ?? ""} ${input.lastName ?? ""}`.trim() || input.email;
-    return await sendEducationPurchaseConfirmationEmail({
+    const result = await sendEducationPurchaseConfirmationEmail({
       to: input.email,
       appUrl: getAppUrl(),
       orderId: input.orderId,
@@ -61,6 +65,10 @@ export async function sendEducationPurchaseNotifications(
       currency: input.currency,
       items: input.items,
     });
+    if (result.skipped) {
+      console.warn("[education:email] purchase confirmation not delivered:", result.reason);
+    }
+    return result;
   } catch (error) {
     console.error("[education:email] failed to send purchase confirmation", error);
     return { skipped: true as const, reason: "Send failed" };
