@@ -34,7 +34,7 @@ type NewLeadEmailInput = {
 };
 
 type NewChatLeadEmailInput = {
-  to: string;
+  to: string | string[];
   appUrl: string;
   conversationId: string;
   contactId: string;
@@ -86,6 +86,45 @@ type AcademySignupWelcomeEmailInput = {
   videoTitle?: string;
 };
 
+type EnquiryConfirmationEmailInput = {
+  to: string;
+  appUrl: string;
+  firstName: string;
+  enquiryType: string;
+};
+
+type AdminEnquiryNotificationEmailInput = {
+  to: string[];
+  appUrl: string;
+  contactId: string;
+  customerName: string;
+  customerEmail: string;
+  enquiryType: string;
+  message: string;
+  preferredContactMethod: string;
+  urgency: string;
+  company?: string;
+  jobTitle?: string;
+};
+
+type CourseEnquiryConfirmationEmailInput = {
+  to: string;
+  appUrl: string;
+  firstName: string;
+  courseTitle: string;
+};
+
+type CourseEnquiryAdminEmailInput = {
+  to: string[];
+  appUrl: string;
+  contactId: string;
+  customerName: string;
+  customerEmail: string;
+  courseTitle: string;
+  message?: string;
+  phone?: string;
+};
+
 type EducationPurchaseEmailItem = {
   name: string;
   quantity: number;
@@ -98,6 +137,17 @@ type EducationPurchaseConfirmationEmailInput = {
   appUrl: string;
   orderId: string;
   customerName: string;
+  totalAmount: number;
+  currency: string;
+  items: EducationPurchaseEmailItem[];
+};
+
+type EducationPurchaseAdminEmailInput = {
+  to: string[];
+  appUrl: string;
+  orderId: string;
+  customerName: string;
+  customerEmail: string;
   totalAmount: number;
   currency: string;
   items: EducationPurchaseEmailItem[];
@@ -354,6 +404,186 @@ export async function sendNewChatLeadEmail(input: NewChatLeadEmailInput) {
   return { skipped: false as const, id };
 }
 
+export async function sendEnquiryConfirmationEmail(
+  input: EnquiryConfirmationEmailInput,
+) {
+  const client = getResend();
+  if (!client) return { skipped: true as const, reason: "Missing RESEND_API_KEY" };
+
+  const subject = "We received your enquiry";
+  const replyUrl = `${input.appUrl}/contact`;
+  const enquiryLabel = input.enquiryType.replace(/_/g, " ");
+  const html = `
+    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+      <h2 style="margin: 0 0 12px;">Thanks for getting in touch</h2>
+      <p style="margin: 0 0 16px;">Hi ${escapeHtml(input.firstName)},<br/>We’ve received your ${escapeHtml(enquiryLabel)} enquiry and will be in touch within 24 to 48 hours.</p>
+      <p style="margin: 0;">
+        <a href="${replyUrl}" style="display: inline-block; background: #fab826; color: #111; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 600;">
+          Visit contact page
+        </a>
+      </p>
+    </div>
+  `.trim();
+
+  const text = [
+    "Thanks for getting in touch",
+    "",
+    `Hi ${input.firstName},`,
+    `We’ve received your ${enquiryLabel} enquiry and will be in touch within 24 to 48 hours.`,
+    "",
+    `Contact page: ${replyUrl}`,
+  ].join("\n");
+
+  const id = await sendThroughResend(
+    client,
+    { from: fromAddress(), to: input.to, subject, html, text },
+    "enquiry-confirmation",
+  );
+
+  return { skipped: false as const, id };
+}
+
+export async function sendAdminEnquiryNotificationEmail(
+  input: AdminEnquiryNotificationEmailInput,
+) {
+  const client = getResend();
+  if (!client) return { skipped: true as const, reason: "Missing RESEND_API_KEY" };
+
+  const subject = `New enquiry: ${input.customerName}`;
+  const contactUrl = `${input.appUrl}/dashboard/crm/contacts/${encodeURIComponent(input.contactId)}`;
+  const extraFields = [
+    input.company ? `<p style="margin: 0 0 10px;"><strong>Company:</strong> ${escapeHtml(input.company)}</p>` : "",
+    input.jobTitle ? `<p style="margin: 0 0 10px;"><strong>Job title:</strong> ${escapeHtml(input.jobTitle)}</p>` : "",
+  ].join("");
+  const html = `
+    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+      <h2 style="margin: 0 0 12px;">New enquiry received</h2>
+      <p style="margin: 0 0 10px;"><strong>Name:</strong> ${escapeHtml(input.customerName)}</p>
+      <p style="margin: 0 0 10px;"><strong>Email:</strong> ${escapeHtml(input.customerEmail)}</p>
+      <p style="margin: 0 0 10px;"><strong>Type:</strong> ${escapeHtml(input.enquiryType)}</p>
+      <p style="margin: 0 0 10px;"><strong>Preferred contact:</strong> ${escapeHtml(input.preferredContactMethod)}</p>
+      <p style="margin: 0 0 16px;"><strong>Urgency:</strong> ${escapeHtml(input.urgency)}</p>
+      ${extraFields}
+      <p style="margin: 0 0 16px;"><strong>Message:</strong><br/>${escapeHtml(input.message)}</p>
+      <p style="margin: 0;">
+        <a href="${contactUrl}" style="display: inline-block; background: #111; color: #fff; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 600;">
+          View contact in CRM
+        </a>
+      </p>
+    </div>
+  `.trim();
+
+  const text = [
+    "New enquiry received",
+    `Name: ${input.customerName}`,
+    `Email: ${input.customerEmail}`,
+    `Type: ${input.enquiryType}`,
+    `Preferred contact: ${input.preferredContactMethod}`,
+    `Urgency: ${input.urgency}`,
+    input.company ? `Company: ${input.company}` : null,
+    input.jobTitle ? `Job title: ${input.jobTitle}` : null,
+    "",
+    `Message: ${input.message}`,
+    "",
+    `CRM: ${contactUrl}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const id = await sendThroughResend(
+    client,
+    { from: fromAddress(), to: input.to, subject, html, text },
+    "enquiry-admin",
+  );
+
+  return { skipped: false as const, id };
+}
+
+export async function sendCourseEnquiryConfirmationEmail(
+  input: CourseEnquiryConfirmationEmailInput,
+) {
+  const client = getResend();
+  if (!client) return { skipped: true as const, reason: "Missing RESEND_API_KEY" };
+
+  const subject = `We received your enquiry about ${input.courseTitle}`;
+  const educationUrl = `${input.appUrl}/education`;
+  const html = `
+    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+      <h2 style="margin: 0 0 12px;">Thanks for your course enquiry</h2>
+      <p style="margin: 0 0 16px;">Hi ${escapeHtml(input.firstName)},<br/>We’ve received your enquiry about <strong>${escapeHtml(input.courseTitle)}</strong> and will follow up shortly.</p>
+      <p style="margin: 0;">
+        <a href="${educationUrl}" style="display: inline-block; background: #fab826; color: #111; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 600;">
+          Browse education
+        </a>
+      </p>
+    </div>
+  `.trim();
+
+  const text = [
+    "Thanks for your course enquiry",
+    "",
+    `Hi ${input.firstName},`,
+    `We’ve received your enquiry about ${input.courseTitle} and will follow up shortly.`,
+    "",
+    `Education: ${educationUrl}`,
+  ].join("\n");
+
+  const id = await sendThroughResend(
+    client,
+    { from: fromAddress(), to: input.to, subject, html, text },
+    "course-enquiry-confirmation",
+  );
+
+  return { skipped: false as const, id };
+}
+
+export async function sendCourseEnquiryAdminEmail(
+  input: CourseEnquiryAdminEmailInput,
+) {
+  const client = getResend();
+  if (!client) return { skipped: true as const, reason: "Missing RESEND_API_KEY" };
+
+  const subject = `Course enquiry: ${input.courseTitle}`;
+  const contactUrl = `${input.appUrl}/dashboard/crm/contacts/${encodeURIComponent(input.contactId)}`;
+  const html = `
+    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+      <h2 style="margin: 0 0 12px;">New course enquiry</h2>
+      <p style="margin: 0 0 10px;"><strong>Course:</strong> ${escapeHtml(input.courseTitle)}</p>
+      <p style="margin: 0 0 10px;"><strong>Name:</strong> ${escapeHtml(input.customerName)}</p>
+      <p style="margin: 0 0 10px;"><strong>Email:</strong> ${escapeHtml(input.customerEmail)}</p>
+      ${input.phone ? `<p style="margin: 0 0 10px;"><strong>Phone:</strong> ${escapeHtml(input.phone)}</p>` : ""}
+      ${input.message ? `<p style="margin: 0 0 16px;"><strong>Message:</strong><br/>${escapeHtml(input.message)}</p>` : ""}
+      <p style="margin: 0;">
+        <a href="${contactUrl}" style="display: inline-block; background: #111; color: #fff; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 600;">
+          View contact in CRM
+        </a>
+      </p>
+    </div>
+  `.trim();
+
+  const text = [
+    "New course enquiry",
+    `Course: ${input.courseTitle}`,
+    `Name: ${input.customerName}`,
+    `Email: ${input.customerEmail}`,
+    input.phone ? `Phone: ${input.phone}` : null,
+    input.message ? "" : null,
+    input.message ? `Message: ${input.message}` : null,
+    "",
+    `CRM: ${contactUrl}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const id = await sendThroughResend(
+    client,
+    { from: fromAddress(), to: input.to, subject, html, text },
+    "course-enquiry-admin",
+  );
+
+  return { skipped: false as const, id };
+}
+
 export async function sendAcademySignupWelcomeEmail(input: AcademySignupWelcomeEmailInput) {
   const client = getResend();
   if (!client) return { skipped: true as const, reason: "Missing RESEND_API_KEY" };
@@ -446,6 +676,59 @@ export async function sendEducationPurchaseConfirmationEmail(
     client,
     { from: fromAddress(), to: input.to, subject, html, text },
     "education-purchase-confirmation",
+  );
+
+  return { skipped: false as const, id };
+}
+
+export async function sendEducationPurchaseAdminEmail(
+  input: EducationPurchaseAdminEmailInput,
+) {
+  const client = getResend();
+  if (!client) return { skipped: true as const, reason: "Missing RESEND_API_KEY" };
+
+  const subject = `Education purchase: ${input.orderId}`;
+  const orderUrl = `${input.appUrl}/dashboard/crm/contacts`;
+  const itemListHtml = renderEducationItemsHtml(input.items);
+  const itemListText = renderEducationItemsText(input.items);
+
+  const html = `
+    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+      <h2 style="margin: 0 0 12px;">New education purchase</h2>
+      <p style="margin: 0 0 10px;"><strong>Order:</strong> ${escapeHtml(input.orderId)}</p>
+      <p style="margin: 0 0 10px;"><strong>Customer:</strong> ${escapeHtml(input.customerName)}</p>
+      <p style="margin: 0 0 16px;"><strong>Email:</strong> ${escapeHtml(input.customerEmail)}</p>
+      <div style="margin: 0 0 16px;">
+        <p style="margin: 0 0 8px;"><strong>Items</strong></p>
+        ${itemListHtml}
+      </div>
+      <p style="margin: 0 0 18px;"><strong>Total:</strong> ${escapeHtml(formatMoney(input.currency, input.totalAmount))}</p>
+      <p style="margin: 0;">
+        <a href="${orderUrl}" style="display: inline-block; background: #111; color: #fff; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 600;">
+          Open CRM
+        </a>
+      </p>
+    </div>
+  `.trim();
+
+  const text = [
+    "New education purchase",
+    `Order: ${input.orderId}`,
+    `Customer: ${input.customerName}`,
+    `Email: ${input.customerEmail}`,
+    "",
+    "Items:",
+    itemListText,
+    "",
+    `Total: ${formatMoney(input.currency, input.totalAmount)}`,
+    "",
+    `CRM: ${orderUrl}`,
+  ].join("\n");
+
+  const id = await sendThroughResend(
+    client,
+    { from: fromAddress(), to: input.to, subject, html, text },
+    "education-purchase-admin",
   );
 
   return { skipped: false as const, id };

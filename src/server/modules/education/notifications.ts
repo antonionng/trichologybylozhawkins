@@ -1,7 +1,10 @@
 import {
   sendAcademySignupWelcomeEmail,
+  sendEducationPurchaseAdminEmail,
   sendEducationPurchaseConfirmationEmail,
 } from "@/server/modules/email/transactional";
+import { getOperationalAdminRecipients } from "@/server/modules/settings/notifications";
+import { getServerEnv } from "@/server/schema";
 
 type AcademySignupNotificationInput = {
   contactId: string;
@@ -26,9 +29,8 @@ type EducationPurchaseNotificationInput = {
   }>;
 };
 
-/** Read directly so a strict getServerEnv() parse never blocks sending mail. */
 const getAppUrl = () =>
-  process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+  getServerEnv().NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
 
 export async function sendAcademySignupNotifications(
   input: AcademySignupNotificationInput,
@@ -56,19 +58,38 @@ export async function sendEducationPurchaseNotifications(
   try {
     const customerName =
       `${input.firstName ?? ""} ${input.lastName ?? ""}`.trim() || input.email;
-    const result = await sendEducationPurchaseConfirmationEmail({
+    const appUrl = getAppUrl();
+    const adminRecipients = await getOperationalAdminRecipients();
+    const customerResult = await sendEducationPurchaseConfirmationEmail({
       to: input.email,
-      appUrl: getAppUrl(),
+      appUrl,
       orderId: input.orderId,
       customerName,
       totalAmount: input.totalAmount,
       currency: input.currency,
       items: input.items,
     });
-    if (result.skipped) {
-      console.warn("[education:email] purchase confirmation not delivered:", result.reason);
+    if (customerResult.skipped) {
+      console.warn("[education:email] purchase confirmation not delivered:", customerResult.reason);
     }
-    return result;
+
+    if (adminRecipients.length > 0) {
+      const adminResult = await sendEducationPurchaseAdminEmail({
+        to: adminRecipients,
+        appUrl,
+        orderId: input.orderId,
+        customerName,
+        customerEmail: input.email,
+        totalAmount: input.totalAmount,
+        currency: input.currency,
+        items: input.items,
+      });
+      if (adminResult.skipped) {
+        console.warn("[education:email] admin purchase notification not delivered:", adminResult.reason);
+      }
+    }
+
+    return customerResult;
   } catch (error) {
     console.error("[education:email] failed to send purchase confirmation", error);
     return { skipped: true as const, reason: "Send failed" };

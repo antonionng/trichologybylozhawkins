@@ -1,5 +1,5 @@
 import { ShopOrderStatus } from "@prisma/client";
-import { getServerEnv, parseEmailList } from "@/server/schema";
+import { getOperationalAdminRecipients } from "@/server/modules/settings/notifications";
 import {
   sendShopAdminOrderNotificationEmail,
   sendShopOrderConfirmationEmail,
@@ -14,8 +14,8 @@ const meaningfulAdminStatuses = new Set<ShopOrderStatus>([
   ShopOrderStatus.REFUNDED,
 ]);
 
-export function getShopAdminNotifyEmails() {
-  return parseEmailList(getServerEnv().SHOP_ADMIN_NOTIFY_EMAILS);
+export async function getShopAdminNotifyEmails() {
+  return getOperationalAdminRecipients();
 }
 
 export function shouldSendCustomerConfirmation(previousStatus: ShopOrderStatus, nextStatus: ShopOrderStatus) {
@@ -71,7 +71,7 @@ type SendShopOrderLifecycleEmailsInput = {
 };
 
 export async function sendShopOrderLifecycleEmails(input: SendShopOrderLifecycleEmailsInput) {
-  const adminRecipients = input.adminRecipients ?? getShopAdminNotifyEmails();
+  const adminRecipients = input.adminRecipients ?? await getShopAdminNotifyEmails();
   const customerName = `${input.order.firstName} ${input.order.lastName}`.trim() || input.order.email;
   const statusChanged = shouldSendAdminStatusNotification(input.previousStatus, input.order.status);
   const trackingChanged = shouldSendAdminTrackingNotification(

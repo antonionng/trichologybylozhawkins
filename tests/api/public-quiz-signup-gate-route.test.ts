@@ -10,6 +10,7 @@ const getCurrentSessionMock = vi.fn();
 const buildPublicScalpQuizSubmissionMock = vi.fn();
 const getPublicScalpQuizLeadSummaryMock = vi.fn();
 const isFeaturedPublicScalpQuizMock = vi.fn(() => false);
+const getOperationalAdminRecipientsMock = vi.fn();
 
 vi.mock("@/server/db/client", () => ({
   prisma: {
@@ -24,6 +25,7 @@ vi.mock("@/server/db/client", () => ({
     },
     activity: {
       create: activityCreateMock,
+      createMany: vi.fn(),
     },
   },
 }));
@@ -57,6 +59,10 @@ vi.mock("@/server/modules/email/transactional", () => ({
   sendQuizResultEmail: vi.fn(),
 }));
 
+vi.mock("@/server/modules/settings/notifications", () => ({
+  getOperationalAdminRecipients: getOperationalAdminRecipientsMock,
+}));
+
 vi.mock("@/server/modules/education/publicScalpQuiz", () => ({
   buildPublicScalpQuizSubmission: buildPublicScalpQuizSubmissionMock,
   getPublicScalpQuizLeadSummary: getPublicScalpQuizLeadSummaryMock,
@@ -73,6 +79,10 @@ describe("POST /api/public/quiz/[slug]/submit signup gate", () => {
     quizAttemptCreateMock.mockResolvedValue({ id: "attempt_1" });
     activityCreateMock.mockResolvedValue({ id: "activity_1" });
     getPublicScalpQuizLeadSummaryMock.mockReturnValue("Scalp quiz summary");
+    getOperationalAdminRecipientsMock.mockResolvedValue([
+      "ops@example.com",
+      "team@example.com",
+    ]);
   });
 
   it("returns a signup gate teaser for the professional featured quiz when the user is not signed in", async () => {

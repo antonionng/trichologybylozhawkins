@@ -8,7 +8,7 @@
    - `STRIPE_SECRET_KEY` & `STRIPE_WEBHOOK_SECRET`
    - `DEV_SKIP_CHECKOUT=false`
    - `RESEND_API_KEY` & `RESEND_FROM_EMAIL`
-   - `SHOP_ADMIN_NOTIFY_EMAILS` for comma-separated shop order alerts
+  - `SHOP_ADMIN_NOTIFY_EMAILS` and `CHAT_ADMIN_NOTIFY_EMAIL` as bootstrap fallbacks before operational recipients are saved in the dashboard
    - `OPENAI_API_KEY`
    - `SUPABASE_*` for secure media delivery
 2. Install dependencies and generate Prisma client:
@@ -62,6 +62,21 @@
 
 - Campaign sending uses Resend from the `email` worker queue. Ensure `RESEND_API_KEY` is configured.
 - Webhook ingestion expects JSON payloads with `event` and `email`. Map provider payloads accordingly.
+- Operational admin recipients are managed in `Dashboard -> Email -> Operational Settings`.
+- Env vars `SHOP_ADMIN_NOTIFY_EMAILS` and `CHAT_ADMIN_NOTIFY_EMAIL` are fallback bootstrap values only. Once `NotificationSettings` exists in the database, runtime admin alerts read from that row instead.
+- If the dashboard list is saved as empty, admin operational emails are intentionally disabled. The env fallback is not reused after that point.
+
+## Operational Email Matrix
+
+| Flow | Customer Email | Admin Email | Admin Recipient Source |
+|------|----------------|-------------|------------------------|
+| Academy signup | Yes | No | N/A |
+| Quiz submission | Yes | Yes | Dashboard operational settings |
+| Shop order lifecycle | Yes | Yes | Dashboard operational settings |
+| Education purchase | Yes | Yes | Dashboard operational settings |
+| CRM contact / enquiry form | Yes | Yes | Dashboard operational settings |
+| Course enquiry | Yes | Yes | Dashboard operational settings |
+| First AI chat lead | No | Yes | Dashboard operational settings |
 
 ## AI Usage
 

@@ -10,12 +10,14 @@ import { StatusBadge, AdminBadge } from "@/components/admin/AdminBadge";
 import { AudienceForm } from "@/components/dashboard/email/AudienceForm";
 import { CampaignForm } from "@/components/dashboard/email/CampaignForm";
 import { AutomationForm } from "@/components/dashboard/email/AutomationForm";
+import { NotificationSettingsForm } from "@/components/dashboard/email/NotificationSettingsForm";
 
 type Audience = { id: string; name: string; _count?: { members: number } };
 type Campaign = { id: string; name: string; status: string; scheduledFor: string | Date | null; audience: { name: string } };
 type Automation = { id: string; name: string; status: string; triggerType: string; steps: any[] };
 
 const TAB_DEFS: AdminTab[] = [
+  { key: "settings", label: "Operational Settings" },
   { key: "campaigns", label: "Campaigns" },
   { key: "audiences", label: "Audiences" },
   { key: "automations", label: "Automations" },
@@ -25,12 +27,14 @@ export function EmailDashboardClient({
   audiences,
   campaigns,
   automations,
+  adminNotificationEmails,
 }: {
   audiences: Audience[];
   campaigns: Campaign[];
   automations: Automation[];
+  adminNotificationEmails: string[];
 }) {
-  const [tab, setTab] = useState("campaigns");
+  const [tab, setTab] = useState("settings");
   const [showCampaignForm, setShowCampaignForm] = useState(false);
   const [showAudienceForm, setShowAudienceForm] = useState(false);
   const [showAutomationForm, setShowAutomationForm] = useState(false);
@@ -101,13 +105,29 @@ export function EmailDashboardClient({
         tabs={TAB_DEFS.map((t) => ({
           ...t,
           count:
-            t.key === "campaigns" ? campaigns.length :
-            t.key === "audiences" ? audiences.length :
-            automations.length,
+            t.key === "settings"
+              ? adminNotificationEmails.length
+              : t.key === "campaigns"
+                ? campaigns.length
+                : t.key === "audiences"
+                  ? audiences.length
+                  : automations.length,
         }))}
         activeKey={tab}
         onChange={setTab}
       />
+
+      {tab === "settings" && (
+        <Panel variant="default" padding="lg" className="space-y-3">
+          <div className="space-y-1">
+            <h2 className="text-sm font-semibold text-admin-text">Operational notifications</h2>
+            <p className="text-xs text-admin-text-muted">
+              Control the shared admin recipient list used for transactional internal alerts.
+            </p>
+          </div>
+          <NotificationSettingsForm adminNotificationEmails={adminNotificationEmails} />
+        </Panel>
+      )}
 
       {/* ── Campaigns ── */}
       {tab === "campaigns" && (
