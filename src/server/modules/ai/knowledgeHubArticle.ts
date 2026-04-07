@@ -41,7 +41,7 @@ const KNOWLEDGE_HUB_ARTICLE_JSON_SCHEMA = {
         },
       },
     },
-    required: ["title", "slug", "summary", "readTime", "sections"],
+    required: ["title", "slug", "summary", "readTime", "category", "sections"],
   },
 };
 
@@ -148,6 +148,7 @@ export async function generateKnowledgeHubArticleDraft(input: {
     "Write a full Knowledge Hub article. Use several sections: at least one heading, multiple paragraphs, and a list where it helps readers scan key points.",
     "Slug must be lowercase kebab-case, URL-safe, no leading slash.",
     "readTime should look like '5 min read' or '8 min read'.",
+    "Include category in the JSON: reuse the category given above if it still fits, or a concise alternative label (a few words).",
   ].filter(Boolean);
 
   const finalPrompt = `You are writing blog content for Lorraine Hawkins, an expert trichologist. Tone: warm, clinical, evidence-based, practical. No hype or miracle claims.
@@ -179,7 +180,7 @@ ${userParts.join("\n\n")}`;
     slug: (parsed.slug ?? "").trim() || "article",
     summary: (parsed.summary ?? "").trim(),
     readTime: (parsed.readTime ?? "5 min read").trim() || "5 min read",
-    category: parsed.category?.trim() || undefined,
+    category: (parsed.category ?? input.category).trim() || undefined,
     sections,
   };
 }
