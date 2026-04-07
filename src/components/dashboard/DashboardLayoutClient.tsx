@@ -31,6 +31,20 @@ const ADMIN_NAV: NavGroup[] = [
           </svg>
         ),
       },
+      {
+        href: "/dashboard/settings/admins",
+        label: "Admin team",
+        icon: (
+          <svg viewBox="0 0 24 24" className={ic} fill="none">
+            <path
+              d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm10 0a3 3 0 11-6 0 3 3 0 016 0z"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ),
+      },
     ],
   },
   {

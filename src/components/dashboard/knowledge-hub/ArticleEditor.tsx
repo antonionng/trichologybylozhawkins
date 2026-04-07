@@ -70,6 +70,9 @@ export function ArticleEditor({ initial, isNew }: ArticleEditorProps) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiDraftLoading, setAiDraftLoading] = useState(false);
+  const [aiHeroLoading, setAiHeroLoading] = useState(false);
 
   const [title, setTitle] = useState(initial.title);
   const [slug, setSlug] = useState(initial.slug);
@@ -148,6 +151,88 @@ export function ArticleEditor({ initial, isNew }: ArticleEditorProps) {
       setError("Upload failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const onGenerateAiDraft = async () => {
+    setAiDraftLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/ai/knowledge-hub-article", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "draft",
+          category,
+          ...(title.trim() ? { title: title.trim() } : {}),
+          ...(aiPrompt.trim() ? { prompt: aiPrompt.trim() } : {}),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data?.error ?? "AI draft failed");
+        return;
+      }
+      const d = data.draft as {
+        title: string;
+        slug: string;
+        summary: string;
+        readTime: string;
+        category?: string;
+        sections: ContentSection[];
+      };
+      setTitle(d.title);
+      if (autoSlug) {
+        setSlug(slugify(d.title));
+      } else if (d.slug) {
+        setSlug(d.slug);
+      }
+      setSummary(d.summary);
+      setReadTime(d.readTime || "5 min read");
+      if (d.category) {
+        const match = CATEGORIES.find(
+          (c) => c.toLowerCase() === d.category!.toLowerCase()
+        );
+        if (match) setCategory(match);
+      }
+      setSections(d.sections?.length ? d.sections : [{ type: "paragraph", text: "" }]);
+    } catch {
+      setError("AI draft failed");
+    } finally {
+      setAiDraftLoading(false);
+    }
+  };
+
+  const onGenerateAiHero = async () => {
+    if (!title.trim()) {
+      setError("Add an article title before generating a hero image.");
+      return;
+    }
+    setAiHeroLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/ai/knowledge-hub-article", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "hero",
+          title: title.trim(),
+          category,
+          ...(aiPrompt.trim() ? { prompt: aiPrompt.trim() } : {}),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data?.error ?? "AI hero image failed");
+        return;
+      }
+      setHeroMediaUrl("");
+      setHeroMediaId("");
+      setHeroImage(data.heroUrl as string);
+    } catch {
+      setError("AI hero image failed");
+    } finally {
+      setAiHeroLoading(false);
     }
   };
 
@@ -280,6 +365,53 @@ export function ArticleEditor({ initial, isNew }: ArticleEditorProps) {
                   placeholder="5 min read"
                 />
               </div>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-admin-border bg-admin-panel p-5 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-admin-text">AI assistant</h3>
+              <span className="text-[11px] text-admin-text-muted">Optional brief</span>
+            </div>
+            <textarea
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              rows={3}
+              className="w-full rounded-md border border-admin-border bg-admin-elevated px-3 py-2 text-sm text-admin-text placeholder:text-admin-text-muted/50 focus:border-admin-accent focus:outline-none resize-none"
+              placeholder="e.g. Focus on postpartum shedding, cite gentle routines, UK audience…"
+            />
+            <p className="text-[11px] text-admin-text-muted leading-relaxed">
+              Generate a full draft from your category (and title if set), or a hero image once you have a title.
+              You can also create AI-assisted posts from{" "}
+              <a
+                href="/dashboard/content"
+                className="text-admin-accent hover:underline"
+              >
+                Content Factory
+              </a>{" "}
+              (BLOG channel).
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <AdminButton
+                type="button"
+                variant="secondary"
+                size="md"
+                onClick={onGenerateAiDraft}
+                loading={aiDraftLoading}
+                disabled={aiDraftLoading || aiHeroLoading}
+              >
+                {aiDraftLoading ? "Generating…" : "Generate draft"}
+              </AdminButton>
+              <AdminButton
+                type="button"
+                variant="secondary"
+                size="md"
+                onClick={onGenerateAiHero}
+                loading={aiHeroLoading}
+                disabled={aiDraftLoading || aiHeroLoading || !title.trim()}
+              >
+                {aiHeroLoading ? "Generating…" : "Generate hero image"}
+              </AdminButton>
             </div>
           </div>
         </div>

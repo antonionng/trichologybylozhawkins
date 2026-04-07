@@ -194,6 +194,92 @@ async function sendThroughResend(
   return result.data.id;
 }
 
+const EMAIL_BRAND_ACCENT = "#fab826";
+const EMAIL_BRAND_TEXT = "#111111";
+const EMAIL_BRAND_MUTED = "#6b6b6b";
+const EMAIL_BRAND_FOOTER = "#888888";
+const EMAIL_CANVAS_BG = "#f4f1eb";
+const EMAIL_CARD_BORDER = "#ece8e0";
+
+function emailBaseUrl(appUrl: string) {
+  return appUrl.replace(/\/+$/, "");
+}
+
+function emailSiteHostname(appUrl: string) {
+  try {
+    return new URL(appUrl.includes("://") ? appUrl : `https://${appUrl}`).hostname;
+  } catch {
+    return emailBaseUrl(appUrl);
+  }
+}
+
+/** Plain-text prefix so every send matches the HTML brand block. */
+export function brandedEmailTextPreamble(appUrl: string) {
+  const base = emailBaseUrl(appUrl);
+  return `Lorraine Hawkins · Trichology Academy\n${base}\n`;
+}
+
+/**
+ * Table-based shell for Resend: accent bar, LH monogram wordmark, footer. Inner body should not wrap in its own font div.
+ */
+export function brandedEmailHtml(appUrl: string, innerBodyHtml: string) {
+  const base = emailBaseUrl(appUrl);
+  const host = emailSiteHostname(appUrl);
+  const homeHref = escapeHtml(`${base}/`);
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="color-scheme" content="light"></head>
+<body style="margin:0;padding:0;background-color:${EMAIL_CANVAS_BG};">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:${EMAIL_CANVAS_BG};">
+    <tr>
+      <td align="center" style="padding:28px 16px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid ${EMAIL_CARD_BORDER};">
+          <tr>
+            <td style="height:5px;background:${EMAIL_BRAND_ACCENT};font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+          <tr>
+            <td style="padding:24px 28px 12px;">
+              <a href="${homeHref}" style="text-decoration:none;color:inherit;">
+                <table role="presentation" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td style="vertical-align:middle;padding-right:14px;">
+                      <div style="width:44px;height:44px;border-radius:10px;background:${EMAIL_BRAND_ACCENT};text-align:center;line-height:44px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:13px;font-weight:800;color:${EMAIL_BRAND_TEXT};">LH</div>
+                    </td>
+                    <td style="vertical-align:middle;">
+                      <div style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:700;color:${EMAIL_BRAND_TEXT};line-height:1.2;">Lorraine Hawkins</div>
+                      <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL_BRAND_MUTED};margin-top:4px;">Trichology Academy</div>
+                    </td>
+                  </tr>
+                </table>
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:4px 28px 28px;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;color:${EMAIL_BRAND_TEXT};">
+              ${innerBodyHtml.trim()}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 28px 24px;border-top:1px solid ${EMAIL_CARD_BORDER};">
+              <p style="margin:18px 0 6px;font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;line-height:1.5;color:${EMAIL_BRAND_FOOTER};">
+                Clinical trichology education, consultations, and professional training with Lorraine Hawkins.
+              </p>
+              <p style="margin:0;font-family:ui-sans-serif,system-ui,sans-serif;font-size:11px;">
+                <a href="${homeHref}" style="color:#5c4d1f;font-weight:600;">${escapeHtml(host)}</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`.trim();
+}
+
 export async function sendQuizResultEmail(input: QuizResultEmailInput) {
   const client = getResend();
   if (!client) return { skipped: true as const, reason: "Missing RESEND_API_KEY" };
@@ -226,13 +312,12 @@ export async function sendQuizResultEmail(input: QuizResultEmailInput) {
         </div>`
       : "";
 
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+  const bodyHtml = `
       <h2 style="margin: 0 0 12px;">${headline}</h2>
       <p style="margin: 0 0 16px;">
         Hi ${escapeHtml(input.name)},<br/>
         Your <strong>${escapeHtml(input.quizTitle)}</strong> result is <strong>${Math.round(input.percentage)}%</strong>
-        (${input.score}/${input.maxScore}) — ${input.passed ? "<strong>passed</strong>." : "<strong>not passed yet</strong>."}
+        (${input.score}/${input.maxScore}) - ${input.passed ? "<strong>passed</strong>." : "<strong>not passed yet</strong>."}
       </p>
       ${summary ? `<p style="margin: 0 0 16px;">${escapeHtml(summary)}</p>` : ""}
       ${
@@ -257,14 +342,15 @@ export async function sendQuizResultEmail(input: QuizResultEmailInput) {
       <p style="margin: 18px 0 0; font-size: 12px; color: #555;">
         If you didn’t request this, you can ignore this email.
       </p>
-    </div>
   `.trim();
+  const html = brandedEmailHtml(input.appUrl, bodyHtml);
 
   const text = [
+    brandedEmailTextPreamble(input.appUrl),
     headline,
     "",
     `Hi ${input.name},`,
-    `Your ${input.quizTitle} result is ${Math.round(input.percentage)}% (${input.score}/${input.maxScore}) — ${input.passed ? "passed" : "not passed yet"}.`,
+    `Your ${input.quizTitle} result is ${Math.round(input.percentage)}% (${input.score}/${input.maxScore}) - ${input.passed ? "passed" : "not passed yet"}.`,
     summary ? "" : null,
     summary ? summary : null,
     nextSteps.length ? "" : null,
@@ -298,28 +384,28 @@ export async function sendNewQuizLeadEmail(input: NewLeadEmailInput) {
   const subject = `New quiz lead: ${input.name} (${input.quizTitle})`;
   const contactUrl = `${input.appUrl}/dashboard/crm/contacts/${encodeURIComponent(input.contactId)}`;
 
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+  const bodyHtml = `
       <h2 style="margin: 0 0 12px;">New quiz contact captured</h2>
       <p style="margin: 0 0 10px;"><strong>Name:</strong> ${escapeHtml(input.name)}</p>
       <p style="margin: 0 0 10px;"><strong>Email:</strong> ${escapeHtml(input.email)}</p>
       <p style="margin: 0 0 10px;"><strong>Quiz:</strong> ${escapeHtml(input.quizTitle)}</p>
-      <p style="margin: 0 0 16px;"><strong>Result:</strong> ${Math.round(input.percentage)}% — ${input.passed ? "Passed" : "Not passed"}</p>
+      <p style="margin: 0 0 16px;"><strong>Result:</strong> ${Math.round(input.percentage)}% - ${input.passed ? "Passed" : "Not passed"}</p>
       ${input.aiHeadline ? `<p style="margin: 0 0 16px;"><strong>AI headline:</strong> ${escapeHtml(input.aiHeadline)}</p>` : ""}
       <p style="margin: 0;">
         <a href="${contactUrl}" style="display: inline-block; background: #111; color: #fff; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 600;">
           View contact in CRM
         </a>
       </p>
-    </div>
   `.trim();
+  const html = brandedEmailHtml(input.appUrl, bodyHtml);
 
   const text = [
+    brandedEmailTextPreamble(input.appUrl),
     "New quiz contact captured",
     `Name: ${input.name}`,
     `Email: ${input.email}`,
     `Quiz: ${input.quizTitle}`,
-    `Result: ${Math.round(input.percentage)}% — ${input.passed ? "Passed" : "Not passed"}`,
+    `Result: ${Math.round(input.percentage)}% - ${input.passed ? "Passed" : "Not passed"}`,
     input.aiHeadline ? `AI headline: ${input.aiHeadline}` : null,
     `CRM: ${contactUrl}`,
   ]
@@ -359,14 +445,13 @@ export async function sendNewChatLeadEmail(input: NewChatLeadEmailInput) {
       </div>`
     : "";
 
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+  const bodyHtml = `
       <h2 style="margin: 0 0 12px;">New chat started</h2>
       <p style="margin: 0 0 10px;"><strong>Conversation ID:</strong> ${escapeHtml(
         input.conversationId
       )}</p>
       <p style="margin: 0 0 10px;"><strong>Session ID:</strong> ${
-        input.sessionId ? escapeHtml(input.sessionId) : "—"
+        input.sessionId ? escapeHtml(input.sessionId) : "-"
       }</p>
       <p style="margin: 0 0 16px;"><strong>First message:</strong> ${escapeHtml(
         input.firstMessage
@@ -377,10 +462,11 @@ export async function sendNewChatLeadEmail(input: NewChatLeadEmailInput) {
         </a>
       </p>
       ${transcriptHtml}
-    </div>
   `.trim();
+  const html = brandedEmailHtml(input.appUrl, bodyHtml);
 
   const text = [
+    brandedEmailTextPreamble(input.appUrl),
     "New chat started",
     `Conversation ID: ${input.conversationId}`,
     input.sessionId ? `Session ID: ${input.sessionId}` : null,
@@ -413,8 +499,7 @@ export async function sendEnquiryConfirmationEmail(
   const subject = "We received your enquiry";
   const replyUrl = `${input.appUrl}/contact`;
   const enquiryLabel = input.enquiryType.replace(/_/g, " ");
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+  const bodyHtml = `
       <h2 style="margin: 0 0 12px;">Thanks for getting in touch</h2>
       <p style="margin: 0 0 16px;">Hi ${escapeHtml(input.firstName)},<br/>We’ve received your ${escapeHtml(enquiryLabel)} enquiry and will be in touch within 24 to 48 hours.</p>
       <p style="margin: 0;">
@@ -422,10 +507,11 @@ export async function sendEnquiryConfirmationEmail(
           Visit contact page
         </a>
       </p>
-    </div>
   `.trim();
+  const html = brandedEmailHtml(input.appUrl, bodyHtml);
 
   const text = [
+    brandedEmailTextPreamble(input.appUrl),
     "Thanks for getting in touch",
     "",
     `Hi ${input.firstName},`,
@@ -455,8 +541,7 @@ export async function sendAdminEnquiryNotificationEmail(
     input.company ? `<p style="margin: 0 0 10px;"><strong>Company:</strong> ${escapeHtml(input.company)}</p>` : "",
     input.jobTitle ? `<p style="margin: 0 0 10px;"><strong>Job title:</strong> ${escapeHtml(input.jobTitle)}</p>` : "",
   ].join("");
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+  const bodyHtml = `
       <h2 style="margin: 0 0 12px;">New enquiry received</h2>
       <p style="margin: 0 0 10px;"><strong>Name:</strong> ${escapeHtml(input.customerName)}</p>
       <p style="margin: 0 0 10px;"><strong>Email:</strong> ${escapeHtml(input.customerEmail)}</p>
@@ -470,10 +555,11 @@ export async function sendAdminEnquiryNotificationEmail(
           View contact in CRM
         </a>
       </p>
-    </div>
   `.trim();
+  const html = brandedEmailHtml(input.appUrl, bodyHtml);
 
   const text = [
+    brandedEmailTextPreamble(input.appUrl),
     "New enquiry received",
     `Name: ${input.customerName}`,
     `Email: ${input.customerEmail}`,
@@ -507,8 +593,7 @@ export async function sendCourseEnquiryConfirmationEmail(
 
   const subject = `We received your enquiry about ${input.courseTitle}`;
   const educationUrl = `${input.appUrl}/education`;
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+  const bodyHtml = `
       <h2 style="margin: 0 0 12px;">Thanks for your course enquiry</h2>
       <p style="margin: 0 0 16px;">Hi ${escapeHtml(input.firstName)},<br/>We’ve received your enquiry about <strong>${escapeHtml(input.courseTitle)}</strong> and will follow up shortly.</p>
       <p style="margin: 0;">
@@ -516,10 +601,11 @@ export async function sendCourseEnquiryConfirmationEmail(
           Browse education
         </a>
       </p>
-    </div>
   `.trim();
+  const html = brandedEmailHtml(input.appUrl, bodyHtml);
 
   const text = [
+    brandedEmailTextPreamble(input.appUrl),
     "Thanks for your course enquiry",
     "",
     `Hi ${input.firstName},`,
@@ -545,8 +631,7 @@ export async function sendCourseEnquiryAdminEmail(
 
   const subject = `Course enquiry: ${input.courseTitle}`;
   const contactUrl = `${input.appUrl}/dashboard/crm/contacts/${encodeURIComponent(input.contactId)}`;
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+  const bodyHtml = `
       <h2 style="margin: 0 0 12px;">New course enquiry</h2>
       <p style="margin: 0 0 10px;"><strong>Course:</strong> ${escapeHtml(input.courseTitle)}</p>
       <p style="margin: 0 0 10px;"><strong>Name:</strong> ${escapeHtml(input.customerName)}</p>
@@ -558,10 +643,11 @@ export async function sendCourseEnquiryAdminEmail(
           View contact in CRM
         </a>
       </p>
-    </div>
   `.trim();
+  const html = brandedEmailHtml(input.appUrl, bodyHtml);
 
   const text = [
+    brandedEmailTextPreamble(input.appUrl),
     "New course enquiry",
     `Course: ${input.courseTitle}`,
     `Name: ${input.customerName}`,
@@ -595,8 +681,7 @@ export async function sendAcademySignupWelcomeEmail(input: AcademySignupWelcomeE
     ? `Your free welcome lesson, ${input.videoTitle}, is now waiting for you in the academy.`
     : "Your academy access is ready.";
 
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+  const bodyHtml = `
       <h2 style="margin: 0 0 12px;">Welcome to Lorraine Hawkins Academy</h2>
       <p style="margin: 0 0 16px;">${escapeHtml(greeting)}<br/>${escapeHtml(bonusLine)}</p>
       <p style="margin: 0 0 16px;">You can now sign in to view your training and continue your learning journey.</p>
@@ -605,10 +690,11 @@ export async function sendAcademySignupWelcomeEmail(input: AcademySignupWelcomeE
           Go to the academy
         </a>
       </p>
-    </div>
   `.trim();
+  const html = brandedEmailHtml(input.appUrl, bodyHtml);
 
   const text = [
+    brandedEmailTextPreamble(input.appUrl),
     "Welcome to Lorraine Hawkins Academy",
     "",
     greeting,
@@ -638,8 +724,7 @@ export async function sendEducationPurchaseConfirmationEmail(
   const itemListHtml = renderEducationItemsHtml(input.items);
   const itemListText = renderEducationItemsText(input.items);
 
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+  const bodyHtml = `
       <h2 style="margin: 0 0 12px;">Thanks for your purchase</h2>
       <p style="margin: 0 0 16px;">
         Hi ${escapeHtml(input.customerName)},<br/>
@@ -655,10 +740,11 @@ export async function sendEducationPurchaseConfirmationEmail(
           Open the academy
         </a>
       </p>
-    </div>
   `.trim();
+  const html = brandedEmailHtml(input.appUrl, bodyHtml);
 
   const text = [
+    brandedEmailTextPreamble(input.appUrl),
     "Thanks for your purchase",
     "",
     `Hi ${input.customerName},`,
@@ -692,8 +778,7 @@ export async function sendEducationPurchaseAdminEmail(
   const itemListHtml = renderEducationItemsHtml(input.items);
   const itemListText = renderEducationItemsText(input.items);
 
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+  const bodyHtml = `
       <h2 style="margin: 0 0 12px;">New education purchase</h2>
       <p style="margin: 0 0 10px;"><strong>Order:</strong> ${escapeHtml(input.orderId)}</p>
       <p style="margin: 0 0 10px;"><strong>Customer:</strong> ${escapeHtml(input.customerName)}</p>
@@ -708,10 +793,11 @@ export async function sendEducationPurchaseAdminEmail(
           Open CRM
         </a>
       </p>
-    </div>
   `.trim();
+  const html = brandedEmailHtml(input.appUrl, bodyHtml);
 
   const text = [
+    brandedEmailTextPreamble(input.appUrl),
     "New education purchase",
     `Order: ${input.orderId}`,
     `Customer: ${input.customerName}`,
@@ -748,8 +834,7 @@ export async function sendShopOrderConfirmationEmail(input: ShopOrderConfirmatio
     : "";
   const trackingText = input.trackingUrl ? `Tracking: ${input.trackingUrl}` : null;
 
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+  const bodyHtml = `
       <h2 style="margin: 0 0 12px;">Thanks for your order</h2>
       <p style="margin: 0 0 16px;">
         Hi ${escapeHtml(input.customerName)},<br/>
@@ -769,10 +854,11 @@ export async function sendShopOrderConfirmationEmail(input: ShopOrderConfirmatio
         </a>
       </p>
       ${trackingMarkup}
-    </div>
   `.trim();
+  const html = brandedEmailHtml(input.appUrl, bodyHtml);
 
   const text = [
+    brandedEmailTextPreamble(input.appUrl),
     "Thanks for your order",
     "",
     `Hi ${input.customerName},`,
@@ -813,8 +899,7 @@ export async function sendShopAdminOrderNotificationEmail(input: ShopAdminOrderN
     : "";
   const trackingText = input.trackingUrl ? `Tracking: ${input.trackingUrl}` : null;
 
-  const html = `
-    <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; line-height: 1.45; color: #111;">
+  const bodyHtml = `
       <h2 style="margin: 0 0 12px;">${escapeHtml(input.statusLabel)}</h2>
       <p style="margin: 0 0 10px;"><strong>Order:</strong> ${escapeHtml(input.orderId)}</p>
       <p style="margin: 0 0 10px;"><strong>Customer:</strong> ${escapeHtml(input.customerName)}</p>
@@ -832,10 +917,11 @@ export async function sendShopAdminOrderNotificationEmail(input: ShopAdminOrderN
           View order
         </a>
       </p>
-    </div>
   `.trim();
+  const html = brandedEmailHtml(input.appUrl, bodyHtml);
 
   const text = [
+    brandedEmailTextPreamble(input.appUrl),
     input.statusLabel,
     `Order: ${input.orderId}`,
     `Customer: ${input.customerName}`,
@@ -856,6 +942,57 @@ export async function sendShopAdminOrderNotificationEmail(input: ShopAdminOrderN
     client,
     { from: fromAddress(), to: input.to, subject, html, text },
     "shop-order-admin",
+  );
+
+  return { skipped: false as const, id };
+}
+
+type AdminInviteEmailInput = {
+  to: string;
+  appUrl: string;
+  /** Full URL including token query param (e.g. .../set-password?token=...&next=/dashboard) */
+  setPasswordUrl: string;
+};
+
+export async function sendAdminInviteEmail(input: AdminInviteEmailInput) {
+  const client = getResend();
+  if (!client) return { skipped: true as const, reason: "Missing RESEND_API_KEY" };
+
+  const subject = "Your admin dashboard access";
+  const bodyHtml = `
+      <h2 style="margin: 0 0 12px;">You have been invited as an admin</h2>
+      <p style="margin: 0 0 16px;">
+        An administrator added you to the Lorraine Hawkins dashboard. Use the link below to choose a password and sign in.
+        The link expires in 7 days.
+      </p>
+      <p style="margin: 0 0 18px;">
+        <a href="${escapeHtml(input.setPasswordUrl)}" style="display: inline-block; background: #fab826; color: #111; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 600;">
+          Set password and continue
+        </a>
+      </p>
+      <p style="margin: 0; font-size: 12px; color: #555;">
+        If the button does not work, copy this URL into your browser:<br/>
+        <span style="word-break: break-all;">${escapeHtml(input.setPasswordUrl)}</span>
+      </p>
+      <p style="margin: 18px 0 0; font-size: 12px; color: #555;">
+        If you did not expect this message, you can ignore it.
+      </p>
+  `.trim();
+  const html = brandedEmailHtml(input.appUrl, bodyHtml);
+
+  const text = [
+    brandedEmailTextPreamble(input.appUrl),
+    "You have been invited as an admin for the Lorraine Hawkins dashboard.",
+    "Use this link to choose a password (expires in 7 days):",
+    input.setPasswordUrl,
+    "",
+    "If you did not expect this message, you can ignore it.",
+  ].join("\n");
+
+  const id = await sendThroughResend(
+    client,
+    { from: fromAddress(), to: input.to, subject, html, text },
+    "admin-invite",
   );
 
   return { skipped: false as const, id };

@@ -39,8 +39,10 @@ describe("shop order transactional emails", () => {
       expect.objectContaining({
         to: "customer@example.com",
         subject: expect.stringContaining("ord_123"),
-        html: expect.stringContaining("Big"),
-        text: expect.stringContaining("Total: GBP 36.00"),
+        html: expect.stringMatching(/Trichology Academy[\s\S]*Big/),
+        text: expect.stringMatching(
+          /Lorraine Hawkins · Trichology Academy[\s\S]*Total: GBP 36\.00/,
+        ),
       }),
     );
   });
@@ -67,8 +69,10 @@ describe("shop order transactional emails", () => {
       expect.objectContaining({
         to: ["ops@example.com", "shop@example.com"],
         subject: expect.stringContaining("Order shipped"),
-        html: expect.stringContaining("/dashboard/shop/orders/ord_456"),
-        text: expect.stringContaining("Tracking: https://track.example.com/ord_456"),
+        html: expect.stringMatching(/Trichology Academy[\s\S]*\/dashboard\/shop\/orders\/ord_456/),
+        text: expect.stringMatching(
+          /Lorraine Hawkins · Trichology Academy[\s\S]*Tracking: https:\/\/track\.example\.com\/ord_456/,
+        ),
       }),
     );
   });

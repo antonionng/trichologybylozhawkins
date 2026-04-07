@@ -11,6 +11,7 @@ import { prisma } from "@/server/db/client";
 import { handleCheckoutFulfillment } from "@/server/modules/education/service";
 import { runGeneration, triggerPostImageGeneration } from "@/server/modules/ai/service";
 import { Resend } from "resend";
+import { brandedEmailHtml, brandedEmailTextPreamble } from "@/server/modules/email/transactional";
 
 const queuePrefix = process.env.QUEUE_PREFIX ?? "lorraine-platform";
 const connection = getRedisConnection();
@@ -21,6 +22,9 @@ const resendClient = process.env.RESEND_API_KEY
 const defaultFrom =
   process.env.RESEND_FROM_EMAIL ||
   "Lorraine Hawkins <no-reply@trichologybylorrainehawkins.co.uk>";
+
+const campaignAppUrl =
+  process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
 
 const emailHandler = async (job: Job<EmailJobData>) => {
   if (job.name === "send-campaign") {
@@ -55,16 +59,19 @@ const emailHandler = async (job: Job<EmailJobData>) => {
     let failed = 0;
     for (const member of campaign.audience.members) {
       try {
+        const innerHtml =
+          campaign.contentHtml ??
+          `<p>${escapeHtml(campaign.subject)}</p><p>${escapeHtml(campaign.name)}</p>`;
+        const innerText =
+          campaign.contentText ??
+          `${campaign.subject}\n\n${campaign.name}\n\nLorraine Hawkins`;
+
         const result = await resendClient.emails.send({
           from: fromHeader,
           to: member.email,
           subject: campaign.subject,
-          html:
-            campaign.contentHtml ??
-            `<p>${escapeHtml(campaign.subject)}</p><p>${escapeHtml(campaign.name)}</p>`,
-          text:
-            campaign.contentText ??
-            `${campaign.subject}\n\n${campaign.name}\n\nLorraine Hawkins`,
+          html: brandedEmailHtml(campaignAppUrl, innerHtml),
+          text: `${brandedEmailTextPreamble(campaignAppUrl)}\n${innerText}`,
           ...(campaign.replyTo ? { reply_to: campaign.replyTo } : {}),
         });
 

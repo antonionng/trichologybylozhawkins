@@ -33,8 +33,8 @@ describe("education transactional emails", () => {
       expect.objectContaining({
         to: "learner@example.com",
         subject: expect.stringContaining("Welcome"),
-        html: expect.stringContaining("Sensitive scalps"),
-        text: expect.stringContaining("https://example.com/academy"),
+        html: expect.stringMatching(/Trichology Academy[\s\S]*Sensitive scalps/),
+        text: expect.stringContaining("Lorraine Hawkins · Trichology Academy"),
       }),
     );
   });
@@ -57,8 +57,10 @@ describe("education transactional emails", () => {
       expect.objectContaining({
         to: "learner@example.com",
         subject: expect.stringContaining("ord_123"),
-        html: expect.stringContaining("Sensitive scalps"),
-        text: expect.stringContaining("Total: GBP 29.00"),
+        html: expect.stringMatching(/Trichology Academy[\s\S]*Sensitive scalps/),
+        text: expect.stringMatching(
+          /Lorraine Hawkins · Trichology Academy[\s\S]*Total: GBP 29\.00/,
+        ),
       }),
     );
   });

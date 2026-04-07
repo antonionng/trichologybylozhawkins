@@ -11,6 +11,7 @@ export default function SetPasswordClient() {
 
   const token = useMemo(() => params.get("token") ?? "", [params]);
   const nextPath = useMemo(() => params.get("next") ?? "/academy", [params]);
+  const isAdminInvite = nextPath === "/dashboard" || nextPath.startsWith("/dashboard/");
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -64,7 +65,9 @@ export default function SetPasswordClient() {
           <p className="text-xs uppercase tracking-[0.3em] text-black/40">Set password</p>
           <h1 className="text-2xl font-semibold text-black">Create your login</h1>
           <p className="mt-2 text-sm text-black/60">
-            Choose a password to access your purchased training.
+            {isAdminInvite
+              ? "Choose a password to access the admin dashboard."
+              : "Choose a password to access your purchased training."}
           </p>
         </div>
 
