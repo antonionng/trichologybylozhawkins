@@ -17,6 +17,7 @@ describe("homepage featured lead banner placement", () => {
     expect(appPage).toContain("ensureFeaturedPublicQuizExists");
     expect(appPage).toContain("HomepageFreeVideoBanner");
     expect(appPage).toContain("<HomeHero />");
+    expect(appPage).toContain("<HomepageClinicDoor />");
     expect(appPage).toContain("<HomepageFreeVideoBanner");
   });
 

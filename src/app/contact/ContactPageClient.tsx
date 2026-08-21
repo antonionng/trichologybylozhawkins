@@ -7,8 +7,8 @@ import { Container } from "@/components/layout/Container";
 import { ButtonLink, Button } from "@/components/ui/Button";
 import { photography } from "@/lib/visualAssets";
 import { EnquiryForm } from "@/components/contact/EnquiryForm";
-import { siteContact, siteContactLinks } from "@/lib/siteContact";
-import { buildScalpQuizContactPrefill } from "@/lib/scalpQuizContactPrefill";
+import { clinicHours, formatClinicAddress, siteContact, siteContactLinks } from "@/lib/siteContact";
+import { buildContactPagePrefill } from "@/lib/scalpQuizContactPrefill";
 
 const responseInsights = [
   { value: "24–48h", label: "Response" },
@@ -40,8 +40,8 @@ const enquiryTracks = [
     title: "Clinical consultations",
     description: "Expert clinical assessment with Lorraine, or case review and mentorship for practitioners.",
     bullets: ["Professional scalp imaging", "Personalised treatment plan", "Specialist referrals if needed"],
-    secondaryHref: "/services",
-    secondaryLabel: "Learn about services",
+                secondaryHref: "/clinic",
+    secondaryLabel: "Clinic details",
   },
 ];
 
@@ -51,16 +51,10 @@ const contactFaqs = [
   { q: "How many can attend a workshop?", a: "4-15 participants ideal, but we can accommodate larger teams across multiple sessions." },
 ];
 
-const officeHours = [
-  { label: "Consultations", detail: "Wed & Thu · 10am–5pm GMT" },
-  { label: "Training", detail: "Mon & Tue · 9am–6pm GMT" },
-  { label: "Email", detail: "Monitored daily" },
-];
-
 export default function ContactPageClient() {
   const [isEnquiryFormOpen, setIsEnquiryFormOpen] = useState(false);
   const searchParams = useSearchParams();
-  const quizPrefill = useMemo(() => buildScalpQuizContactPrefill(searchParams), [searchParams]);
+  const quizPrefill = useMemo(() => buildContactPagePrefill(searchParams), [searchParams]);
 
   useEffect(() => {
     if (quizPrefill?.shouldAutoOpen) {
@@ -104,6 +98,8 @@ export default function ContactPageClient() {
                 <a href={siteContactLinks.mailto} className="underline decoration-brand-salmon/40 underline-offset-4 hover:text-brand-graphite">{siteContact.email}</a>
                 <span className="hidden text-brand-graphite/20 sm:block">&bull;</span>
                 <a href={siteContactLinks.tel} className="underline decoration-brand-salmon/40 underline-offset-4 hover:text-brand-graphite">{siteContact.phoneDisplay}</a>
+                <span className="hidden text-brand-graphite/20 sm:block">&bull;</span>
+                <a href="/clinic" className="underline decoration-brand-salmon/40 underline-offset-4 hover:text-brand-graphite">{formatClinicAddress()}</a>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button variant="secondary" size="sm" onClick={() => setIsEnquiryFormOpen(true)}>
@@ -181,7 +177,7 @@ export default function ContactPageClient() {
               <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-brand-graphite/35">Availability</span>
               <h2 className="mt-1 mb-4 font-display text-xl text-brand-graphite">When we&rsquo;re available</h2>
               <div className="space-y-3">
-                {officeHours.map((h, i) => (
+                {clinicHours.map((h, i) => (
                   <div key={h.label} className="flex items-center gap-3 rounded-xl border border-brand-graphite/8 bg-white p-3 shadow-sm">
                     <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-salmon/10 text-xs font-bold text-brand-salmon">{i + 1}</span>
                     <div>
@@ -222,7 +218,7 @@ export default function ContactPageClient() {
                 <p className="text-xs text-brand-graphite/50">Browse all video courses and pricing</p>
               </div>
             </a>
-            <a href="/services" className="group flex items-center gap-4 rounded-2xl border border-brand-graphite/8 bg-white p-5 shadow-sm transition-all hover:shadow-md">
+            <a href="/clinic" className="group flex items-center gap-4 rounded-2xl border border-brand-graphite/8 bg-white p-5 shadow-sm transition-all hover:shadow-md">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-sage/12">
                 <svg className="h-5 w-5 text-brand-sage" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" /></svg>
               </span>

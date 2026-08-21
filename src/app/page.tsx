@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { prisma } from "@/server/db/client";
 import { HomeHero } from "@/components/sections/HomeHero";
 import { EducationShowcase, VideoRow, CourseRow } from "@/components/sections/EducationShowcase";
@@ -8,7 +9,10 @@ import { BlogHighlightsSection } from "@/components/sections/BlogHighlightsSecti
 import { FaqSection } from "@/components/sections/FaqSection";
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { HomepageFreeVideoBanner } from "@/components/sections/HomepageFreeVideoBanner";
+import { HomepageClinicDoor } from "@/components/sections/HomepageClinicDoor";
+import { ClinicHostBanner } from "@/components/sections/ClinicHostBanner";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { isClinicMarketingHost } from "@/lib/siteHost";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
 import {
   HOME_PRODUCT_FALLBACKS,
@@ -178,11 +182,14 @@ export default async function Home() {
     getShowcaseData(),
     getHomepageFeaturedLead(),
   ]);
+  const showClinicHostBanner = isClinicMarketingHost(headers().get("host"));
 
   return (
     <main>
       <JsonLd data={buildFaqJsonLd("/", faqItems)} />
+      {showClinicHostBanner ? <ClinicHostBanner /> : null}
       <HomeHero />
+      <HomepageClinicDoor />
       {featuredLead ? <HomepageFreeVideoBanner lead={featuredLead} /> : null}
       <EducationShowcase videos={videos} courses={courses} />
       <ProductsShowcase products={products as any} />

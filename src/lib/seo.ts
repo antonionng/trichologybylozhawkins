@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { siteContact } from "@/lib/siteContact";
+import { isLegacyPublicHost, shouldForceProductionCanonical } from "@/lib/siteHost";
 
 export const SITE_NAME = "Trichology Academy";
 export const BRAND_NAME = "Lorraine Hawkins";
-export const DEFAULT_SITE_URL = "https://trichologyacademy.com";
+export const DEFAULT_SITE_URL = "https://trichologyacademy.co.uk";
 export const DEFAULT_OG_IMAGE_PATH = "/og-image.png";
 /** Pixel size of `public/og-image.png` (used in Open Graph metadata). */
 export const DEFAULT_OG_IMAGE_WIDTH = 1024;
@@ -44,13 +45,21 @@ function trimTrailingSlash(value: string) {
 }
 
 export function getSiteUrl() {
+  if (shouldForceProductionCanonical()) {
+    return DEFAULT_SITE_URL;
+  }
+
   const configuredUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
   if (!configuredUrl) {
     return DEFAULT_SITE_URL;
   }
 
   try {
-    return trimTrailingSlash(new URL(configuredUrl).toString());
+    const parsed = new URL(configuredUrl);
+    if (isLegacyPublicHost(parsed.hostname)) {
+      return DEFAULT_SITE_URL;
+    }
+    return trimTrailingSlash(parsed.toString());
   } catch {
     return DEFAULT_SITE_URL;
   }
@@ -159,6 +168,17 @@ export function buildPageMetadata({
   };
 }
 
+function buildPostalAddressJsonLd() {
+  return {
+    "@type": "PostalAddress",
+    streetAddress: siteContact.streetAddress,
+    addressLocality: siteContact.addressLocality,
+    addressRegion: siteContact.addressRegion,
+    postalCode: siteContact.postalCode,
+    addressCountry: siteContact.addressCountry,
+  };
+}
+
 export function buildOrganizationJsonLd() {
   const siteUrl = getSiteUrl();
 
@@ -170,7 +190,34 @@ export function buildOrganizationJsonLd() {
     url: siteUrl,
     email: siteContact.email,
     telephone: siteContact.phoneE164,
+    address: buildPostalAddressJsonLd(),
     sameAs: [siteContact.instagramUrl.split("?")[0]],
+  };
+}
+
+export function buildClinicJsonLd() {
+  const clinicUrl = buildCanonicalUrl("/clinic");
+
+  return {
+    "@context": "https://schema.org",
+    "@type": ["LocalBusiness", "HealthAndBeautyBusiness"],
+    "@id": `${clinicUrl}#clinic`,
+    name: siteContact.clinicName,
+    url: clinicUrl,
+    email: siteContact.email,
+    telephone: siteContact.phoneE164,
+    address: buildPostalAddressJsonLd(),
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: ["Wednesday", "Thursday"],
+        opens: "10:00",
+        closes: "17:00",
+      },
+    ],
+    parentOrganization: {
+      "@id": `${getSiteUrl()}#organization`,
+    },
   };
 }
 
