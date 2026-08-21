@@ -12,9 +12,11 @@ function readRepoFile(relativePath: string) {
 describe("Lorraine content revisions", () => {
   it("updates contact availability copy", () => {
     const contactPage = readRepoFile("src/app/contact/ContactPageClient.tsx");
+    const siteContact = readRepoFile("src/lib/siteContact.ts");
 
-    expect(contactPage).toContain("Training\", detail: \"Mon & Tue · 9am–6pm GMT");
-    expect(contactPage).toContain("Consultations\", detail: \"Wed & Thu · 10am–5pm GMT");
+    expect(contactPage).toContain("clinicHours");
+    expect(siteContact).toContain('consultationHoursShort: "Wed–Thu · 10am–5pm GMT"');
+    expect(siteContact).toContain('detail: "Mon & Tue · 9am–6pm GMT"');
   });
 
   it("updates home hero experience bullets", () => {

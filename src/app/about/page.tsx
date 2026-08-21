@@ -58,7 +58,7 @@ export default function About() {
               </div>
               <div className="flex flex-wrap gap-3 pt-1">
                 <ButtonLink href="/education" variant="secondary" size="sm">Browse Training</ButtonLink>
-                <ButtonLink href="/education/videos" variant="ghost" size="sm">Video Courses</ButtonLink>
+                <ButtonLink href="/clinic" variant="ghost" size="sm">Knutsford clinic</ButtonLink>
               </div>
               <div className="grid grid-cols-3 gap-3 pt-2">
                 {aboutMetrics.map((m) => (

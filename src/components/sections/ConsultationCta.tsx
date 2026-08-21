@@ -25,8 +25,15 @@ export function ConsultationCta() {
             <p className="text-sm leading-relaxed text-brand-graphite/75">
               Explore video courses, structured training programs, or discuss bespoke workshops for your team.
             </p>
-            <ButtonLink href="/services" variant="secondary" size="md">
+            <ButtonLink href="/education" variant="secondary" size="md">
               Explore training options
+            </ButtonLink>
+            <p className="text-sm font-semibold text-brand-sage">Need a personal consultation?</p>
+            <p className="text-sm leading-relaxed text-brand-graphite/75">
+              In-person hair and scalp visits are in Knutsford. Booking is by enquiry or phone, with a reply within 24–48 hours.
+            </p>
+            <ButtonLink href="/clinic" variant="ghost" size="md">
+              Knutsford clinic
             </ButtonLink>
           </div>
         </div>

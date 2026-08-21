@@ -9,6 +9,21 @@ export type ScalpQuizContactPrefill = {
   message: string;
 };
 
+export function buildContactPagePrefill(params: URLSearchParams): ScalpQuizContactPrefill | null {
+  const quizPrefill = buildScalpQuizContactPrefill(params);
+  if (quizPrefill) return quizPrefill;
+
+  if (params.get("service") !== "clinic") return null;
+
+  return {
+    shouldAutoOpen: true,
+    enquiryType: "clinic",
+    urgency: "normal",
+    source: params.get("source")?.trim() || "clinic-page",
+    message: "I would like to book a trichology consultation in Knutsford.",
+  };
+}
+
 export function buildScalpQuizContactPrefill(params: URLSearchParams): ScalpQuizContactPrefill | null {
   const source = params.get("source");
   if (source !== "scalp-health-check") return null;

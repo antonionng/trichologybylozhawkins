@@ -34,6 +34,7 @@ const navItems: NavItem[] = [
       { href: "/blog", label: "Knowledge Hub" },
     ],
   },
+  { href: "/clinic", label: "Clinic" },
   { href: "/about", label: "About Lorraine" },
   { href: "/contact", label: "Contact" },
 ];
@@ -48,6 +49,7 @@ const mobileLinks = [
   { href: "/education#workshops", label: "In-Person Workshops" },
   { href: FEATURED_PUBLIC_QUIZ_HREF, label: FEATURED_PUBLIC_QUIZ_NAV_LABEL },
   { href: "/blog", label: "Knowledge Hub" },
+  { href: "/clinic", label: "Clinic" },
   { href: "/about", label: "About Lorraine" },
   { href: "/contact", label: "Contact" },
 ];

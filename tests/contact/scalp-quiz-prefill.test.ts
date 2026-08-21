@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildScalpQuizContactPrefill } from "@/lib/scalpQuizContactPrefill";
+import {
+  buildContactPagePrefill,
+  buildScalpQuizContactPrefill,
+} from "@/lib/scalpQuizContactPrefill";
 
 describe("buildScalpQuizContactPrefill", () => {
   it("creates a clinic enquiry draft from the scalp quiz booking CTA", () => {
@@ -24,5 +27,17 @@ describe("buildScalpQuizContactPrefill", () => {
     const prefill = buildScalpQuizContactPrefill(new URLSearchParams("service=clinic"));
 
     expect(prefill).toBeNull();
+  });
+
+  it("opens a Knutsford clinic enquiry from service=clinic links", () => {
+    const prefill = buildContactPagePrefill(new URLSearchParams("service=clinic"));
+
+    expect(prefill).toEqual({
+      shouldAutoOpen: true,
+      enquiryType: "clinic",
+      urgency: "normal",
+      source: "clinic-page",
+      message: "I would like to book a trichology consultation in Knutsford.",
+    });
   });
 });

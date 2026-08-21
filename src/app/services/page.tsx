@@ -5,6 +5,7 @@ import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 import { Container } from "@/components/layout/Container";
 import { services } from "@/lib/content";
 import { photography } from "@/lib/visualAssets";
+import { formatClinicAddress, siteContact } from "@/lib/siteContact";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata = buildPageMetadata({
@@ -55,10 +56,13 @@ export default function Services() {
                 Consultations &amp; professional training
               </h1>
               <p className="max-w-lg text-base leading-relaxed text-brand-graphite/65">
-                Personal scalp health consultations for individuals. Hands-on training for salon teams and practitioners. All led by Lorraine.
+                Personal scalp health consultations at {formatClinicAddress()}. Hands-on training for salon teams and practitioners. All led by Lorraine.
+              </p>
+              <p className="text-sm text-brand-graphite/55">
+                Consultations {siteContact.consultationHoursShort}. Booking is by enquiry, not an online calendar.
               </p>
               <div className="flex flex-wrap gap-3 pt-1">
-                <ButtonLink href="/contact" variant="secondary" size="sm">Book consultation</ButtonLink>
+                <ButtonLink href="/clinic" variant="secondary" size="sm">Knutsford clinic</ButtonLink>
                 <ButtonLink href="/education" variant="ghost" size="sm">Train your team</ButtonLink>
               </div>
               <div className="grid grid-cols-3 gap-3 pt-2">
@@ -125,7 +129,8 @@ export default function Services() {
                 ))}
               </div>
               <div className="flex flex-wrap gap-3 mt-auto">
-                <ButtonLink href="/contact?service=clinic" variant="secondary" size="sm" className="w-fit">Book consultation</ButtonLink>
+                <ButtonLink href="/contact?service=clinic" variant="secondary" size="sm" className="w-fit">Request a consultation</ButtonLink>
+                <ButtonLink href="/clinic" variant="ghost" size="sm" className="w-fit">Clinic details</ButtonLink>
                 <ButtonLink href="/education#intensives" variant="ghost" size="sm" className="w-fit">Plan your training</ButtonLink>
               </div>
             </div>

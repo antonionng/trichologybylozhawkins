@@ -805,7 +805,7 @@ export const services: Service[] = [
       src: "/images/service-consultation-placeholder.png",
       alt: "Personal scalp health consultation with Lorraine Hawkins.",
     },
-    cta: { label: "Book a consultation", href: "/contact" },
+    cta: { label: "Knutsford clinic", href: "/clinic" },
   },
   {
     id: "service-team-training",

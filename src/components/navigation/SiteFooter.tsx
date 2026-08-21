@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Container } from "@/components/layout/Container";
 import { ButtonLink } from "@/components/ui/Button";
 import { usePathname } from "next/navigation";
-import { siteContact, siteContactLinks } from "@/lib/siteContact";
+import { formatClinicAddress, siteContact, siteContactLinks } from "@/lib/siteContact";
 
 const footerLinks = {
   education: [
@@ -15,6 +15,7 @@ const footerLinks = {
     { label: "Conditions Library", href: "/education/conditions" },
   ],
   company: [
+    { label: "Knutsford clinic", href: "/clinic" },
     { label: "About Lorraine", href: "/about" },
     { label: "Privacy Policy", href: "/privacy" },
     { label: "Terms & Conditions", href: "/terms" },
@@ -41,11 +42,17 @@ export function SiteFooter() {
             Trichologist · Educator · Practitioner
           </p>
           <p className="text-sm leading-relaxed text-brand-graphite/65">
-            Clinical trichology education for hair professionals. Founded by Lorraine Hawkins.
+            Clinical trichology education for hair professionals. Consultations in Knutsford.
           </p>
-          <ButtonLink href="/contact" size="sm" variant="secondary" textured className="mt-2 w-fit">
-            Get in touch
-          </ButtonLink>
+          <p className="text-sm text-brand-graphite/60">{formatClinicAddress()}</p>
+          <div className="flex flex-wrap gap-3">
+            <ButtonLink href="/clinic" size="sm" variant="ghost" className="mt-2 w-fit">
+              Clinic
+            </ButtonLink>
+            <ButtonLink href="/contact" size="sm" variant="secondary" textured className="mt-2 w-fit">
+              Get in touch
+            </ButtonLink>
+          </div>
         </div>
 
         <FooterColumn heading="Education" links={footerLinks.education} />
