@@ -15,7 +15,7 @@ export const metadata = buildPageMetadata({
   path: "/clinic",
   title: "Knutsford trichology clinic",
   description:
-    "In-person hair and scalp consultations with Lorraine Hawkins at 27 Regent Street, Knutsford. Enquire by form, email, or phone — replies within 24–48 hours.",
+    "In-person hair and scalp consultations with Lorraine Hawkins at 27 Regent Street, Knutsford, WA16 6GR. Enquire by form, email, or phone — replies within 24–48 hours.",
   keywords: [
     "trichology clinic knutsford",
     "hair loss consultation knutsford",
@@ -80,7 +80,7 @@ export default function ClinicPage() {
                   Request a consultation
                 </ButtonLink>
                 <ButtonLink href={siteContactLinks.tel} variant="ghost" size="sm">
-                  Call {siteContact.phoneDisplay}
+                  Call 07834 614092
                 </ButtonLink>
               </div>
               <div className="grid grid-cols-3 gap-3 pt-2">
@@ -185,7 +185,7 @@ export default function ClinicPage() {
               <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-brand-graphite/35">
                 Address
               </span>
-              <h2 className="font-display text-xl text-brand-graphite">27 Regent Street, Knutsford</h2>
+              <h2 className="font-display text-xl text-brand-graphite">27 Regent Street, Knutsford, WA16 6GR</h2>
               <p className="text-sm leading-relaxed text-brand-graphite/60">
                 {siteContact.streetAddress}, {siteContact.addressLocality}, {siteContact.addressRegion},{" "}
                 {siteContact.postalCode}.
@@ -193,7 +193,7 @@ export default function ClinicPage() {
               <p className="text-sm text-brand-graphite/60">
                 Phone{" "}
                 <a href={siteContactLinks.tel} className="underline decoration-brand-salmon/40 underline-offset-4">
-                  {siteContact.phoneDisplay}
+                  07834 614092
                 </a>
               </p>
               <ButtonLink href={siteContactLinks.maps} variant="ghost" size="sm" className="w-fit">

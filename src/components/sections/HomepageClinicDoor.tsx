@@ -18,8 +18,8 @@ export function HomepageClinicDoor() {
               </h2>
               <p className="max-w-2xl text-sm leading-relaxed text-brand-graphite/65">
                 If you want a scalp check or a hair-loss consultation, Lorraine sees clients in
-                person at {formatClinicAddress()}. Booking is by enquiry or phone — there is no
-                online calendar — and the team replies within {siteContact.enquiryResponseLabel}.
+                person at {formatClinicAddress()}. Booking is by enquiry or phone — there is no online calendar —
+                and the team replies within {siteContact.enquiryResponseLabel}.
               </p>
             </div>
             <div className="flex flex-wrap gap-3 lg:justify-end">
