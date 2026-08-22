@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { prisma } from "@/server/db/client";
 import { HomeHero } from "@/components/sections/HomeHero";
@@ -10,9 +11,10 @@ import { FaqSection } from "@/components/sections/FaqSection";
 import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { HomepageFreeVideoBanner } from "@/components/sections/HomepageFreeVideoBanner";
 import { HomepageClinicDoor } from "@/components/sections/HomepageClinicDoor";
-import { ClinicHostBanner } from "@/components/sections/ClinicHostBanner";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { isClinicMarketingHost } from "@/lib/siteHost";
+import { ClinicPageView } from "@/components/clinic/ClinicPageView";
+import { clinicPageMetadata } from "@/lib/clinicPageMeta";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
 import {
   HOME_PRODUCT_FALLBACKS,
@@ -27,7 +29,7 @@ import { findHomepageFeaturedPublicQuizRecord } from "@/server/modules/education
 import { getCurrentFeaturedLeadItem } from "@/server/modules/education/featuredLeadItem";
 import { buildFaqJsonLd, buildPageMetadata } from "@/lib/seo";
 
-export const metadata = buildPageMetadata({
+const academyHomeMetadata = buildPageMetadata({
   path: "/",
   title: "Lorraine Hawkins",
   description:
@@ -40,6 +42,13 @@ export const metadata = buildPageMetadata({
     "hair loss support",
   ],
 });
+
+export async function generateMetadata(): Promise<Metadata> {
+  if (isClinicMarketingHost(headers().get("host"))) {
+    return clinicPageMetadata;
+  }
+  return academyHomeMetadata;
+}
 
 async function getShowcaseData() {
   return loadHomeShowcaseData({
@@ -178,16 +187,18 @@ async function getHomepageFeaturedLead() {
 }
 
 export default async function Home() {
+  if (isClinicMarketingHost(headers().get("host"))) {
+    return <ClinicPageView />;
+  }
+
   const [{ videos, courses, products }, featuredLead] = await Promise.all([
     getShowcaseData(),
     getHomepageFeaturedLead(),
   ]);
-  const showClinicHostBanner = isClinicMarketingHost(headers().get("host"));
 
   return (
     <main>
       <JsonLd data={buildFaqJsonLd("/", faqItems)} />
-      {showClinicHostBanner ? <ClinicHostBanner /> : null}
       <HomeHero />
       <HomepageClinicDoor />
       {featuredLead ? <HomepageFreeVideoBanner lead={featuredLead} /> : null}
