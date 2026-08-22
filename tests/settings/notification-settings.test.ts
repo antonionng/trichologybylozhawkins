@@ -95,4 +95,37 @@ describe("notification settings", () => {
       },
     });
   });
+
+  it("always includes Lorraine and Antonio on enquiry mail", async () => {
+    findUniqueMock.mockResolvedValueOnce({
+      id: "default",
+      adminNotificationEmails: ["info@trichologybylorrainehawkins.co.uk"],
+    });
+
+    const { getEnquiryAdminRecipients } = await import(
+      "@/server/modules/settings/notifications"
+    );
+
+    await expect(getEnquiryAdminRecipients()).resolves.toEqual([
+      "loz.hawkins95@gmail.com",
+      "ag@experrt.com",
+      "info@trichologybylorrainehawkins.co.uk",
+    ]);
+  });
+
+  it("still emails both enquiry inboxes when operational settings are empty", async () => {
+    findUniqueMock.mockResolvedValueOnce({
+      id: "default",
+      adminNotificationEmails: [],
+    });
+
+    const { getEnquiryAdminRecipients } = await import(
+      "@/server/modules/settings/notifications"
+    );
+
+    await expect(getEnquiryAdminRecipients()).resolves.toEqual([
+      "loz.hawkins95@gmail.com",
+      "ag@experrt.com",
+    ]);
+  });
 });

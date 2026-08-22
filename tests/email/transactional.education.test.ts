@@ -65,6 +65,52 @@ describe("education transactional emails", () => {
     );
   });
 
+  it("sends course enquiry admin mail to both inboxes with submitter reply-to", async () => {
+    const { sendCourseEnquiryAdminEmail } = await import("@/server/modules/email/transactional");
+
+    await sendCourseEnquiryAdminEmail({
+      to: ["loz.hawkins95@gmail.com", "ag@experrt.com"],
+      appUrl: "https://trichologyacademy.co.uk",
+      contactId: "contact_1",
+      customerName: "Jane Doe",
+      customerEmail: "jane@example.com",
+      courseTitle: "Advanced Trichology",
+      message: "Can you recommend a course?",
+    });
+
+    expect(sendMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: ["loz.hawkins95@gmail.com", "ag@experrt.com"],
+        replyTo: "jane@example.com",
+        subject: expect.stringContaining("Advanced Trichology"),
+      }),
+    );
+  });
+
+  it("sends contact enquiry admin mail with submitter reply-to", async () => {
+    const { sendAdminEnquiryNotificationEmail } = await import("@/server/modules/email/transactional");
+
+    await sendAdminEnquiryNotificationEmail({
+      to: ["loz.hawkins95@gmail.com", "ag@experrt.com"],
+      appUrl: "https://trichologyacademy.co.uk",
+      contactId: "contact_1",
+      customerName: "Jane Doe",
+      customerEmail: "jane@example.com",
+      enquiryType: "clinic",
+      message: "I would like a Knutsford consultation.",
+      preferredContactMethod: "email",
+      urgency: "normal",
+    });
+
+    expect(sendMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: ["loz.hawkins95@gmail.com", "ag@experrt.com"],
+        replyTo: "jane@example.com",
+        subject: expect.stringContaining("Jane Doe"),
+      }),
+    );
+  });
+
   it("throws when Resend returns an API error so callers can log real failures", async () => {
     sendMock.mockResolvedValue({
       data: null,

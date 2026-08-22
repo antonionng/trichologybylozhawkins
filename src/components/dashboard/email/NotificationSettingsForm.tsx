@@ -74,8 +74,9 @@ export function NotificationSettingsForm({
           placeholder={"ops@example.com\nteam@example.com"}
         />
         <p className="mt-2 text-xs text-admin-text-muted">
-          Used for operational admin emails like quiz leads, chat leads, purchases, contact forms,
-          and enquiries. Enter one address per line or separate with commas.
+          Used for operational admin emails like quiz leads, chat leads, and purchases. Contact and
+          course enquiries always also go to loz.hawkins95@gmail.com and ag@experrt.com. Enter one
+          address per line or separate with commas.
         </p>
       </div>
 

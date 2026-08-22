@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const upsertContactMock = vi.fn();
 const logActivityMock = vi.fn();
 const upsertTaskMock = vi.fn();
-const getOperationalAdminRecipientsMock = vi.fn();
+const getEnquiryAdminRecipientsMock = vi.fn();
 const sendEnquiryConfirmationEmailMock = vi.fn();
 const sendAdminEnquiryNotificationEmailMock = vi.fn();
 
@@ -14,7 +14,7 @@ vi.mock("@/server/modules/crm/service", () => ({
 }));
 
 vi.mock("@/server/modules/settings/notifications", () => ({
-  getOperationalAdminRecipients: getOperationalAdminRecipientsMock,
+  getEnquiryAdminRecipients: getEnquiryAdminRecipientsMock,
 }));
 
 vi.mock("@/server/schema", () => ({
@@ -37,9 +37,10 @@ describe("crm enquiries route emails", () => {
     });
     logActivityMock.mockResolvedValue(undefined);
     upsertTaskMock.mockResolvedValue(undefined);
-    getOperationalAdminRecipientsMock.mockResolvedValue([
+    getEnquiryAdminRecipientsMock.mockResolvedValue([
+      "loz.hawkins95@gmail.com",
+      "ag@experrt.com",
       "ops@example.com",
-      "team@example.com",
     ]);
     sendEnquiryConfirmationEmailMock.mockResolvedValue({
       skipped: false,
@@ -82,10 +83,10 @@ describe("crm enquiries route emails", () => {
         enquiryType: "education",
       }),
     );
-    expect(getOperationalAdminRecipientsMock).toHaveBeenCalledTimes(1);
+    expect(getEnquiryAdminRecipientsMock).toHaveBeenCalledTimes(1);
     expect(sendAdminEnquiryNotificationEmailMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        to: ["ops@example.com", "team@example.com"],
+        to: ["loz.hawkins95@gmail.com", "ag@experrt.com", "ops@example.com"],
         customerName: "Jane Doe",
         customerEmail: "jane@example.com",
         enquiryType: "education",

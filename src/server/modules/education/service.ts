@@ -20,7 +20,7 @@ import {
   sendCourseEnquiryConfirmationEmail,
 } from "@/server/modules/email/transactional";
 import { sendEducationPurchaseNotifications } from "@/server/modules/education/notifications";
-import { getOperationalAdminRecipients } from "@/server/modules/settings/notifications";
+import { getEnquiryAdminRecipients } from "@/server/modules/settings/notifications";
 
 const getVideoProductDelegate = () =>
   (prisma as any).videoProduct as
@@ -950,7 +950,7 @@ export const createCourseEnquiry = async (
 
   const firstName = contact.firstName || data.name.split(" ")[0] || data.name;
   const appUrl = getServerEnv().NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
-  const adminRecipients = await getOperationalAdminRecipients();
+  const adminRecipients = await getEnquiryAdminRecipients();
 
   await Promise.allSettled([
     sendCourseEnquiryConfirmationEmail({
