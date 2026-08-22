@@ -6,7 +6,7 @@ import {
   sendAdminEnquiryNotificationEmail,
   sendEnquiryConfirmationEmail,
 } from "@/server/modules/email/transactional";
-import { getOperationalAdminRecipients } from "@/server/modules/settings/notifications";
+import { getEnquiryAdminRecipients } from "@/server/modules/settings/notifications";
 import { getServerEnv } from "@/server/schema";
 
 const enquirySchema = z.object({
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     });
 
     const appUrl = getServerEnv().NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
-    const adminRecipients = await getOperationalAdminRecipients();
+    const adminRecipients = await getEnquiryAdminRecipients();
 
     await Promise.allSettled([
       sendEnquiryConfirmationEmail({

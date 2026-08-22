@@ -17,8 +17,32 @@ if (
   }
 }
 
+// Historic clinic hostname. Serve this host — do not 301 it (or vercel.app) to the Academy.
+const CLINIC_MARKETING_HOSTS = [
+  "trichologybylorrainehawkins.co.uk",
+  "www.trichologybylorrainehawkins.co.uk",
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/treatments",
+        destination: "/clinic",
+        permanent: true,
+      },
+    ];
+  },
+  async rewrites() {
+    return {
+      beforeFiles: CLINIC_MARKETING_HOSTS.map((host) => ({
+        source: "/",
+        has: [{ type: "host", value: host }],
+        destination: "/clinic",
+      })),
+    };
+  },
   eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors.

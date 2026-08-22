@@ -74,8 +74,8 @@
 | Quiz submission | Yes | Yes | Dashboard operational settings |
 | Shop order lifecycle | Yes | Yes | Dashboard operational settings |
 | Education purchase | Yes | Yes | Dashboard operational settings |
-| CRM contact / enquiry form | Yes | Yes | Dashboard operational settings |
-| Course enquiry | Yes | Yes | Dashboard operational settings |
+| CRM contact / enquiry form | Yes | Yes | Always `loz.hawkins95@gmail.com` + `ag@experrt.com`, plus dashboard operational settings |
+| Course enquiry | Yes | Yes | Always `loz.hawkins95@gmail.com` + `ag@experrt.com`, plus dashboard operational settings |
 | First AI chat lead | No | Yes | Dashboard operational settings |
 
 ## AI Usage

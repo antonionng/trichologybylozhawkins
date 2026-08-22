@@ -22,7 +22,8 @@ describe("homepage clinic door", () => {
     expect(door).toContain("no online calendar");
     expect(home).toContain("<HomeHero />");
     expect(home).toContain("<HomepageClinicDoor />");
-    expect(home).toContain("ClinicHostBanner");
     expect(home).toContain("isClinicMarketingHost");
+    expect(home).toContain("ClinicPageView");
+    expect(home).not.toContain("ClinicHostBanner");
   });
 });

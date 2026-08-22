@@ -15,7 +15,7 @@ describe("Knutsford clinic path", () => {
     expect(formatClinicAddress()).toBe("27 Regent Street, Knutsford, WA16 6GR");
     expect(siteContact.phoneDisplay).toBe("07834 614092");
 
-    const clinicPage = readRepoFile("src/app/clinic/page.tsx");
+    const clinicPage = readRepoFile("src/components/clinic/ClinicPageView.tsx");
     expect(clinicPage).toContain("27 Regent Street");
     expect(clinicPage).toContain("Knutsford");
     expect(clinicPage).toContain("WA16 6GR");
@@ -25,6 +25,7 @@ describe("Knutsford clinic path", () => {
     expect(clinicPage).not.toContain("£");
     expect(clinicPage).not.toContain("TestimonialsSection");
     expect(clinicPage).not.toContain("5-star");
+    expect(readRepoFile("src/app/clinic/page.tsx")).toContain("ClinicPageView");
   });
 
   it("links clinic from public nav and footer", () => {

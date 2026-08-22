@@ -3,6 +3,12 @@ import { getServerEnv, parseEmailList } from "@/server/schema/env";
 
 const NOTIFICATION_SETTINGS_ID = "default";
 
+/** Always receive public enquiry mail. Not an env/dashboard-only list. */
+export const REQUIRED_ENQUIRY_ADMIN_RECIPIENTS = [
+  "loz.hawkins95@gmail.com",
+  "ag@experrt.com",
+] as const;
+
 function normalizeEmailList(values: string[]) {
   return [...new Set(values.map((value) => value.trim().toLowerCase()).filter(Boolean))];
 }
@@ -25,6 +31,13 @@ export async function getOperationalAdminRecipients() {
   }
 
   return normalizeEmailList(settings.adminNotificationEmails);
+}
+
+export async function getEnquiryAdminRecipients() {
+  return normalizeEmailList([
+    ...REQUIRED_ENQUIRY_ADMIN_RECIPIENTS,
+    ...(await getOperationalAdminRecipients()),
+  ]);
 }
 
 export async function saveOperationalAdminRecipients(values: string[]) {

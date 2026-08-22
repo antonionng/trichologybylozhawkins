@@ -1,11 +1,15 @@
 const PRODUCTION_CANONICAL_HOST = "trichologyacademy.co.uk";
 
+export const CLINIC_MARKETING_HOSTS = [
+  "trichologybylorrainehawkins.co.uk",
+  "www.trichologybylorrainehawkins.co.uk",
+] as const;
+
 const LEGACY_PUBLIC_HOSTS = new Set([
   "trichology.vercel.app",
   "trichologyacademy.com",
   "www.trichologyacademy.com",
-  "trichologybylorrainehawkins.co.uk",
-  "www.trichologybylorrainehawkins.co.uk",
+  ...CLINIC_MARKETING_HOSTS,
 ]);
 
 function normalizeHost(host?: string | null) {
@@ -14,10 +18,7 @@ function normalizeHost(host?: string | null) {
 
 export function isClinicMarketingHost(host?: string | null) {
   const hostname = normalizeHost(host);
-  return (
-    hostname === "trichologybylorrainehawkins.co.uk" ||
-    hostname === "www.trichologybylorrainehawkins.co.uk"
-  );
+  return (CLINIC_MARKETING_HOSTS as readonly string[]).includes(hostname);
 }
 
 export function isLegacyPublicHost(host?: string | null) {

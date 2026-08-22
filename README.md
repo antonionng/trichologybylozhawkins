@@ -47,7 +47,7 @@ Make sure these are correct for your machine:
 - `REDIS_URL` (Redis, default: `redis://localhost:6379`)
 - `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` (required in production)
 - `RESEND_API_KEY` (required in production for campaign delivery)
-- `SHOP_ADMIN_NOTIFY_EMAILS` + `CHAT_ADMIN_NOTIFY_EMAIL` (bootstrap fallbacks only until Dashboard → Email → Operational Settings is saved)
+- `SHOP_ADMIN_NOTIFY_EMAILS` + `CHAT_ADMIN_NOTIFY_EMAIL` (bootstrap fallbacks only until Dashboard → Email → Operational Settings is saved). Public enquiry mail always includes `loz.hawkins95@gmail.com` and `ag@experrt.com` in code.
 - `DEV_SKIP_CHECKOUT=false` (must stay false in production)
 
 ### Install + DB setup

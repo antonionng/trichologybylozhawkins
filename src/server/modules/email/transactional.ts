@@ -169,6 +169,7 @@ type ResendPayload = {
   subject: string;
   html: string;
   text: string;
+  replyTo?: string;
   reply_to?: string;
 };
 
@@ -578,7 +579,14 @@ export async function sendAdminEnquiryNotificationEmail(
 
   const id = await sendThroughResend(
     client,
-    { from: fromAddress(), to: input.to, subject, html, text },
+    {
+      from: fromAddress(),
+      to: input.to,
+      subject,
+      html,
+      text,
+      replyTo: input.customerEmail,
+    },
     "enquiry-admin",
   );
 
@@ -663,7 +671,14 @@ export async function sendCourseEnquiryAdminEmail(
 
   const id = await sendThroughResend(
     client,
-    { from: fromAddress(), to: input.to, subject, html, text },
+    {
+      from: fromAddress(),
+      to: input.to,
+      subject,
+      html,
+      text,
+      replyTo: input.customerEmail,
+    },
     "course-enquiry-admin",
   );
 
