@@ -24,7 +24,14 @@ async function getQuiz(id: string) {
 
 async function getCourses() {
   return prisma.course.findMany({
-    select: { id: true, title: true },
+    select: {
+      id: true,
+      title: true,
+      modules: {
+        select: { id: true, title: true, position: true },
+        orderBy: { position: "asc" },
+      },
+    },
     orderBy: { title: "asc" },
   });
 }

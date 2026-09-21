@@ -1,33 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Surface } from "@/components/layout/Surface";
 import { Button } from "@/components/ui/Button";
 
+type CourseOption = {
+  id: string;
+  title: string;
+  modules?: Array<{ id: string; title: string; position: number }>;
+};
+
 export default function NewQuizPage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [courseId, setCourseId] = useState("");
-  const [courses, setCourses] = useState<Array<{ id: string; title: string }>>([]);
+  const [moduleId, setModuleId] = useState("");
+  const [courses, setCourses] = useState<CourseOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch courses on mount
-  useState(() => {
-    fetch("/api/education/courses")
+  useEffect(() => {
+    fetch("/api/education/courses?scope=admin")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          setCourses(data.map((c: any) => ({ id: c.id, title: c.title })));
+          setCourses(
+            data.map((c: CourseOption) => ({
+              id: c.id,
+              title: c.title,
+              modules: (c.modules ?? [])
+                .slice()
+                .sort((a, b) => a.position - b.position),
+            })),
+          );
           if (data.length > 0) {
             setCourseId(data[0].id);
           }
         }
       })
       .catch(console.error);
-  });
+  }, []);
+
+  const selectedModules = courses.find((c) => c.id === courseId)?.modules ?? [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +59,7 @@ export default function NewQuizPage() {
         body: JSON.stringify({
           title: title.trim(),
           courseId,
+          moduleId: moduleId || undefined,
           passingScore: 70,
           status: "DRAFT",
         }),
@@ -72,7 +89,9 @@ export default function NewQuizPage() {
           ← Back to Quizzes
         </Link>
         <h1 className="font-display text-2xl text-black">Create New Quiz</h1>
-        <p className="text-black/60">Start by giving your quiz a title and selecting a course.</p>
+        <p className="text-black/60">
+          Start as a draft. Attach a course module to surface it as the chair-check on that module&apos;s last lesson.
+        </p>
       </div>
 
       <Surface variant="card" padding="lg">
@@ -83,7 +102,7 @@ export default function NewQuizPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full rounded-lg border border-black/10 bg-white px-4 py-2 focus:border-[#fab826] focus:outline-none focus:ring-1 focus:ring-[#fab826]"
-              placeholder="e.g. Day 1-4 Assessment"
+              placeholder="e.g. Chair-check: Recognising Common Scalp Concerns"
               required
             />
           </div>
@@ -92,7 +111,10 @@ export default function NewQuizPage() {
             <label className="text-xs uppercase tracking-[0.2em] text-black/60">Course</label>
             <select
               value={courseId}
-              onChange={(e) => setCourseId(e.target.value)}
+              onChange={(e) => {
+                setCourseId(e.target.value);
+                setModuleId("");
+              }}
               className="w-full rounded-lg border border-black/10 bg-white px-4 py-2 focus:border-[#fab826] focus:outline-none focus:ring-1 focus:ring-[#fab826]"
               required
             >
@@ -103,6 +125,28 @@ export default function NewQuizPage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs uppercase tracking-[0.2em] text-black/60">
+              Course module (optional chair-check)
+            </label>
+            <select
+              value={moduleId}
+              onChange={(e) => setModuleId(e.target.value)}
+              className="w-full rounded-lg border border-black/10 bg-white px-4 py-2 focus:border-[#fab826] focus:outline-none focus:ring-1 focus:ring-[#fab826]"
+              disabled={!courseId}
+            >
+              <option value="">Whole course (not a module chair-check)</option>
+              {selectedModules.map((mod) => (
+                <option key={mod.id} value={mod.id}>
+                  {mod.title}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-black/50">
+              Published module quizzes appear after the last lesson in that module. Keep drafts unpublished until copy is final.
+            </p>
           </div>
 
           {error && (
@@ -125,4 +169,3 @@ export default function NewQuizPage() {
     </div>
   );
 }
-

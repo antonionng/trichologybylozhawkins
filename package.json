@@ -21,7 +21,11 @@
     "postinstall": "prisma generate",
     "ingest:extract": "npx tsx scripts/ingest/extract-content.ts",
     "ingest:structure": "npx tsx scripts/ingest/structure-courses.ts",
-    "ingest": "npm run ingest:extract && npm run ingest:structure"
+    "ingest": "npm run ingest:extract && npm run ingest:structure",
+    "essentials:deepen": "npx tsx scripts/essentials-deepen.ts",
+    "essentials:status": "npx tsx scripts/essentials-deepen.ts status",
+    "essentials:pdfs": "npx tsx scripts/essentials-deepen.ts pdfs",
+    "essentials:quizzes": "npx tsx scripts/essentials-deepen.ts quizzes"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

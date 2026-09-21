@@ -5,8 +5,8 @@ import { z } from "zod";
 // Schemas
 export const quizCreateSchema = z.object({
   courseId: z.string().cuid(),
-  moduleId: z.string().cuid().optional(),
-  lessonId: z.string().cuid().optional(),
+  moduleId: z.string().cuid().optional().nullable(),
+  lessonId: z.string().cuid().optional().nullable(),
   title: z.string().min(1),
   description: z.string().optional(),
   passingScore: z.number().min(0).max(100).default(70),
@@ -55,6 +55,17 @@ export const attemptCreateSchema = z.object({
 });
 
 // Quiz CRUD
+async function assertModuleBelongsToCourse(moduleId: string | null | undefined, courseId: string) {
+  if (!moduleId) return;
+  const courseModule = await prisma.courseModule.findUnique({
+    where: { id: moduleId },
+    select: { courseId: true, title: true },
+  });
+  if (!courseModule || courseModule.courseId !== courseId) {
+    throw new Error("moduleId must belong to the selected course");
+  }
+}
+
 export async function getQuizzes(courseId?: string) {
   return prisma.quiz.findMany({
     where: courseId ? { courseId } : undefined,
@@ -80,6 +91,7 @@ export async function getQuiz(id: string) {
 
 export async function createQuiz(input: z.infer<typeof quizCreateSchema>) {
   const data = quizCreateSchema.parse(input);
+  await assertModuleBelongsToCourse(data.moduleId, data.courseId);
   return prisma.quiz.create({
     data,
     include: {
@@ -90,6 +102,12 @@ export async function createQuiz(input: z.infer<typeof quizCreateSchema>) {
 
 export async function updateQuiz(input: z.infer<typeof quizUpdateSchema>) {
   const { id, ...data } = quizUpdateSchema.parse(input);
+  const courseId =
+    data.courseId ??
+    (await prisma.quiz.findUnique({ where: { id }, select: { courseId: true } }))?.courseId;
+  if (courseId) {
+    await assertModuleBelongsToCourse(data.moduleId, courseId);
+  }
   return prisma.quiz.update({
     where: { id },
     data,

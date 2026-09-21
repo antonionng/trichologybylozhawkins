@@ -468,7 +468,15 @@ export const getCourse = async (id: string) => {
     where: { id },
     include: {
       modules: {
-        include: { lessons: true },
+        include: {
+          lessons: {
+            include: {
+              downloadable: {
+                select: { id: true, title: true, mimeType: true, filePath: true },
+              },
+            },
+          },
+        },
         orderBy: { position: "asc" },
       },
       pricing: {

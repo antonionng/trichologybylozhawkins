@@ -11,8 +11,10 @@ import { ReflectionPrompt } from "@/components/academy/ReflectionPrompt";
 import { LessonSidebar } from "@/components/academy/LessonSidebar";
 import { CompletionCelebration } from "@/components/academy/CompletionCelebration";
 import { LessonGate } from "@/components/academy/LessonGate";
+import { LessonVideoPlayer } from "@/components/academy/LessonVideoPlayer";
+import { LessonDownloadCta } from "@/components/academy/LessonDownloadCta";
 import { parseLessonContent } from "@/lib/lessonContentParser";
-import { createSignedDownloadUrl } from "@/server/storage/supabase";
+import { resolveStoredMediaUrl } from "@/server/modules/education/lessonMedia";
 
 export const dynamic = "force-dynamic";
 
@@ -131,14 +133,8 @@ export default async function LessonPage({
     }
   }
 
-  let videoSignedUrl: string | null = null;
-  if (lesson.videoUrl) {
-    try { videoSignedUrl = await createSignedDownloadUrl(lesson.videoUrl); } catch { /* use null */ }
-  }
-  let downloadSignedUrl: string | null = null;
-  if (lesson.downloadable?.filePath) {
-    try { downloadSignedUrl = await createSignedDownloadUrl(lesson.downloadable.filePath); } catch { /* use null */ }
-  }
+  const videoSignedUrl = await resolveStoredMediaUrl(lesson.videoUrl);
+  const downloadSignedUrl = await resolveStoredMediaUrl(lesson.downloadable?.filePath);
 
   const contentJson = lesson.content as ContentJson;
   const contentText = contentJson?.text ?? null;
@@ -213,6 +209,21 @@ export default async function LessonPage({
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_300px]">
         {/* Left column — main content */}
         <div className="min-w-0 space-y-6">
+          {videoSignedUrl ? (
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-black/40">
+                  Lesson video
+                </p>
+                <h2 className="text-xl font-semibold text-black">Watch</h2>
+                <p className="mt-1 text-sm text-black/55">
+                  Voice-over walkthrough for this lesson. Face-to-camera is not required.
+                </p>
+              </div>
+              <LessonVideoPlayer src={videoSignedUrl} title={lesson.title} />
+            </div>
+          ) : null}
+
           {/* Key Takeaways at the top */}
           {parsed.takeaways.length > 0 && (
             <KeyTakeawaysCard takeaways={parsed.takeaways} />
@@ -244,53 +255,16 @@ export default async function LessonPage({
             </div>
           )}
 
-          {/* Video + Downloads */}
-          {(videoSignedUrl || lesson.downloadable) && (
-            <div className="grid gap-6 sm:grid-cols-2">
-              {videoSignedUrl ? (
-                <Surface variant="card" padding="lg" className="space-y-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.3em] text-black/40">
-                      Supplementary
-                    </p>
-                    <h2 className="text-xl font-semibold text-black">Video</h2>
-                  </div>
-                  <video
-                    controls
-                    className="w-full rounded-2xl border border-black/10 bg-black/5"
-                    src={videoSignedUrl}
-                  />
-                </Surface>
-              ) : null}
-
-              {lesson.downloadable ? (
-                <Surface variant="card" padding="lg" className="space-y-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.3em] text-black/40">
-                      Downloads
-                    </p>
-                    <h2 className="text-xl font-semibold text-black">Files</h2>
-                  </div>
-                  <a
-                    href={downloadSignedUrl ?? "#"}
-                    className="group flex items-center justify-between rounded-2xl border border-black/5 bg-white/80 p-4 transition hover:border-brand-salmon/30 hover:bg-brand-salmon/5"
-                  >
-                    <div>
-                      <p className="font-semibold text-black group-hover:text-brand-salmon">
-                        {lesson.downloadable.title}
-                      </p>
-                      <p className="text-xs text-black/50">
-                        {lesson.downloadable.mimeType ?? "Download"}
-                      </p>
-                    </div>
-                    <span className="text-black/30 group-hover:text-brand-salmon">
-                      ↓
-                    </span>
-                  </a>
-                </Surface>
-              ) : null}
-            </div>
-          )}
+          {lesson.downloadable ? (
+            <Surface variant="card" padding="lg">
+              <LessonDownloadCta
+                title={lesson.downloadable.title}
+                href={downloadSignedUrl}
+                mimeType={lesson.downloadable.mimeType}
+                isEndOfModule={isLastInModule}
+              />
+            </Surface>
+          ) : null}
 
           {/* Completion celebration */}
           {isLastLesson && isCompleted && (
