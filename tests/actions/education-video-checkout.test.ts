@@ -80,21 +80,38 @@ describe("startVideoCheckout", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
+    process.env.NEXT_PUBLIC_APP_URL = "https://trichologyacademy.co.uk";
+    delete process.env.VERCEL_ENV;
   });
 
-  it("requires the learner to be signed in before starting video checkout", async () => {
+  it("lets guests start video checkout without signing in", async () => {
     getCurrentSessionMock.mockResolvedValueOnce(null);
     videoProductFindUniqueMock.mockResolvedValueOnce({
       id: "ckvideo123456789012345678",
       title: "Sensitive scalps",
     });
+    createCheckoutSessionMock.mockResolvedValueOnce({
+      id: "sess_1",
+      url: "https://checkout.stripe.com/c/pay/cs_test_123",
+    });
 
     const { startVideoCheckout } = await import("@/app/actions/education");
 
-    await expect(
-      startVideoCheckout("ckvideo123456789012345678", "ckprice1234567890123456")
-    ).rejects.toThrow("Please sign in or create an account to purchase this video.");
-    expect(createCheckoutSessionMock).not.toHaveBeenCalled();
+    await startVideoCheckout("ckvideo123456789012345678", "ckprice1234567890123456");
+
+    expect(createCheckoutSessionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        productType: "VIDEO",
+        productId: "ckvideo123456789012345678",
+        priceId: "ckprice1234567890123456",
+        contactId: undefined,
+        successUrl:
+          "https://trichologyacademy.co.uk/education/success?session_id={CHECKOUT_SESSION_ID}",
+        cancelUrl: "https://trichologyacademy.co.uk/education/videos",
+        metadata: { guestCheckout: "true" },
+      }),
+    );
+    expect(redirectMock).toHaveBeenCalledWith("https://checkout.stripe.com/c/pay/cs_test_123");
   });
 
   it("hydrates video checkout with the signed-in learner contact", async () => {
@@ -131,7 +148,7 @@ describe("startVideoCheckout", () => {
           userId: "u1",
           userEmail: "member@example.com",
         },
-      })
+      }),
     );
     expect(redirectMock).toHaveBeenCalledWith("https://stripe.test/session/1");
   });

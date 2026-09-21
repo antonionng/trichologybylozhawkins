@@ -21,6 +21,14 @@ import {
 } from "@/server/modules/email/transactional";
 import { sendEducationPurchaseNotifications } from "@/server/modules/education/notifications";
 import { getEnquiryAdminRecipients } from "@/server/modules/settings/notifications";
+import { publicCourseCatalogWhere, publicVideoCatalogWhere } from "@/lib/publicCatalog";
+import {
+  GUEST_CHECKOUT_SOURCE,
+  extractCheckoutCustomerEmail,
+  extractCheckoutCustomerName,
+  isPendingGuestCheckoutContact,
+  pendingGuestCheckoutEmail,
+} from "@/server/modules/education/checkoutContact";
 
 const getVideoProductDelegate = () =>
   (prisma as any).videoProduct as
@@ -378,7 +386,7 @@ export const getRecentEnrollments = async (limit = 5) => {
 
 export const getCourseCatalog = async (slug?: string) => {
   return prisma.course.findMany({
-    where: slug ? { slug } : { status: "PUBLISHED" },
+    where: slug ? { slug } : publicCourseCatalogWhere(),
     include: {
       modules: {
         include: { lessons: true },
@@ -412,7 +420,7 @@ export const getVideoCatalog = async (slug?: string) => {
   }
 
   return videoProduct.findMany({
-    where: slug ? { slug } : { status: "PUBLISHED" },
+    where: slug ? { slug } : publicVideoCatalogWhere(),
     include: {
       pricing: { orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }] },
       heroMedia: true,
@@ -611,9 +619,18 @@ export const createCheckoutSession = async (
     },
   });
 
+  const contactId =
+    data.contactId ??
+    (
+      await ensureCheckoutContact({
+        email: customerEmail,
+        sessionId: session.id,
+      })
+    ).id;
+
   await prisma.order.create({
     data: {
-      contactId: data.contactId ?? (await ensureAnonymousContact(session.customer_details)).id,
+      contactId,
       totalAmount: selectedPrice.amount,
       currency: selectedPrice.currency,
       status: "PENDING",
@@ -717,7 +734,12 @@ export const createBundleCheckoutSession = async (options: {
 
   const contactId =
     options.contactId ??
-    (await ensureAnonymousContact(session.customer_details)).id;
+    (
+      await ensureCheckoutContact({
+        email: customerEmail,
+        sessionId: session.id,
+      })
+    ).id;
 
   await prisma.order.create({
     data: {
@@ -741,26 +763,89 @@ export const createBundleCheckoutSession = async (options: {
   return session;
 };
 
-const ensureAnonymousContact = async (
-  details: Stripe.Checkout.Session.CustomerDetails | null
-) => {
-  if (!details?.email) {
-    throw new Error("Unable to determine customer email for checkout.");
+const ensureCheckoutContact = async (options: {
+  contactId?: string;
+  email?: string | null;
+  sessionId: string;
+}) => {
+  if (options.contactId) {
+    const existing = await prisma.contact.findUnique({
+      where: { id: options.contactId },
+    });
+    if (existing) {
+      return existing;
+    }
   }
 
-  const existing = await prisma.contact.findUnique({
-    where: { email: details.email },
-  });
+  const email = options.email?.trim().toLowerCase();
+  if (email) {
+    const existing = await prisma.contact.findUnique({
+      where: { email },
+    });
+    if (existing) {
+      return existing;
+    }
 
-  if (existing) {
-    return existing;
+    return prisma.contact.create({
+      data: {
+        email,
+        firstName: "Learner",
+        lastName: "Guest",
+        source: "checkout",
+      },
+    });
   }
 
   return prisma.contact.create({
     data: {
-      email: details.email,
-      firstName: details.name?.split(" ")[0] ?? "Learner",
-      lastName: details.name?.split(" ").slice(1).join(" ") || "Guest",
+      email: pendingGuestCheckoutEmail(options.sessionId),
+      firstName: "Guest",
+      lastName: "Learner",
+      source: GUEST_CHECKOUT_SOURCE,
+    },
+  });
+};
+
+const resolvePaidCheckoutContact = async (options: {
+  order: {
+    id: string;
+    contactId: string;
+    contact: { id: string; email: string; firstName: string | null; lastName: string | null; source?: string | null };
+  };
+  paidEmail: string;
+  payload?: Record<string, unknown>;
+}) => {
+  const paidEmail = options.paidEmail.toLowerCase();
+  if (options.order.contact.email.toLowerCase() === paidEmail) {
+    return options.order.contact;
+  }
+
+  const existing = await prisma.contact.findUnique({
+    where: { email: paidEmail },
+  });
+  if (existing) {
+    return existing;
+  }
+
+  const name = extractCheckoutCustomerName(options.payload);
+
+  if (isPendingGuestCheckoutContact(options.order.contact)) {
+    return prisma.contact.update({
+      where: { id: options.order.contact.id },
+      data: {
+        email: paidEmail,
+        firstName: name?.firstName || options.order.contact.firstName || "Learner",
+        lastName: name?.lastName || options.order.contact.lastName || "Guest",
+        source: "checkout",
+      },
+    });
+  }
+
+  return prisma.contact.create({
+    data: {
+      email: paidEmail,
+      firstName: name?.firstName || "Learner",
+      lastName: name?.lastName || "Guest",
       source: "checkout",
     },
   });
@@ -790,6 +875,20 @@ export const handleCheckoutFulfillment = async (options: {
   }
 
   if (options.status === "succeeded" && order.status === "PAID") {
+    const paidEmail = extractCheckoutCustomerEmail(options.payload ?? undefined);
+    if (paidEmail && isPendingGuestCheckoutContact(order.contact)) {
+      const resolved = await resolvePaidCheckoutContact({
+        order,
+        paidEmail,
+        payload: options.payload,
+      });
+      if (resolved.id !== order.contactId) {
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { contactId: resolved.id },
+        });
+      }
+    }
     return;
   }
 
@@ -797,10 +896,21 @@ export const handleCheckoutFulfillment = async (options: {
     return;
   }
 
+  const paidEmail = extractCheckoutCustomerEmail(options.payload ?? undefined);
+  const resolvedContact =
+    options.status === "succeeded" && paidEmail
+      ? await resolvePaidCheckoutContact({
+          order,
+          paidEmail,
+          payload: options.payload,
+        })
+      : order.contact;
+
   await prisma.order.update({
     where: { id: order.id },
     data: {
       status: options.status === "succeeded" ? "PAID" : "CANCELLED",
+      contactId: resolvedContact.id,
       providerPaymentIntentId: options.paymentIntentId ?? undefined,
       payments: {
         create: {
@@ -825,7 +935,7 @@ export const handleCheckoutFulfillment = async (options: {
         if (!existing) {
           await prisma.enrollment.create({
             data: {
-              contactId: order.contactId,
+              contactId: resolvedContact.id,
               courseId: item.courseId,
               status: EnrollmentStatus.ACTIVE,
               orderId: order.id,
@@ -843,7 +953,7 @@ export const handleCheckoutFulfillment = async (options: {
         if (!existing) {
           await prisma.videoAccess.create({
             data: {
-              contactId: order.contactId,
+              contactId: resolvedContact.id,
               videoProductId: item.videoProductId,
               status: EnrollmentStatus.ACTIVE,
               orderId: order.id,
@@ -855,9 +965,9 @@ export const handleCheckoutFulfillment = async (options: {
 
     await sendEducationPurchaseNotifications({
       orderId: order.id,
-      email: order.contact.email,
-      firstName: order.contact.firstName,
-      lastName: order.contact.lastName,
+      email: resolvedContact.email,
+      firstName: resolvedContact.firstName,
+      lastName: resolvedContact.lastName,
       totalAmount: Number(order.totalAmount),
       currency: order.currency,
       items: order.items.map((item) => ({

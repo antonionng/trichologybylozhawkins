@@ -9,6 +9,9 @@ const enrollmentFindFirstMock = vi.fn();
 const enrollmentCreateMock = vi.fn();
 const videoAccessFindFirstMock = vi.fn();
 const videoAccessCreateMock = vi.fn();
+const contactFindUniqueMock = vi.fn();
+const contactUpdateMock = vi.fn();
+const contactCreateMock = vi.fn();
 
 vi.mock("@/server/modules/education/notifications", () => ({
   sendEducationPurchaseNotifications: sendEducationPurchaseNotificationsMock,
@@ -28,6 +31,11 @@ vi.mock("@/server/db/client", () => ({
     videoAccess: {
       findFirst: videoAccessFindFirstMock,
       create: videoAccessCreateMock,
+    },
+    contact: {
+      findUnique: contactFindUniqueMock,
+      update: contactUpdateMock,
+      create: contactCreateMock,
     },
   },
 }));
@@ -109,6 +117,74 @@ describe("education service email hooks", () => {
         orderId: "ord_1",
         email: "learner@example.com",
         totalAmount: 29,
+      }),
+    );
+  });
+
+  it("relinks a pending guest order to the Stripe-paid email before granting access", async () => {
+    orderFindFirstMock.mockResolvedValueOnce({
+      id: "ord_2",
+      contactId: "guest_1",
+      status: "PENDING",
+      currency: "GBP",
+      totalAmount: 29,
+      contact: {
+        id: "guest_1",
+        email: "pending+cs_live_abc@guest.trichologyacademy.local",
+        firstName: "Guest",
+        lastName: "Learner",
+        source: "checkout-guest",
+      },
+      items: [
+        {
+          courseId: null,
+          videoProductId: "video_1",
+          unitAmount: 29,
+          currency: "GBP",
+        },
+      ],
+    });
+    contactFindUniqueMock.mockResolvedValueOnce(null);
+    contactUpdateMock.mockResolvedValueOnce({
+      id: "guest_1",
+      email: "buyer@example.com",
+      firstName: "Buyer",
+      lastName: "Guest",
+      source: "checkout",
+    });
+    orderUpdateMock.mockResolvedValueOnce({});
+
+    const { handleCheckoutFulfillment } = await import("@/server/modules/education/service");
+
+    await handleCheckoutFulfillment({
+      providerSessionId: "sess_2",
+      paymentIntentId: "pi_2",
+      status: "succeeded",
+      payload: {
+        customer_details: { email: "Buyer@example.com", name: "Buyer Guest" },
+      },
+    });
+
+    expect(contactUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "guest_1" },
+        data: expect.objectContaining({
+          email: "buyer@example.com",
+          source: "checkout",
+        }),
+      }),
+    );
+    expect(orderUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          contactId: "guest_1",
+          status: "PAID",
+        }),
+      }),
+    );
+    expect(sendEducationPurchaseNotificationsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "buyer@example.com",
       }),
     );
   });

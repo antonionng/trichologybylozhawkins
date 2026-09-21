@@ -21,6 +21,7 @@ import { getTopicAccent } from "@/lib/topicAccents";
 import { createSignedDownloadUrl } from "@/server/storage/supabase";
 import { photography } from "@/lib/visualAssets";
 import { buildFaqJsonLd, buildPageMetadata } from "@/lib/seo";
+import { publicVideoCatalogWhere } from "@/lib/publicCatalog";
 
 /* ── Normalised video shape ────────────────────────────────────────────── */
 type VideoCard = {
@@ -88,7 +89,7 @@ export function selectFeaturedWorkshops(
 async function getVideos(): Promise<VideoCard[]> {
   try {
     const dbVideos = await prisma.videoProduct.findMany({
-      where: { status: "PUBLISHED" },
+      where: publicVideoCatalogWhere(),
       include: {
         heroMedia: true,
         pricing: { orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }] },

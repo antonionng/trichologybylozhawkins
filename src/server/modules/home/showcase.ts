@@ -1,3 +1,5 @@
+import { excludeTestCatalogItems } from "@/lib/publicCatalog";
+
 export type HomeVideoRow = {
   id: string;
   slug: string;
@@ -59,10 +61,15 @@ export async function loadHomeShowcaseData(deps: ShowcaseDeps) {
     deps.onLoadError?.("products", productsResult.reason);
   }
 
-  const videos = videosResult.status === "fulfilled" ? videosResult.value : [];
-  const courses = coursesResult.status === "fulfilled" ? coursesResult.value : [];
-  const products =
-    productsResult.status === "fulfilled" ? productsResult.value : deps.productFallbacks ?? [];
+  const videos = excludeTestCatalogItems(
+    videosResult.status === "fulfilled" ? videosResult.value : [],
+  );
+  const courses = excludeTestCatalogItems(
+    coursesResult.status === "fulfilled" ? coursesResult.value : [],
+  );
+  const products = excludeTestCatalogItems(
+    productsResult.status === "fulfilled" ? productsResult.value : deps.productFallbacks ?? [],
+  );
 
   const videoRows: HomeVideoRow[] = [];
   for (const v of videos) {

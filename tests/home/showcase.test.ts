@@ -67,6 +67,76 @@ describe("loadHomeShowcaseData", () => {
     expect(result.courses[0]?.heroUrl).toBe("https://example.com/course.jpg");
   });
 
+  it("hides TEST Live catalog rows from homepage showcase lists", async () => {
+    const result = await loadHomeShowcaseData({
+      loadVideos: async () => [
+        {
+          id: "v1",
+          slug: "postpartum-hair-loss",
+          title: "Postpartum Hair Loss",
+          subtitle: null,
+          category: "Video",
+          durationMinutes: 25,
+          publicContent: {},
+          meta: {},
+          pricing: [{ amount: 29 }],
+          heroMedia: null,
+        },
+        {
+          id: "v2",
+          slug: "test-live-video-a",
+          title: "TEST Live Course A",
+          subtitle: null,
+          category: "Video",
+          durationMinutes: 10,
+          publicContent: {},
+          meta: {},
+          pricing: [{ amount: 1 }],
+          heroMedia: null,
+        },
+      ],
+      loadCourses: async () => [
+        {
+          id: "c1",
+          slug: "test-live-course-a",
+          title: "TEST Live Course A",
+          subtitle: null,
+          level: "GENERAL",
+          durationMinutes: 10,
+          meta: {},
+          pricing: [{ amount: 1 }],
+          _count: { modules: 1 },
+          heroMedia: null,
+        },
+      ],
+      loadProducts: async () => [
+        {
+          id: "p1",
+          slug: "test-live-product-a",
+          name: "TEST Live Product A",
+          shortDescription: "Test",
+          price: 1,
+          imageUrl: "https://example.com/test.jpg",
+        },
+        {
+          id: "p2",
+          slug: "primer",
+          name: "Primer",
+          shortDescription: "Real product",
+          price: 18,
+          imageUrl: "https://example.com/primer.jpg",
+        },
+      ],
+      signUrl: async (path: string) => `https://signed.example/${path}`,
+      videoFallbackBySlug: {},
+      videoFallbackDefault: "https://example.com/video-default.jpg",
+    });
+
+    expect(result.videos.map((item) => item.slug)).toEqual(["postpartum-hair-loss"]);
+    expect(result.courses).toEqual([]);
+    expect(result.products.map((item) => item.slug)).toEqual(["primer"]);
+  });
+
   it("reports which showcase source failed to load", async () => {
     const onLoadError = vi.fn();
 
