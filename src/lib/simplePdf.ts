@@ -1,15 +1,18 @@
 /**
- * Minimal one-page (or few-page) PDF writer. No extra dependencies.
- * Helvetica + WinAnsi — placeholder scripts and chair-side one-pagers only.
+ * Minimal A4 PDF writer. No extra dependencies.
+ * Helvetica + WinAnsi for chair-side one-pagers.
  */
 
 const PAGE_WIDTH = 595.28;
 const PAGE_HEIGHT = 841.89;
-const MARGIN = 54;
-const LINE_HEIGHT = 14;
-const TITLE_SIZE = 16;
-const BODY_SIZE = 11;
-const FOOTER_SIZE = 9;
+const MARGIN = 44;
+const LINE_HEIGHT = 12;
+const TITLE_SIZE = 15;
+const BODY_SIZE = 10;
+const FOOTER_SIZE = 8;
+
+export const ESSENTIALS_PDF_FOOTER =
+  "Salon Trichology Essentials  ·  trichologyacademy.co.uk";
 
 function escapePdfText(value: string) {
   return value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
@@ -23,6 +26,10 @@ function toWinAnsi(value: string) {
     .replace(/\u2026/g, "...")
     .replace(/\u00a0/g, " ")
     .replace(/[^\x09\x0a\x0d\x20-\x7e\xa0-\xff]/g, "?");
+}
+
+function stripInlineMarkdown(value: string) {
+  return value.replace(/\*\*/g, "").replace(/`/g, "");
 }
 
 function wrapLine(text: string, maxChars: number) {
@@ -56,23 +63,25 @@ export function markdownToPdfBlocks(markdown: string): SimplePdfBlock[] {
 
   for (const raw of lines) {
     const line = raw.trimEnd();
-    if (!line.trim()) {
+    const trimmed = line.trim();
+    if (!trimmed) {
       blocks.push({ type: "spacer" });
       continue;
     }
-    if (line.startsWith("# ")) {
-      blocks.push({ type: "title", text: line.slice(2).trim() });
+    if (trimmed === "---") continue;
+    if (trimmed.startsWith("# ")) {
+      blocks.push({ type: "title", text: stripInlineMarkdown(trimmed.slice(2)) });
       continue;
     }
-    if (line.startsWith("## ") || line.startsWith("### ")) {
-      blocks.push({ type: "heading", text: line.replace(/^#+\s+/, "").trim() });
+    if (trimmed.startsWith("## ") || trimmed.startsWith("### ")) {
+      blocks.push({ type: "heading", text: stripInlineMarkdown(trimmed.replace(/^#+\s+/, "")) });
       continue;
     }
-    if (/^[-*]\s+/.test(line)) {
-      blocks.push({ type: "bullet", text: line.replace(/^[-*]\s+/, "").trim() });
+    if (/^[-*]\s+/.test(trimmed)) {
+      blocks.push({ type: "bullet", text: stripInlineMarkdown(trimmed.replace(/^[-*]\s+/, "")) });
       continue;
     }
-    blocks.push({ type: "body", text: line.trim() });
+    blocks.push({ type: "body", text: stripInlineMarkdown(trimmed) });
   }
 
   return blocks;
@@ -83,10 +92,10 @@ function layoutBlocks(blocks: SimplePdfBlock[]) {
   let y = PAGE_HEIGHT - MARGIN;
 
   const pushLine = (text: string, size: number, indent = 0) => {
-    const maxChars = size >= TITLE_SIZE ? 62 : 86;
+    const maxChars = size >= TITLE_SIZE ? 64 : 92;
     const wrapped = wrapLine(toWinAnsi(text), maxChars);
     for (const line of wrapped) {
-      if (y < MARGIN + 36) {
+      if (y < MARGIN + 32) {
         pages.push([]);
         y = PAGE_HEIGHT - MARGIN;
       }
@@ -94,27 +103,27 @@ function layoutBlocks(blocks: SimplePdfBlock[]) {
       pages[pages.length - 1].push(
         `BT /F1 ${size} Tf ${MARGIN + indent} ${y.toFixed(2)} Td (${escaped}) Tj ET`,
       );
-      y -= size + 4;
+      y -= size + 3;
     }
   };
 
   for (const block of blocks) {
     if (block.type === "spacer") {
-      y -= LINE_HEIGHT * 0.6;
+      y -= LINE_HEIGHT * 0.45;
       continue;
     }
     if (block.type === "title") {
       pushLine(block.text, TITLE_SIZE);
-      y -= 6;
+      y -= 4;
       continue;
     }
     if (block.type === "heading") {
-      y -= 8;
-      pushLine(block.text, 13);
+      y -= 6;
+      pushLine(block.text, 11);
       continue;
     }
     if (block.type === "bullet") {
-      pushLine(`• ${block.text}`, BODY_SIZE, 12);
+      pushLine(`• ${block.text}`, BODY_SIZE, 10);
       continue;
     }
     pushLine(block.text, BODY_SIZE);
@@ -123,14 +132,17 @@ function layoutBlocks(blocks: SimplePdfBlock[]) {
   return pages;
 }
 
-function buildPageContent(ops: string[], pageIndex: number, pageCount: number) {
-  const footer = `BT /F1 ${FOOTER_SIZE} Tf ${MARGIN} 28 Td (${escapePdfText(
-    `DRAFT PLACEHOLDER  ·  Salon Trichology Essentials  ·  ${pageIndex + 1}/${pageCount}`,
-  )}) Tj ET`;
-  return [...ops, footer].join("\n");
+function buildPageContent(ops: string[], pageIndex: number, pageCount: number, footer: string) {
+  const label = `${footer}  ·  ${pageIndex + 1}/${pageCount}`;
+  const line = `BT /F1 ${FOOTER_SIZE} Tf ${MARGIN} 26 Td (${escapePdfText(toWinAnsi(label))}) Tj ET`;
+  return [...ops, line].join("\n");
 }
 
-export function buildSimplePdf(blocks: SimplePdfBlock[]): Buffer {
+export function buildSimplePdf(
+  blocks: SimplePdfBlock[],
+  options?: { footer?: string },
+): Buffer {
+  const footer = options?.footer ?? ESSENTIALS_PDF_FOOTER;
   const pages = layoutBlocks(blocks);
   const objects: string[] = [];
 
@@ -153,7 +165,7 @@ export function buildSimplePdf(blocks: SimplePdfBlock[]): Buffer {
   objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
 
   pages.forEach((ops, i) => {
-    const stream = buildPageContent(ops, i, pages.length);
+    const stream = buildPageContent(ops, i, pages.length, footer);
     objects.push(`<< /Length ${Buffer.byteLength(stream, "utf8")} >>\nstream\n${stream}\nendstream`);
   });
 
@@ -175,6 +187,9 @@ export function buildSimplePdf(blocks: SimplePdfBlock[]): Buffer {
   return Buffer.from(pdf, "utf8");
 }
 
-export function markdownToSimplePdf(markdown: string): Buffer {
-  return buildSimplePdf(markdownToPdfBlocks(markdown));
+export function markdownToSimplePdf(
+  markdown: string,
+  options?: { footer?: string },
+): Buffer {
+  return buildSimplePdf(markdownToPdfBlocks(markdown), options);
 }

@@ -21,6 +21,7 @@ export type EssentialsModuleSpec = {
   quiz: {
     title: string;
     slug: string;
+    description: string;
   };
   onePager: {
     slug: string;
@@ -48,14 +49,16 @@ export const ESSENTIALS_MODULES: EssentialsModuleSpec[] = [
       },
     ],
     quiz: {
-      title: `${ESSENTIALS_PLACEHOLDER_MARK} Chair-check: Recognising Common Scalp Concerns`,
+      title: "Chair-check: Recognising Common Scalp Concerns",
       slug: "essentials-chair-check-scalp-concerns",
+      description:
+        "End-of-module chair-check for Lessons 1-2. Supportive, not exam-scary. What would you say next?",
     },
     onePager: {
-      slug: "scalp-concerns-referral-script",
-      title: `${ESSENTIALS_PLACEHOLDER_MARK} Chair-side: Recognising Common Scalp Concerns`,
-      markdownFile: "recognising-common-scalp-concerns.md",
-      pdfFile: "recognising-common-scalp-concerns.pdf",
+      slug: "scalp-hair-quick-screen",
+      title: "Scalp & hair quick screen (salon chair)",
+      markdownFile: "scalp-hair-quick-screen.md",
+      pdfFile: "scalp-hair-quick-screen.pdf",
     },
   },
   {
@@ -75,14 +78,16 @@ export const ESSENTIALS_MODULES: EssentialsModuleSpec[] = [
       },
     ],
     quiz: {
-      title: `${ESSENTIALS_PLACEHOLDER_MARK} Chair-check: Client Conversations That Build Trust`,
+      title: "Chair-check: Client Conversations That Build Trust",
       slug: "essentials-chair-check-client-conversations",
+      description:
+        "End-of-module chair-check for Lessons 3-4. Supportive, not exam-scary. What would you say next?",
     },
     onePager: {
-      slug: "client-conversations-referral-script",
-      title: `${ESSENTIALS_PLACEHOLDER_MARK} Chair-side: Client Conversations That Build Trust`,
-      markdownFile: "client-conversations-that-build-trust.md",
-      pdfFile: "client-conversations-that-build-trust.pdf",
+      slug: "chair-language-crib-sheet",
+      title: "Chair language crib sheet",
+      markdownFile: "chair-language-crib-sheet.md",
+      pdfFile: "chair-language-crib-sheet.pdf",
     },
   },
   {
@@ -97,14 +102,16 @@ export const ESSENTIALS_MODULES: EssentialsModuleSpec[] = [
       },
     ],
     quiz: {
-      title: `${ESSENTIALS_PLACEHOLDER_MARK} Chair-check: Know Your Boundaries`,
+      title: "Chair-check: Know Your Boundaries",
       slug: "essentials-chair-check-boundaries",
+      description:
+        "End-of-module chair-check for Lesson 5. Supportive, not exam-scary. Scope and referral.",
     },
     onePager: {
-      slug: "boundaries-referral-script",
-      title: `${ESSENTIALS_PLACEHOLDER_MARK} Chair-side: Know Your Boundaries`,
-      markdownFile: "know-your-boundaries.md",
-      pdfFile: "know-your-boundaries.pdf",
+      slug: "scope-referral-pathway",
+      title: "Scope of practice & referral pathway",
+      markdownFile: "scope-referral-pathway.md",
+      pdfFile: "scope-referral-pathway.pdf",
     },
   },
 ];
@@ -122,9 +129,14 @@ export function essentialsAdminLessonMediaPrefix(courseId: string, lessonId: str
   return `courses/${courseId}/lessons/${lessonId}`;
 }
 
-export function essentialsOnePagerStoragePath(moduleSlug: string) {
-  return `courses/${ESSENTIALS_COURSE_SLUG}/downloads/${moduleSlug}-chair-side.pdf`;
+export function essentialsOnePagerStoragePath(onePagerSlug: string) {
+  return `courses/${ESSENTIALS_COURSE_SLUG}/downloads/${onePagerSlug}.pdf`;
 }
+
+export const ESSENTIALS_CONTENT_DIR = "content/essentials";
+export const ESSENTIALS_VO_DIR = "content/essentials/vo";
+export const ESSENTIALS_ONE_PAGER_DIR = "content/essentials/one-pagers";
+export const ESSENTIALS_CHAIR_CHECKS_MD = "content/essentials/chair-checks.md";
 
 export function matchByTitleIncludes(title: string, needles: string | string[]) {
   const haystack = title.toLowerCase();

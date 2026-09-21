@@ -1,11 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { parseEssentialsChairChecks } from "@/lib/essentialsChairChecks";
 import {
   ESSENTIALS_COURSE_SLUG,
   ESSENTIALS_MODULES,
-  ESSENTIALS_PLACEHOLDER_MARK,
   essentialsLessonVideoPath,
+  essentialsOnePagerStoragePath,
   findEssentialsLessonSpec,
   findEssentialsModuleSpec,
   lastLessonOfModule,
@@ -32,9 +33,9 @@ describe("Essentials deepen catalog", () => {
         "The scalp conditions you'll see most often",
       )?.slug,
     ).toBe("scalp-conditions");
-    expect(
-      findEssentialsModuleSpec("Know Your Boundaries")?.quiz.slug,
-    ).toBe("essentials-chair-check-boundaries");
+    expect(findEssentialsModuleSpec("Know Your Boundaries")?.quiz.slug).toBe(
+      "essentials-chair-check-boundaries",
+    );
     expect(
       lastLessonOfModule([
         { position: 0, id: "a" },
@@ -44,41 +45,64 @@ describe("Essentials deepen catalog", () => {
     expect(essentialsLessonVideoPath("scalp-conditions")).toBe(
       "courses/salon-trichology-essentials/lessons/scalp-conditions/vo.mp4",
     );
+    expect(essentialsOnePagerStoragePath("scalp-hair-quick-screen")).toBe(
+      "courses/salon-trichology-essentials/downloads/scalp-hair-quick-screen.pdf",
+    );
   });
 
-  it("keeps chair-check JSON as DRAFT placeholders", () => {
-    const raw = readRepo("data/essentials/chair-check-quizzes.json");
-    const json = JSON.parse(raw);
-    expect(json.status).toBe("DRAFT");
-    expect(json.modules).toHaveLength(3);
-    for (const quiz of json.modules) {
-      expect(quiz.title).toContain(ESSENTIALS_PLACEHOLDER_MARK);
-      expect(quiz.questions.length).toBeGreaterThanOrEqual(3);
-      for (const question of quiz.questions) {
-        expect(question.questionText).toContain(ESSENTIALS_PLACEHOLDER_MARK);
-      }
-    }
+  it("parses Marketing chair-checks as DRAFT module quizzes", () => {
+    const parsed = parseEssentialsChairChecks(readRepo("content/essentials/chair-checks.md"));
+    expect(parsed.status).toBe("DRAFT");
+    expect(parsed.courseSlug).toBe(ESSENTIALS_COURSE_SLUG);
+    expect(parsed.modules).toHaveLength(3);
+    expect(parsed.modules.map((quiz) => quiz.questions.length)).toEqual([5, 5, 5]);
+    expect(parsed.modules[0].questions[0].correctAnswer).toBe(1);
+    expect(parsed.modules[0].questions[1].correctAnswer).toBe(2);
+    expect(parsed.modules[0].questions[2].questionType).toBe("TRUE_FALSE");
+    expect(parsed.modules[0].questions[2].correctAnswer).toBe(1);
+    expect(parsed.modules[2].questions[0].correctAnswer).toBe(2);
+    expect(parsed.modules[2].slug).toBe("essentials-chair-check-boundaries");
+    expect(parsed.modules.every((quiz) => quiz.title.startsWith("Chair-check:"))).toBe(true);
   });
 });
 
-describe("simple PDF placeholders", () => {
-  it("builds a PDF from the module markdown stubs", () => {
-    const markdown = readRepo(
-      "data/essentials/one-pagers/recognising-common-scalp-concerns.md",
-    );
+describe("Marketing one-pagers and VO pack", () => {
+  it("builds A4 PDFs from the chair-side markdown", () => {
+    const markdown = readRepo("content/essentials/one-pagers/scalp-hair-quick-screen.md");
     const pdf = markdownToSimplePdf(markdown);
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
-    expect(pdf.toString("latin1")).toContain("DRAFT PLACEHOLDER");
+    expect(pdf.toString("latin1")).toContain("Salon Trichology Essentials");
+    expect(pdf.toString("latin1")).toContain("quick screen");
+    expect(pdf.toString("latin1")).not.toContain("DRAFT PLACEHOLDER");
     expect(pdf.toString("latin1")).toContain("%%EOF");
+  });
+
+  it("keeps VO scripts and documented videoUrl paths in content/essentials/vo", () => {
+    const voReadme = readRepo("content/essentials/vo/README.md");
+    expect(voReadme).toContain("courses/salon-trichology-essentials/lessons/<lesson-slug>/vo.mp4");
+    expect(voReadme).toContain("Do **not** invent audio");
+    expect(voReadme).toContain("ELEVENLABS_API_KEY");
+
+    for (const file of [
+      "lesson-01-scalp-conditions.md",
+      "lesson-02-when-hair-loss-is-more-than-normal-shedding.md",
+      "lesson-03-starting-the-conversation.md",
+      "lesson-04-recommending-products-services.md",
+      "lesson-05-scope-of-practice-for-stylists.md",
+    ]) {
+      const body = readRepo(`content/essentials/vo/${file}`);
+      expect(body).toContain("**Script body:**");
+      expect(body).toContain("courses/salon-trichology-essentials/lessons/");
+    }
   });
 });
 
 describe("lesson media + admin schemas", () => {
   it("accepts storage paths and public URLs for lesson videoUrl", () => {
     expect(isHttpMediaUrl("https://cdn.example.com/vo.mp4")).toBe(true);
-    expect(isHttpMediaUrl("courses/salon-trichology-essentials/lessons/scalp-conditions/vo.mp4")).toBe(
-      false,
-    );
+    expect(
+      isHttpMediaUrl("courses/salon-trichology-essentials/lessons/scalp-conditions/vo.mp4"),
+    ).toBe(false);
 
     const pathResult = courseLessonSchema.parse({
       moduleId: "clxxxxxxxxxxxxxxxxxxxxxxx",
@@ -99,7 +123,7 @@ describe("lesson media + admin schemas", () => {
     const parsed = quizCreateSchema.parse({
       courseId: "clxxxxxxxxxxxxxxxxxxxxxxx",
       moduleId: "clyyyyyyyyyyyyyyyyyyyyyyy",
-      title: "[DRAFT PLACEHOLDER] Chair-check",
+      title: "Chair-check: Recognising Common Scalp Concerns",
       status: "DRAFT",
     });
     expect(parsed.moduleId).toBe("clyyyyyyyyyyyyyyyyyyyyyyy");
@@ -123,12 +147,14 @@ describe("learner and admin wiring", () => {
     expect(docs).toContain("Do **not** add course or video SKUs");
     expect(docs).toContain("TEST Live Course/Product A/B stay unpublished");
     expect(docs).toContain("Pay-first checkout is unchanged");
+    expect(docs).toContain("content/essentials/");
+    expect(docs).toContain("Do not generate ElevenLabs audio unless `ELEVENLABS_API_KEY` is available");
 
     const script = readRepo("scripts/essentials-deepen.ts");
     expect(script).toContain("status: QuizStatus.DRAFT");
-    expect(script).toMatch(/status:\s*QuizStatus\.DRAFT/);
     expect(script).not.toMatch(/status:\s*QuizStatus\.PUBLISHED/);
     expect(script).toContain("never creates SKUs");
+    expect(script).toContain("parseEssentialsChairChecks");
   });
 
   it("lets admin attach a module quiz and a lesson video path", () => {
@@ -138,7 +164,7 @@ describe("learner and admin wiring", () => {
 
     const newQuiz = readRepo("src/app/dashboard/education/quizzes/new/page.tsx");
     expect(newQuiz).toContain("moduleId: moduleId || undefined");
-    expect(newQuiz).toContain("status: \"DRAFT\"");
+    expect(newQuiz).toContain('status: "DRAFT"');
 
     const courseEditor = readRepo("src/components/dashboard/education/CourseEditor.tsx");
     expect(courseEditor).toContain("Save video path");
@@ -161,7 +187,7 @@ describe("LessonVideoPlayer", () => {
     const player = readRepo("src/components/academy/LessonVideoPlayer.tsx");
     expect(player).toContain("Play lesson");
     expect(player).toContain("/images/video-placeholder.svg");
-    expect(player).toContain("preload=\"metadata\"");
+    expect(player).toContain('preload="metadata"');
     expect(player).toContain("formatDuration");
   });
 });

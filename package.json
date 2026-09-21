@@ -24,6 +24,7 @@
     "ingest": "npm run ingest:extract && npm run ingest:structure",
     "essentials:deepen": "npx tsx scripts/essentials-deepen.ts",
     "essentials:status": "npx tsx scripts/essentials-deepen.ts status",
+    "essentials:parse": "npx tsx scripts/essentials-deepen.ts parse",
     "essentials:pdfs": "npx tsx scripts/essentials-deepen.ts pdfs",
     "essentials:quizzes": "npx tsx scripts/essentials-deepen.ts quizzes"
   },

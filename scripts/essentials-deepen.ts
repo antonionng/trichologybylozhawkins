@@ -5,27 +5,34 @@
  * never touches TEST Live Course/Product A/B.
  *
  * Usage:
- *   npx tsx scripts/essentials-deepen.ts status
+ *   npx tsx scripts/essentials-deepen.ts parse
  *   npx tsx scripts/essentials-deepen.ts pdfs
  *   npx tsx scripts/essentials-deepen.ts quizzes
+ *   npx tsx scripts/essentials-deepen.ts status
  *   npx tsx scripts/essentials-deepen.ts attach-videos
  *   npx tsx scripts/essentials-deepen.ts attach-pdfs
+ *
+ * Source of truth: content/essentials/* (Marketing pack).
+ * Quizzes stay DRAFT. No new SKUs. No ElevenLabs unless ELEVENLABS_API_KEY is set.
  *
  * Env (see docs/essentials-deepen.md):
  *   DATABASE_URL
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_STORAGE_BUCKET
  *   ESSENTIALS_COURSE_SLUG          default salon-trichology-essentials
  *   ESSENTIALS_VIDEO_FILENAME       default vo.mp4
- *   ESSENTIALS_VIDEO_DIR            optional local folder of VO files named {lesson-slug}.mp4
- *   ESSENTIALS_FORCE                set to 1 to replace existing videoUrl / downloadable
+ *   ESSENTIALS_VIDEO_DIR            optional local folder of {lesson-slug}.mp4 files
+ *   ESSENTIALS_FORCE                set to 1 to replace existing videoUrl / downloadable / published quiz questions
  */
 import { readFile, writeFile, mkdir, access } from "node:fs/promises";
 import path from "node:path";
 import { PrismaClient, QuestionType, QuizStatus } from "@prisma/client";
 import { createClient } from "@supabase/supabase-js";
+import { parseEssentialsChairChecks } from "../src/lib/essentialsChairChecks";
 import {
+  ESSENTIALS_CHAIR_CHECKS_MD,
   ESSENTIALS_COURSE_SLUG,
   ESSENTIALS_MODULES,
+  ESSENTIALS_ONE_PAGER_DIR,
   ESSENTIALS_PLACEHOLDER_MARK,
   essentialsLessonVideoPath,
   essentialsOnePagerStoragePath,
@@ -36,31 +43,12 @@ import {
 } from "../src/lib/essentialsDeepen";
 import { markdownToSimplePdf } from "../src/lib/simplePdf";
 
-type ChairCheckFile = {
-  courseSlug: string;
-  status: "DRAFT";
-  passingScore: number;
-  isRequired: boolean;
-  isPublic: boolean;
-  modules: Array<{
-    moduleTitleIncludes: string;
-    slug: string;
-    title: string;
-    description: string;
-    questions: Array<{
-      questionText: string;
-      questionType: string;
-      options: string[];
-      correctAnswer: number;
-      explanation: string;
-    }>;
-  }>;
-};
-
 const prisma = new PrismaClient();
 const repoRoot = path.resolve(__dirname, "..");
-const dataDir = path.join(repoRoot, "data", "essentials");
-const onePagerDir = path.join(dataDir, "one-pagers");
+const contentDir = path.join(repoRoot, "content", "essentials");
+const onePagerDir = path.join(repoRoot, ESSENTIALS_ONE_PAGER_DIR);
+const chairChecksMdPath = path.join(repoRoot, ESSENTIALS_CHAIR_CHECKS_MD);
+const chairChecksJsonPath = path.join(contentDir, "chair-checks.json");
 
 function courseSlug() {
   return process.env.ESSENTIALS_COURSE_SLUG?.trim() || ESSENTIALS_COURSE_SLUG;
@@ -89,9 +77,26 @@ function getStorage() {
   return { client, bucket };
 }
 
-async function loadChairChecks(): Promise<ChairCheckFile> {
-  const raw = await readFile(path.join(dataDir, "chair-check-quizzes.json"), "utf8");
-  return JSON.parse(raw) as ChairCheckFile;
+async function loadChairChecks() {
+  const markdown = await readFile(chairChecksMdPath, "utf8");
+  const parsed = parseEssentialsChairChecks(markdown);
+  if (parsed.status !== "DRAFT") {
+    throw new Error("Parsed chair-checks must stay DRAFT.");
+  }
+  return parsed;
+}
+
+async function commandParse() {
+  const parsed = await loadChairChecks();
+  await mkdir(contentDir, { recursive: true });
+  await writeFile(chairChecksJsonPath, `${JSON.stringify(parsed, null, 2)}\n`);
+  console.log(
+    `Parsed ${parsed.modules.length} DRAFT chair-checks → ${path.relative(repoRoot, chairChecksJsonPath)}`,
+  );
+  for (const quiz of parsed.modules) {
+    console.log(`  ${quiz.slug}: ${quiz.questions.length} questions`);
+  }
+  return parsed;
 }
 
 async function loadCourse() {
@@ -157,11 +162,7 @@ async function commandPdfs() {
 }
 
 async function commandQuizzes() {
-  const file = await loadChairChecks();
-  if (file.status !== "DRAFT") {
-    throw new Error("chair-check-quizzes.json must keep status DRAFT.");
-  }
-
+  const file = await commandParse();
   const course = await loadCourse();
 
   for (const quizSpec of file.modules) {
@@ -181,18 +182,20 @@ async function commandQuizzes() {
     });
     const existing = existingBySlug ?? existingByModule;
 
-    if (existing && existing.status === QuizStatus.PUBLISHED && !existing.title.includes(ESSENTIALS_PLACEHOLDER_MARK)) {
+    if (existing && existing.status === QuizStatus.PUBLISHED && !forceReplace()) {
       console.log(
-        `Skip "${courseModule.title}" — a published non-placeholder quiz already exists (${existing.title}). Publish Marketing copy by editing that quiz.`,
+        `Skip "${courseModule.title}" — quiz is PUBLISHED (${existing.title}). Review in admin or re-run with ESSENTIALS_FORCE=1 to refresh questions without changing status.`,
       );
       continue;
     }
 
-    if (existing && existing.status === QuizStatus.PUBLISHED && !forceReplace()) {
+    const nextStatus =
+      existing?.status === QuizStatus.PUBLISHED ? existing.status : QuizStatus.DRAFT;
+
+    if (nextStatus === QuizStatus.PUBLISHED && !existing?.title.includes(ESSENTIALS_PLACEHOLDER_MARK)) {
       console.log(
-        `Skip "${courseModule.title}" — quiz is PUBLISHED. Re-run with ESSENTIALS_FORCE=1 only if you intend to refresh placeholder rows (still will not publish).`,
+        `Updating published quiz questions on "${courseModule.title}" because ESSENTIALS_FORCE=1. Status stays ${nextStatus}.`,
       );
-      continue;
     }
 
     const quiz = existing
@@ -207,7 +210,7 @@ async function commandQuizzes() {
             isRequired: file.isRequired,
             isPublic: file.isPublic,
             slug: quizSpec.slug,
-            status: QuizStatus.DRAFT,
+            status: nextStatus,
           },
         })
       : await prisma.quiz.create({
@@ -241,7 +244,9 @@ async function commandQuizzes() {
       });
     }
 
-    console.log(`Upserted DRAFT chair-check "${quiz.title}" on module "${courseModule.title}"`);
+    console.log(
+      `Upserted ${quiz.status} chair-check "${quiz.title}" on module "${courseModule.title}" (moduleId=${courseModule.id})`,
+    );
   }
 }
 
@@ -321,7 +326,7 @@ async function commandAttachPdfs() {
     const mdPath = path.join(onePagerDir, spec.onePager.markdownFile);
     const markdown = await readFile(mdPath, "utf8");
     const pdf = markdownToSimplePdf(markdown);
-    const storagePath = essentialsOnePagerStoragePath(spec.slug);
+    const storagePath = essentialsOnePagerStoragePath(spec.onePager.slug);
 
     const { error } = await storage.client.storage
       .from(storage.bucket)
@@ -360,9 +365,16 @@ async function commandAttachPdfs() {
 
 async function main() {
   const command = process.argv[2] ?? "status";
-  const allowed = new Set(["status", "pdfs", "quizzes", "attach-videos", "attach-pdfs"]);
+  const allowed = new Set(["status", "parse", "pdfs", "quizzes", "attach-videos", "attach-pdfs"]);
   if (!allowed.has(command)) {
-    throw new Error(`Unknown command "${command}". Use status | pdfs | quizzes | attach-videos | attach-pdfs`);
+    throw new Error(
+      `Unknown command "${command}". Use status | parse | pdfs | quizzes | attach-videos | attach-pdfs`,
+    );
+  }
+
+  if (command === "parse") {
+    await commandParse();
+    return;
   }
 
   if (command === "pdfs") {
