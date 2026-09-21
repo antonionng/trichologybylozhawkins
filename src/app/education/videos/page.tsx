@@ -15,6 +15,7 @@ import { ConsultationCta } from "@/components/sections/ConsultationCta";
 import { getTopicAccent } from "@/lib/topicAccents";
 import { photography } from "@/lib/visualAssets";
 import { buildPageMetadata } from "@/lib/seo";
+import { publicVideoCatalogWhere } from "@/lib/publicCatalog";
 
 /* ── Normalised card shape ─────────────────────────────────────────────── */
 
@@ -41,7 +42,7 @@ async function getVideos(): Promise<VideoCardData[]> {
     const lead = await getCurrentFeaturedLeadItem();
     const freeSignupVideo = lead?.kind === "VIDEO" ? lead : null;
     const dbVideos = await prisma.videoProduct.findMany({
-      where: { status: "PUBLISHED" },
+      where: publicVideoCatalogWhere(),
       include: {
         heroMedia: true,
         pricing: { orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }] },

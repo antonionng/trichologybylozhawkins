@@ -6,7 +6,6 @@ import { getCurrentSession } from "@/server/security/auth";
 import { Container } from "@/components/layout/Container";
 import { PageSection } from "@/components/layout/PageSection";
 import { Surface } from "@/components/layout/Surface";
-import { CheckoutAuthClient } from "@/components/education/CheckoutAuthClient";
 import { BundleCheckoutCta } from "@/components/education/BundleCheckoutCta";
 import { buildPageMetadata } from "@/lib/seo";
 
@@ -72,18 +71,18 @@ export default async function BundleCheckoutPage({
                   Save when you buy both
                 </span>
               </div>
+              <p className="text-sm text-black/60">
+                Continue to secure Stripe checkout. You can create or claim your academy account after payment.
+              </p>
             </div>
 
-            {session ? (
-              <BundleCheckoutCta bundleSlug={bundle.slug} />
-            ) : (
-              <>
-                <p className="text-sm text-black/60">
-                  Create an account or sign in to complete your purchase.
-                </p>
-                <CheckoutAuthClient bundleSlug={bundle.slug} />
-              </>
-            )}
+            <BundleCheckoutCta bundleSlug={bundle.slug} />
+
+            {!session ? (
+              <p className="text-center text-[10px] leading-relaxed text-black/35">
+                No account needed to pay. After checkout we&apos;ll email access and let you set a password or sign in to link this purchase.
+              </p>
+            ) : null}
           </Surface>
         </Container>
       </PageSection>

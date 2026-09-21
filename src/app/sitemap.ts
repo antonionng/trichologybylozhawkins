@@ -69,11 +69,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       blogSlots,
     ] = await Promise.all([
       prisma.course.findMany({
-        where: { status: "PUBLISHED", slug: { not: "academy-quizzes" } },
+        where: {
+          status: "PUBLISHED",
+          slug: { not: "academy-quizzes" },
+          NOT: { slug: { startsWith: "test-live-" } },
+        },
         select: { slug: true, updatedAt: true },
       }),
       prisma.videoProduct.findMany({
-        where: { status: "PUBLISHED" },
+        where: { status: "PUBLISHED", NOT: { slug: { startsWith: "test-live-" } } },
         select: { slug: true, updatedAt: true },
       }),
       prisma.workshop.findMany({
@@ -85,7 +89,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         select: { slug: true, updatedAt: true },
       }),
       prisma.shopProduct.findMany({
-        where: { status: "PUBLISHED" },
+        where: { status: "PUBLISHED", NOT: { slug: { startsWith: "test-live-" } } },
         select: { slug: true, updatedAt: true },
       }),
       prisma.quiz.findMany({

@@ -9,11 +9,12 @@ function readRepoFile(relativePath: string) {
 }
 
 describe("course checkout bundle choice", () => {
-  it("keeps signed-in learners on the course checkout page with a payment CTA", () => {
+  it("keeps learners on the course checkout page with a payment CTA", () => {
     const checkoutPage = readRepoFile("src/app/education/checkout/[slug]/page.tsx");
 
     expect(checkoutPage).not.toContain("redirect(`/education/${params.slug}`)");
     expect(checkoutPage).toContain("PurchaseButton");
+    expect(checkoutPage).not.toContain("CheckoutAuthClient");
   });
 
   it("uses a shared bundle offer helper for the eligible course pair", () => {

@@ -28,6 +28,7 @@ import { ensureFeaturedPublicQuizExists } from "@/server/modules/education/featu
 import { findHomepageFeaturedPublicQuizRecord } from "@/server/modules/education/publicQuizLookup";
 import { getCurrentFeaturedLeadItem } from "@/server/modules/education/featuredLeadItem";
 import { buildFaqJsonLd, buildPageMetadata } from "@/lib/seo";
+import { publicCourseCatalogWhere, publicShopProductCatalogWhere, publicVideoCatalogWhere } from "@/lib/publicCatalog";
 
 const academyHomeMetadata = buildPageMetadata({
   path: "/",
@@ -54,7 +55,7 @@ async function getShowcaseData() {
   return loadHomeShowcaseData({
     loadVideos: () =>
       prisma.videoProduct.findMany({
-        where: { status: "PUBLISHED" },
+        where: publicVideoCatalogWhere(),
         include: {
           pricing: { where: { isPrimary: true }, take: 1 },
           heroMedia: true,
@@ -64,7 +65,7 @@ async function getShowcaseData() {
       }),
     loadCourses: () =>
       prisma.course.findMany({
-        where: { status: "PUBLISHED", slug: { not: "academy-quizzes" } },
+        where: publicCourseCatalogWhere(),
         include: {
           pricing: { where: { isPrimary: true }, take: 1 },
           heroMedia: true,
@@ -75,7 +76,7 @@ async function getShowcaseData() {
       }),
     loadProducts: () =>
       prisma.shopProduct.findMany({
-        where: { status: "PUBLISHED" },
+        where: publicShopProductCatalogWhere(),
         include: {
           heroMedia: true,
           images: { include: { media: true }, orderBy: { position: "asc" }, take: 1 },

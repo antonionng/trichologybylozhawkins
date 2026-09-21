@@ -17,6 +17,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUserOrRedirect } from "@/server/security/auth";
+import { getEducationCheckoutUrls } from "@/lib/educationCheckout";
 
 // Schemas with ID for updates
 const courseMutationSchema = courseUpsertSchema.extend({
@@ -227,31 +228,51 @@ export async function upsertSession(data: z.infer<typeof sessionMutationSchema>)
   return session;
 }
 
+async function getOptionalCheckoutActor() {
+  const { getCurrentSession } = await import("@/server/security/auth");
+  const userSession = await getCurrentSession();
+  if (!userSession) {
+    return {
+      userSession: null,
+      contactId: undefined as string | undefined,
+      metadata: { guestCheckout: "true" } as Record<string, string>,
+      user: null,
+    };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userSession.uid },
+    select: { id: true, email: true, contactId: true },
+  });
+
+  if (!user) {
+    return {
+      userSession,
+      contactId: undefined as string | undefined,
+      metadata: { guestCheckout: "true" } as Record<string, string>,
+      user: null,
+    };
+  }
+
+  return {
+    userSession,
+    contactId: user.contactId ?? undefined,
+    metadata: { userId: user.id, userEmail: user.email } as Record<string, string>,
+    user,
+  };
+}
+
 export async function startCheckout(courseId: string, priceId?: string) {
   const course = await educationService.getCourse(courseId);
   if (!course) throw new Error("Course not found");
 
-  const { getCurrentSession } = await import("@/server/security/auth");
-  const userSession = await getCurrentSession();
-
-  let contactId: string | undefined;
-  let metadata: Record<string, string> | undefined;
-
-  if (userSession) {
-    const user = await prisma.user.findUnique({
-      where: { id: userSession.uid },
-      select: { id: true, email: true, contactId: true },
-    });
-
-    if (user) {
-      metadata = { userId: user.id, userEmail: user.email };
-      if (user.contactId) contactId = user.contactId;
-    }
-  }
+  const actor = await getOptionalCheckoutActor();
+  let contactId = actor.contactId;
+  const metadata = actor.metadata;
 
   // Skip Stripe checkout when DEV_SKIP_CHECKOUT is set — creates enrollment directly
   if (process.env.DEV_SKIP_CHECKOUT === "true") {
-    const userEmail = metadata?.userEmail ?? "test@dev.local";
+    const userEmail = metadata.userEmail ?? "test@dev.local";
 
     if (!contactId) {
       const contact = await prisma.contact.upsert({
@@ -266,9 +287,9 @@ export async function startCheckout(courseId: string, priceId?: string) {
       });
       contactId = contact.id;
 
-      if (userSession) {
+      if (actor.userSession) {
         await prisma.user.update({
-          where: { id: userSession.uid },
+          where: { id: actor.userSession.uid },
           data: { contactId: contact.id },
         });
       }
@@ -292,13 +313,14 @@ export async function startCheckout(courseId: string, priceId?: string) {
     redirect(`/academy/${courseId}`);
   }
 
+  const urls = getEducationCheckoutUrls("/education");
   const session = await educationService.createCheckoutSession({
     productType: "COURSE",
     productId: courseId,
     priceId,
     contactId,
-    successUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/education/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/education`,
+    successUrl: urls.successUrl,
+    cancelUrl: urls.cancelUrl,
     metadata,
   });
 
@@ -311,29 +333,25 @@ export async function startBundleCheckout(bundleSlug: string) {
   const bundle = await educationService.getBundleBySlug(bundleSlug);
   if (!bundle) throw new Error("Bundle not found");
 
-  const { getCurrentSession } = await import("@/server/security/auth");
-  const userSession = await getCurrentSession();
-
-  let contactId: string | undefined;
-  let metadata: Record<string, string> | undefined;
-
-  if (userSession) {
-    const user = await prisma.user.findUnique({
-      where: { id: userSession.uid },
-      select: { id: true, email: true, contactId: true },
-    });
-
-    if (user) {
-      metadata = { userId: user.id, userEmail: user.email };
-      if (user.contactId) contactId = user.contactId;
-    }
-  }
-
-  if (!contactId) {
-    throw new Error("Please sign in or create an account to purchase the bundle.");
-  }
+  const actor = await getOptionalCheckoutActor();
+  let contactId = actor.contactId;
+  const metadata = actor.metadata;
 
   if (process.env.DEV_SKIP_CHECKOUT === "true") {
+    if (!contactId) {
+      const contact = await prisma.contact.upsert({
+        where: { email: metadata.userEmail ?? "test@dev.local" },
+        update: {},
+        create: {
+          email: metadata.userEmail ?? "test@dev.local",
+          firstName: "Test",
+          lastName: "User",
+          source: "dev-bypass",
+        },
+      });
+      contactId = contact.id;
+    }
+
     for (const course of bundle.courses) {
       const existing = await prisma.enrollment.findFirst({
         where: { contactId, courseId: course.id },
@@ -353,11 +371,12 @@ export async function startBundleCheckout(bundleSlug: string) {
     redirect(`/academy/${bundle.courses[0].id}`);
   }
 
+  const urls = getEducationCheckoutUrls("/education");
   const session = await educationService.createBundleCheckoutSession({
     bundleSlug,
     contactId,
-    successUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/education/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/education`,
+    successUrl: urls.successUrl,
+    cancelUrl: urls.cancelUrl,
     metadata,
   });
 
@@ -370,32 +389,16 @@ export async function startVideoCheckout(videoProductId: string, priceId?: strin
   const video = await prisma.videoProduct.findUnique({ where: { id: videoProductId } });
   if (!video) throw new Error("Video not found");
 
-  const { getCurrentSession } = await import("@/server/security/auth");
-  const userSession = await getCurrentSession();
-  if (!userSession) {
-    throw new Error("Please sign in or create an account to purchase this video.");
-  }
+  const actor = await getOptionalCheckoutActor();
+  let contactId = actor.contactId;
+  const metadata = actor.metadata;
 
-  const user = await prisma.user.findUnique({
-    where: { id: userSession.uid },
-    select: { id: true, email: true, contactId: true },
-  });
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  let contactId = user.contactId;
-  const metadata: Record<string, string> = {
-    userId: user.id,
-    userEmail: user.email,
-  };
-
-  if (!contactId) {
+  if (actor.user && !contactId) {
     const contact = await prisma.contact.upsert({
-      where: { email: user.email },
+      where: { email: actor.user.email },
       update: {},
       create: {
-        email: user.email,
+        email: actor.user.email,
         firstName: "Learner",
         lastName: "",
         source: "video-checkout",
@@ -404,18 +407,19 @@ export async function startVideoCheckout(videoProductId: string, priceId?: strin
     contactId = contact.id;
 
     await prisma.user.update({
-      where: { id: user.id },
+      where: { id: actor.user.id },
       data: { contactId: contact.id },
     });
   }
 
+  const urls = getEducationCheckoutUrls("/education/videos");
   const session = await educationService.createCheckoutSession({
     productType: "VIDEO",
     productId: videoProductId,
     priceId,
     contactId,
-    successUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/education/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/education/videos`,
+    successUrl: urls.successUrl,
+    cancelUrl: urls.cancelUrl,
     metadata,
   });
 

@@ -89,9 +89,9 @@ export default function EducationSuccessClient() {
       <Surface variant="glass" padding="lg" className="w-full space-y-4">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-black/40">Academy</p>
-          <h1 className="text-2xl font-semibold text-black">Purchase received</h1>
+          <h1 className="text-2xl font-semibold text-black">Payment received</h1>
           <p className="mt-2 text-sm text-black/60">
-            We&apos;re preparing access to your training. This usually takes a few seconds.
+            We&apos;re unlocking your training and preparing your academy account. You can create a password or sign in to claim this purchase.
           </p>
         </div>
 
@@ -102,7 +102,7 @@ export default function EducationSuccessClient() {
         ) : null}
 
         {status === "claiming" ? (
-          <p className="text-sm text-black/60">Confirming payment and creating your access...</p>
+          <p className="text-sm text-black/60">Confirming payment and preparing your account...</p>
         ) : null}
 
         {status === "waiting" ? (

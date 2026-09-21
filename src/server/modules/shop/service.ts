@@ -90,7 +90,17 @@ export async function deleteCategory(id: string) {
 export async function listPublishedProducts(input: Partial<z.infer<typeof listProductsSchema>> = {}) {
   const data = listProductsSchema.parse(input);
   const where = {
-    ...(data.includeDrafts ? {} : { status: ShopProductStatus.PUBLISHED }),
+    ...(data.includeDrafts
+      ? {}
+      : {
+          status: ShopProductStatus.PUBLISHED,
+          NOT: {
+            OR: [
+              { slug: { startsWith: "test-live-" } },
+              { name: { startsWith: "TEST Live", mode: "insensitive" as const } },
+            ],
+          },
+        }),
     ...(data.categorySlug ? { category: { slug: data.categorySlug } } : {}),
     ...(data.query
       ? {

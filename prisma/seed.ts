@@ -2031,6 +2031,16 @@ async function main() {
     });
   }
 
+  const { unpublishTestCatalogItems } = await import("../src/server/modules/catalog/unpublishTestCatalog");
+  const unpublishedTestItems = await unpublishTestCatalogItems(prisma);
+  if (
+    unpublishedTestItems.courses.length ||
+    unpublishedTestItems.products.length ||
+    unpublishedTestItems.videos.length
+  ) {
+    console.log("Unpublished TEST Live catalog items:", unpublishedTestItems);
+  }
+
   console.log("\n🌱 Seed completed successfully!");
 }
 
