@@ -129,6 +129,20 @@ export function CourseEditor({ course, heroUrl }: Props) {
     router.refresh();
   };
 
+  const saveLessonVideoPath = async (
+    lesson: { id: string; moduleId: string; title: string },
+    videoUrl: string,
+  ) => {
+    await upsertLesson({
+      id: lesson.id,
+      moduleId: lesson.moduleId,
+      title: lesson.title,
+      videoUrl: videoUrl.trim() || null,
+    } as any);
+    toast(videoUrl.trim() ? "Lesson video path saved" : "Lesson video path cleared", "success");
+    router.refresh();
+  };
+
   const savePrice = async (amount: number) => {
     await upsertPrice({
       courseId: course.id,
@@ -298,6 +312,12 @@ export function CourseEditor({ course, heroUrl }: Props) {
                             saveLessonContent(
                               { id: lesson.id, moduleId: mod.id, title: lesson.title },
                               contentText
+                            )
+                          }
+                          onSaveVideoPath={(videoUrl) =>
+                            saveLessonVideoPath(
+                              { id: lesson.id, moduleId: mod.id, title: lesson.title },
+                              videoUrl
                             )
                           }
                         />
@@ -517,16 +537,20 @@ function UploadBox({ label, description, accept, onUpload }: {
   );
 }
 
-function LessonRow({ lesson, onUpload, onSaveContent }: {
+function LessonRow({ lesson, onUpload, onSaveContent, onSaveVideoPath }: {
   lesson: any;
   onUpload: (input: { kind: "lesson-video" | "lesson-download"; file: File; lessonId: string }) => Promise<void>;
   onSaveContent: (contentText: string) => Promise<void>;
+  onSaveVideoPath: (videoUrl: string) => Promise<void>;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [content, setContent] = useState(() => (lesson.content as any)?.text ?? "");
+  const [videoPath, setVideoPath] = useState(() => lesson.videoUrl ?? "");
   const [saving, setSaving] = useState(false);
+  const [savingPath, setSavingPath] = useState(false);
   const hasContent = Boolean((lesson.content as any)?.text);
   const resourceCount = Array.isArray((lesson.content as any)?.resources) ? (lesson.content as any).resources.length : 0;
+  const downloadTitle = lesson.downloadable?.title ?? null;
 
   return (
     <li className="rounded-md border border-admin-border bg-admin-panel transition-colors">
@@ -534,7 +558,7 @@ function LessonRow({ lesson, onUpload, onSaveContent }: {
         <div className="min-w-0">
           <p className="text-sm text-admin-text">{lesson.title}</p>
           <p className="text-[10px] text-admin-text-muted">
-            {hasContent ? "✓ Theory" : "No theory"} · {lesson.videoUrl ? "✓ Video" : "No video"} · {lesson.downloadableId ? "✓ Download" : "No download"}{resourceCount > 0 ? ` · ✓ ${resourceCount} resource${resourceCount !== 1 ? "s" : ""}` : ""}
+            {hasContent ? "✓ Theory" : "No theory"} · {lesson.videoUrl ? "✓ Video" : "No video"} · {lesson.downloadableId ? `✓ Download${downloadTitle ? ` (${downloadTitle})` : ""}` : "No download"}{resourceCount > 0 ? ` · ✓ ${resourceCount} resource${resourceCount !== 1 ? "s" : ""}` : ""}
           </p>
         </div>
         <div className="flex items-center gap-1.5">
@@ -553,6 +577,46 @@ function LessonRow({ lesson, onUpload, onSaveContent }: {
 
       {expanded && (
         <div className="border-t border-admin-border px-3 py-3 space-y-3">
+          <div className="space-y-2 rounded-md border border-admin-border bg-admin-elevated p-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-admin-text-muted">
+              Lesson video (storage path or upload)
+            </p>
+            <p className="text-[11px] text-admin-text-muted">
+              Voice-over only is fine. Paste a Supabase path such as{" "}
+              <code className="text-admin-text">courses/salon-trichology-essentials/lessons/&lt;lesson-slug&gt;/vo.mp4</code>
+              , or upload an mp4/m4v. Uploads overwrite this path.
+            </p>
+            <AdminInput
+              label="videoUrl path"
+              value={videoPath}
+              onChange={(e) => setVideoPath(e.target.value)}
+              placeholder="courses/salon-trichology-essentials/lessons/scalp-conditions/vo.mp4"
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <AdminButton
+                variant="secondary"
+                size="sm"
+                disabled={savingPath}
+                onClick={async () => {
+                  setSavingPath(true);
+                  try { await onSaveVideoPath(videoPath); }
+                  finally { setSavingPath(false); }
+                }}
+              >
+                {savingPath ? "Saving…" : "Save video path"}
+              </AdminButton>
+              <LessonUpload
+                label="Upload VO"
+                accept="video/mp4,video/x-m4v,.mp4,.m4v,video/*"
+                onUpload={(file) => onUpload({ kind: "lesson-video", file, lessonId: lesson.id })}
+              />
+              <LessonUpload
+                label="Upload PDF"
+                accept=".pdf,application/pdf"
+                onUpload={(file) => onUpload({ kind: "lesson-download", file, lessonId: lesson.id })}
+              />
+            </div>
+          </div>
           <AdminTextarea
             label="Lesson Theory (Markdown)"
             value={content}

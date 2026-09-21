@@ -92,21 +92,21 @@ export function LessonGate({
         </button>
       )}
 
-      {/* Module quiz prompt (last lesson of module, quiz not passed) */}
+      {/* Module chair-check (last lesson of module, published quiz not passed) */}
       {isCompleted && needsModuleQuiz && (
         <div className="rounded-2xl border border-[#fab826]/30 bg-gradient-to-r from-[#fab826]/10 to-transparent p-6">
           <div className="flex items-start gap-4">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fab826]/20 text-xl">📝</span>
             <div className="flex-1">
-              <h3 className="text-lg font-bold text-black">Module Assessment Required</h3>
+              <h3 className="text-lg font-bold text-black">Chair-check required</h3>
               <p className="mt-1 text-sm text-black/60">
-                Complete the <span className="font-medium">{moduleQuizTitle}</span> to unlock the next module.
+                Complete <span className="font-medium">{moduleQuizTitle}</span> before moving on. This is the module&apos;s chair-side knowledge check.
               </p>
               <Link
                 href={`/academy/quizzes/${moduleQuizId}`}
                 className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[#fab826] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#e5a820]"
               >
-                Take Module Quiz →
+                Take chair-check →
               </Link>
             </div>
           </div>
@@ -118,8 +118,8 @@ export function LessonGate({
         <div className="flex items-center gap-3 rounded-2xl border border-[#fab826]/20 bg-[#fab826]/5 px-5 py-4">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#fab826] text-white text-sm">★</span>
           <div>
-            <p className="font-semibold text-[#b67400]">Module Quiz Passed</p>
-            <p className="text-sm text-[#b67400]/70">You&apos;ve completed this module&apos;s assessment.</p>
+            <p className="font-semibold text-[#b67400]">Chair-check passed</p>
+            <p className="text-sm text-[#b67400]/70">You&apos;ve completed this module&apos;s chair-side check.</p>
           </div>
         </div>
       )}
@@ -154,7 +154,7 @@ export function LessonGate({
             <div className="flex flex-1 items-center justify-center gap-3 rounded-2xl bg-black/5 px-6 py-5 text-center text-sm text-black/40 cursor-not-allowed">
               {!isCompleted
                 ? "Complete the knowledge check to continue"
-                : "Pass the module quiz to continue"}
+                : "Pass the chair-check to continue"}
             </div>
           )
         ) : (

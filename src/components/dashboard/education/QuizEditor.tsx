@@ -21,11 +21,18 @@ function slugify(text: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+type CourseOption = {
+  id: string;
+  title: string;
+  modules: Array<{ id: string; title: string; position: number }>;
+};
+
 type Quiz = {
   id: string;
   title: string;
   description: string | null;
   courseId: string;
+  moduleId: string | null;
   passingScore: number;
   timeLimit: number | null;
   isRequired: boolean;
@@ -53,7 +60,7 @@ type Quiz = {
 
 type Props = {
   quiz: Quiz;
-  courses: Array<{ id: string; title: string }>;
+  courses: CourseOption[];
   /** Resolved preview URL (signed storage or external) */
   heroUrl?: string | null;
 };
@@ -78,6 +85,7 @@ export function QuizEditor({ quiz, courses, heroUrl }: Props) {
     title: quiz.title,
     description: quiz.description || "",
     courseId: quiz.courseId,
+    moduleId: quiz.moduleId || "",
     passingScore: quiz.passingScore,
     timeLimit: quiz.timeLimit || "",
     isRequired: quiz.isRequired,
@@ -87,6 +95,7 @@ export function QuizEditor({ quiz, courses, heroUrl }: Props) {
     slug: quiz.slug || "",
     cardImageUrl: quiz.cardImageUrl || "",
   });
+  const selectedCourseModules = courses.find((c) => c.id === form.courseId)?.modules ?? [];
 
   const [newQuestion, setNewQuestion] = useState({
     questionText: "",
@@ -110,7 +119,9 @@ export function QuizEditor({ quiz, courses, heroUrl }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: form.title, description: form.description || undefined,
-          courseId: form.courseId, passingScore: form.passingScore,
+          courseId: form.courseId,
+          moduleId: form.moduleId || null,
+          passingScore: form.passingScore,
           timeLimit: form.timeLimit ? Number(form.timeLimit) : undefined,
           isRequired: form.isRequired, status: form.status,
           isPublic: form.isPublic,
@@ -318,8 +329,31 @@ export function QuizEditor({ quiz, courses, heroUrl }: Props) {
               }));
             }}
           />
-          <AdminSelect label="Course" value={form.courseId} onChange={(e) => setForm((p) => ({ ...p, courseId: e.target.value }))}
+          <AdminSelect label="Course" value={form.courseId} onChange={(e) => {
+            const courseId = e.target.value;
+            const modules = courses.find((c) => c.id === courseId)?.modules ?? [];
+            setForm((p) => ({
+              ...p,
+              courseId,
+              moduleId: modules.some((m) => m.id === p.moduleId) ? p.moduleId : "",
+            }));
+          }}
             options={courses.map((c) => ({ value: c.id, label: c.title }))} />
+          <AdminSelect
+            label="Course module (chair-check)"
+            value={form.moduleId}
+            onChange={(e) => setForm((p) => ({ ...p, moduleId: e.target.value }))}
+            options={[
+              { value: "", label: "Whole course (not a module chair-check)" },
+              ...selectedCourseModules
+                .slice()
+                .sort((a, b) => a.position - b.position)
+                .map((mod) => ({ value: mod.id, label: mod.title })),
+            ]}
+          />
+          <p className="text-xs text-admin-text-muted lg:col-span-2">
+            A published module-scoped quiz appears on the last lesson of that module as the chair-check. Leave as draft until Marketing copy is final.
+          </p>
           <div className="lg:col-span-2">
             <AdminTextarea label="Description" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} rows={3} />
           </div>

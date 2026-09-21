@@ -17,6 +17,7 @@ type QuizRow = {
   slug: string | null;
   createdAt: string;
   course: { id: string; title: string; slug: string };
+  moduleId?: string | null;
   _count: { questions: number; attempts: number };
   heroUrl?: string | null;
 };
@@ -67,7 +68,14 @@ const columns: AdminColumn<QuizRow>[] = [
   {
     key: "course",
     header: "Course",
-    render: (row) => <span className="text-sm text-admin-text-secondary">{row.course.title}</span>,
+    render: (row) => (
+      <div>
+        <span className="text-sm text-admin-text-secondary">{row.course.title}</span>
+        {row.moduleId ? (
+          <p className="text-[10px] uppercase tracking-[0.12em] text-admin-text-muted">Module chair-check</p>
+        ) : null}
+      </div>
+    ),
   },
   {
     key: "questions",

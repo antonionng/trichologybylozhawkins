@@ -50,8 +50,16 @@ export const courseLessonSchema = z.object({
   description: z.string().optional(),
   position: z.number().int().min(0).optional(),
   // Supports either a public URL or a Supabase storage path (used with signed URLs).
-  videoUrl: z.string().min(1).optional(),
-  downloadableId: z.string().cuid().optional(),
+  videoUrl: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((value) => {
+      if (value == null) return value;
+      const trimmed = value.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    }),
+  downloadableId: z.string().cuid().optional().nullable(),
   content: z.record(z.any()).optional(),
 });
 

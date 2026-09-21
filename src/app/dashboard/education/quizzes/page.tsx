@@ -21,6 +21,7 @@ async function getQuizzes() {
       cardImageUrl: true,
       heroMedia: { select: { path: true } },
       course: { select: { id: true, title: true, slug: true } },
+      moduleId: true,
       _count: { select: { questions: true, attempts: true } },
     },
     orderBy: { createdAt: "desc" },

@@ -95,6 +95,11 @@ export default async function AcademyCoursePage({ params }: { params: { courseId
                                   Video
                                 </span>
                               )}
+                              {lesson.downloadableId && (
+                                <span className="shrink-0 rounded-full bg-brand-salmon/10 px-2 py-0.5 text-[10px] font-medium text-brand-salmon">
+                                  Download
+                                </span>
+                              )}
                             </div>
                           </div>
                           <Link
