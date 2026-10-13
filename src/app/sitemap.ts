@@ -5,6 +5,22 @@ import { blogHighlights } from "@/lib/content";
 
 type SitemapItem = MetadataRoute.Sitemap[number];
 
+/** Short ISR so newly published Knowledge Hub posts appear without a deploy. */
+export const revalidate = 60;
+
+type CmsDatedRecord = {
+  publishedAt?: Date | string | null;
+  updatedAt?: Date | string | null;
+};
+
+export function lastModifiedFromCmsEntry(entry: CmsDatedRecord) {
+  return entry.publishedAt ?? entry.updatedAt ?? null;
+}
+
+export function isPublishedCmsStatus(status: string | null | undefined) {
+  return status === "PUBLISHED";
+}
+
 function toUrl(path: string) {
   return `${getSiteUrl()}${path}`;
 }
@@ -102,25 +118,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }),
       prisma.contentSlot.findMany({
         where: { channel: "BLOG", status: "PUBLISHED" },
-        select: { id: true, metadata: true, updatedAt: true },
+        select: { id: true, metadata: true, updatedAt: true, publishedAt: true, status: true },
       }),
     ]);
 
     if (blogCollection?.id) {
       const blogEntries = await prisma.entry.findMany({
         where: { collectionId: blogCollection.id, status: "PUBLISHED" },
-        select: { slug: true, updatedAt: true },
+        select: { slug: true, updatedAt: true, publishedAt: true, status: true },
       });
 
       blogEntries.forEach((entry) => {
-        addEntry(entries, `/blog/${entry.slug}`, entry.updatedAt, 0.72, "monthly");
+        if (!isPublishedCmsStatus(entry.status)) return;
+        addEntry(
+          entries,
+          `/blog/${entry.slug}`,
+          lastModifiedFromCmsEntry(entry),
+          0.72,
+          "monthly",
+        );
       });
     }
 
     blogSlots.forEach((slot) => {
+      if (!isPublishedCmsStatus(slot.status)) return;
       const meta = (slot.metadata ?? {}) as Record<string, unknown>;
       const slug = typeof meta.slug === "string" ? meta.slug : slot.id;
-      addEntry(entries, `/blog/${slug}`, slot.updatedAt, 0.72, "monthly");
+      addEntry(entries, `/blog/${slug}`, lastModifiedFromCmsEntry(slot), 0.72, "monthly");
     });
 
     courses.forEach((course) => {
