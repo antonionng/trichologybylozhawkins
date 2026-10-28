@@ -61,6 +61,9 @@ export default async function CheckoutPage({ params }: { params: { slug: string 
               <p className="text-sm text-black/60">
                 Continue to secure Stripe checkout. You can create or claim your academy account after payment.
               </p>
+              <p className="text-sm leading-relaxed text-black/65">
+                Before paying you must agree to the Terms, request immediate access to this digital content, and acknowledge that the 14-day cancellation right is lost once access starts.
+              </p>
             </div>
 
             {bundleOffer ? (

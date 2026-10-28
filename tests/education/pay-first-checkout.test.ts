@@ -28,6 +28,11 @@ describe("pay-first education checkout", () => {
     expect(videoCheckout).toContain("VideoPurchaseButton");
     expect(courseCheckout).toContain("PurchaseButton");
     expect(bundleCheckout).toContain("BundleCheckoutCta");
+
+    for (const source of [videoCheckout, courseCheckout, bundleCheckout]) {
+      expect(source).toContain("request immediate access to this digital content");
+      expect(source).toContain("14-day cancellation right is lost once access starts");
+    }
   });
 
   it("extracts the paid Stripe email from session or webhook payloads", () => {

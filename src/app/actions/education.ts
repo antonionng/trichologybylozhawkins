@@ -18,6 +18,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUserOrRedirect } from "@/server/security/auth";
 import { getEducationCheckoutUrls } from "@/lib/educationCheckout";
+import {
+  requireDigitalContentConsent,
+  type DigitalContentConsentInput,
+} from "@/lib/digitalContentConsent";
 
 // Schemas with ID for updates
 const courseMutationSchema = courseUpsertSchema.extend({
@@ -262,7 +266,12 @@ async function getOptionalCheckoutActor() {
   };
 }
 
-export async function startCheckout(courseId: string, priceId?: string) {
+export async function startCheckout(
+  courseId: string,
+  priceId?: string,
+  consent?: DigitalContentConsentInput,
+) {
+  const digitalContentConsent = requireDigitalContentConsent(consent);
   const course = await educationService.getCourse(courseId);
   if (!course) throw new Error("Course not found");
 
@@ -322,6 +331,7 @@ export async function startCheckout(courseId: string, priceId?: string) {
     successUrl: urls.successUrl,
     cancelUrl: urls.cancelUrl,
     metadata,
+    ...digitalContentConsent,
   });
 
   if (session.url) {
@@ -329,7 +339,11 @@ export async function startCheckout(courseId: string, priceId?: string) {
   }
 }
 
-export async function startBundleCheckout(bundleSlug: string) {
+export async function startBundleCheckout(
+  bundleSlug: string,
+  consent?: DigitalContentConsentInput,
+) {
+  const digitalContentConsent = requireDigitalContentConsent(consent);
   const bundle = await educationService.getBundleBySlug(bundleSlug);
   if (!bundle) throw new Error("Bundle not found");
 
@@ -378,6 +392,7 @@ export async function startBundleCheckout(bundleSlug: string) {
     successUrl: urls.successUrl,
     cancelUrl: urls.cancelUrl,
     metadata,
+    ...digitalContentConsent,
   });
 
   if (session.url) {
@@ -385,7 +400,12 @@ export async function startBundleCheckout(bundleSlug: string) {
   }
 }
 
-export async function startVideoCheckout(videoProductId: string, priceId?: string) {
+export async function startVideoCheckout(
+  videoProductId: string,
+  priceId?: string,
+  consent?: DigitalContentConsentInput,
+) {
+  const digitalContentConsent = requireDigitalContentConsent(consent);
   const video = await prisma.videoProduct.findUnique({ where: { id: videoProductId } });
   if (!video) throw new Error("Video not found");
 
@@ -421,6 +441,7 @@ export async function startVideoCheckout(videoProductId: string, priceId?: strin
     successUrl: urls.successUrl,
     cancelUrl: urls.cancelUrl,
     metadata,
+    ...digitalContentConsent,
   });
 
   if (session.url) {

@@ -159,8 +159,15 @@ function getResend() {
   return new Resend(key);
 }
 
+export const DEFAULT_RESEND_FROM_EMAIL =
+  "Lorraine Hawkins <no-reply@trichologybylorrainehawkins.co.uk>";
+
 function fromAddress() {
-  return process.env.RESEND_FROM_EMAIL || "Lorraine Hawkins <no-reply@trichologybylorrainehawkins.co.uk>";
+  return process.env.RESEND_FROM_EMAIL || DEFAULT_RESEND_FROM_EMAIL;
+}
+
+export function getResendFromAddress() {
+  return fromAddress();
 }
 
 type ResendPayload = {

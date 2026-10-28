@@ -24,7 +24,7 @@ export default function Terms() {
             align="center"
           />
           <Surface variant="card" padding="lg" className="space-y-6 text-base leading-relaxed text-brand-graphite/75">
-            <p className="text-sm text-brand-graphite/60">Last updated: November 2025</p>
+            <p className="text-sm text-brand-graphite/60">Last updated: October 2026</p>
             
             <div className="space-y-4">
               <h2 className="font-display text-xl text-brand-graphite">Services Offered</h2>
@@ -50,7 +50,7 @@ export default function Terms() {
             <div className="space-y-4">
               <h2 className="font-display text-xl text-brand-graphite">Cancellations and Refunds</h2>
               <p><strong>Consultations:</strong> Cancel up to 48 hours before your appointment for a full refund. Cancellations within 48 hours are non-refundable but can be rescheduled once.</p>
-              <p><strong>Video Courses:</strong> Due to the digital nature of these products, refunds are not available after download access is granted.</p>
+              <p><strong>Online courses and digital content:</strong> Online courses, video courses, and other digital content are supplied immediately after purchase. Refunds are not available once access has started. By requesting immediate access you acknowledge that you lose the 14-day cancellation right that would otherwise apply to distance contracts.</p>
               <p><strong>Workshops:</strong> Cancel up to 14 days before the workshop date for a refund minus a 10% admin fee. Cancellations within 14 days are non-refundable but transferable to another participant.</p>
             </div>
 

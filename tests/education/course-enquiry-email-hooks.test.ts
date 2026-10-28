@@ -9,6 +9,7 @@ const taskCreateMock = vi.fn();
 const getEnquiryAdminRecipientsMock = vi.fn();
 const sendCourseEnquiryConfirmationEmailMock = vi.fn();
 const sendCourseEnquiryAdminEmailMock = vi.fn();
+const sendAndRecordEnquiryEmailsMock = vi.fn();
 
 vi.mock("@/server/modules/settings/notifications", () => ({
   getEnquiryAdminRecipients: getEnquiryAdminRecipientsMock,
@@ -17,6 +18,10 @@ vi.mock("@/server/modules/settings/notifications", () => ({
 vi.mock("@/server/modules/email/transactional", () => ({
   sendCourseEnquiryConfirmationEmail: sendCourseEnquiryConfirmationEmailMock,
   sendCourseEnquiryAdminEmail: sendCourseEnquiryAdminEmailMock,
+}));
+
+vi.mock("@/server/modules/email/enquiry-delivery", () => ({
+  sendAndRecordEnquiryEmails: sendAndRecordEnquiryEmailsMock,
 }));
 
 vi.mock("@/server/db/client", () => ({
@@ -104,6 +109,10 @@ describe("course enquiry email hooks", () => {
       skipped: false,
       id: "msg_2",
     });
+    sendAndRecordEnquiryEmailsMock.mockImplementation(async ({ jobs }) => {
+      await Promise.all(jobs.map((job: { run: () => Promise<unknown> }) => job.run()));
+      return { status: "sent", error: null, results: [] };
+    });
   });
 
   it("sends customer and admin emails after creating a course enquiry", async () => {
@@ -132,6 +141,12 @@ describe("course enquiry email hooks", () => {
         customerName: "Jane Doe",
         customerEmail: "jane@example.com",
         courseTitle: "Advanced Trichology",
+      }),
+    );
+    expect(sendAndRecordEnquiryEmailsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactId: "contact_1",
+        courseEnquiryId: "enquiry_1",
       }),
     );
   });

@@ -9,6 +9,16 @@ vi.mock("@/app/actions/education", () => ({
   startVideoCheckout: vi.fn(),
 }));
 
+vi.mock("next/link", () => ({
+  default: ({
+    href,
+    children,
+  }: {
+    href: string;
+    children: React.ReactNode;
+  }) => <a href={href}>{children}</a>,
+}));
+
 describe("VideoPurchaseButton", () => {
   it("renders a checkout link for guests when a checkout path is provided", () => {
     const html = renderToStaticMarkup(
@@ -37,5 +47,7 @@ describe("VideoPurchaseButton", () => {
 
     expect(html).toContain("<button");
     expect(html).toContain("Buy for £29");
+    expect(html).toContain("request immediate access to this digital content");
+    expect(html).toContain('href="/terms"');
   });
 });

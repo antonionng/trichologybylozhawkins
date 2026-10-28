@@ -97,7 +97,10 @@ describe("startVideoCheckout", () => {
 
     const { startVideoCheckout } = await import("@/app/actions/education");
 
-    await startVideoCheckout("ckvideo123456789012345678", "ckprice1234567890123456");
+    await startVideoCheckout("ckvideo123456789012345678", "ckprice1234567890123456", {
+      accepted: true,
+      acceptedAt: "2026-10-28T12:00:00.000Z",
+    });
 
     expect(createCheckoutSessionMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -109,6 +112,8 @@ describe("startVideoCheckout", () => {
           "https://trichologyacademy.co.uk/education/success?session_id={CHECKOUT_SESSION_ID}",
         cancelUrl: "https://trichologyacademy.co.uk/education/videos",
         metadata: { guestCheckout: "true" },
+        digitalContentConsentAccepted: true,
+        digitalContentConsentAcceptedAt: new Date("2026-10-28T12:00:00.000Z"),
       }),
     );
     expect(redirectMock).toHaveBeenCalledWith("https://checkout.stripe.com/c/pay/cs_test_123");
@@ -136,7 +141,10 @@ describe("startVideoCheckout", () => {
 
     const { startVideoCheckout } = await import("@/app/actions/education");
 
-    await startVideoCheckout("ckvideo123456789012345678", "ckprice1234567890123456");
+    await startVideoCheckout("ckvideo123456789012345678", "ckprice1234567890123456", {
+      accepted: true,
+      acceptedAt: "2026-10-28T12:00:00.000Z",
+    });
 
     expect(createCheckoutSessionMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -148,8 +156,19 @@ describe("startVideoCheckout", () => {
           userId: "u1",
           userEmail: "member@example.com",
         },
+        digitalContentConsentAccepted: true,
+        digitalContentConsentAcceptedAt: new Date("2026-10-28T12:00:00.000Z"),
       }),
     );
     expect(redirectMock).toHaveBeenCalledWith("https://stripe.test/session/1");
+  });
+
+  it("rejects video checkout without digital content consent", async () => {
+    const { startVideoCheckout } = await import("@/app/actions/education");
+
+    await expect(
+      startVideoCheckout("ckvideo123456789012345678", "ckprice1234567890123456"),
+    ).rejects.toThrow(/agree to the Terms/);
+    expect(createCheckoutSessionMock).not.toHaveBeenCalled();
   });
 });

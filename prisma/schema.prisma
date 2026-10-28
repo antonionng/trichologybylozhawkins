@@ -21,6 +21,9 @@ model Contact {
   lifecycleStage     LifecycleStage @default(LEAD)
   source             String?
   notes              String?
+  enquiryNotificationStatus String?
+  enquiryNotificationError  String?
+  enquiryNotificationAt     DateTime?
   ownerId            String?
   companyId          String?
   company            Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
@@ -461,6 +464,9 @@ model CourseEnquiry {
   source      String?
   consentToMarketing Boolean @default(false)
   status      EnquiryStatus @default(NEW)
+  notificationStatus String?
+  notificationError  String?
+  notificationSentAt DateTime?
   course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   contact     Contact?  @relation(fields: [contactId], references: [id])
   dealId      String?
@@ -515,6 +521,8 @@ model Order {
   paymentProvider PaymentProvider @default(STRIPE)
   providerSessionId String?
   providerPaymentIntentId String?
+  digitalContentConsentAccepted Boolean @default(false)
+  digitalContentConsentAcceptedAt DateTime?
   metadata       Json?
   contact        Contact       @relation(fields: [contactId], references: [id])
   deal           Deal?         @relation("DealOrder", fields: [dealId], references: [id])

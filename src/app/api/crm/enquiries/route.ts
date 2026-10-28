@@ -6,6 +6,7 @@ import {
   sendAdminEnquiryNotificationEmail,
   sendEnquiryConfirmationEmail,
 } from "@/server/modules/email/transactional";
+import { sendAndRecordEnquiryEmails } from "@/server/modules/email/enquiry-delivery";
 import { getEnquiryAdminRecipients } from "@/server/modules/settings/notifications";
 import { getServerEnv } from "@/server/schema";
 
@@ -75,31 +76,42 @@ export async function POST(request: Request) {
     const appUrl = getServerEnv().NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
     const adminRecipients = await getEnquiryAdminRecipients();
 
-    await Promise.allSettled([
-      sendEnquiryConfirmationEmail({
-        to: data.email,
-        appUrl,
-        firstName: data.firstName,
-        enquiryType: data.enquiryType,
-      }),
-      ...(adminRecipients.length > 0
-        ? [
-            sendAdminEnquiryNotificationEmail({
-              to: adminRecipients,
+    await sendAndRecordEnquiryEmails({
+      contactId: contact.id,
+      jobs: [
+        {
+          name: "enquiry-confirmation",
+          run: () =>
+            sendEnquiryConfirmationEmail({
+              to: data.email,
               appUrl,
-              contactId: contact.id,
-              customerName: `${data.firstName} ${data.lastName}`.trim(),
-              customerEmail: data.email,
+              firstName: data.firstName,
               enquiryType: data.enquiryType,
-              message: data.message,
-              preferredContactMethod: data.preferredContactMethod,
-              urgency: data.urgency,
-              company: data.company,
-              jobTitle: data.jobTitle,
             }),
-          ]
-        : []),
-    ]);
+        },
+        ...(adminRecipients.length > 0
+          ? [
+              {
+                name: "enquiry-admin",
+                run: () =>
+                  sendAdminEnquiryNotificationEmail({
+                    to: adminRecipients,
+                    appUrl,
+                    contactId: contact.id,
+                    customerName: `${data.firstName} ${data.lastName}`.trim(),
+                    customerEmail: data.email,
+                    enquiryType: data.enquiryType,
+                    message: data.message,
+                    preferredContactMethod: data.preferredContactMethod,
+                    urgency: data.urgency,
+                    company: data.company,
+                    jobTitle: data.jobTitle,
+                  }),
+              },
+            ]
+          : []),
+      ],
+    });
 
     return NextResponse.json({
       success: true,
