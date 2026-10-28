@@ -70,10 +70,17 @@ vi.mock("@/server/modules/crm/service", () => ({
 
 vi.mock("@/server/modules/email/transactional", () => ({
   sendNewChatLeadEmail: sendNewChatLeadEmailMock,
+  sendAdminEnquiryNotificationEmail: vi.fn(),
+  getResendFromAddress: () => "Lorraine Hawkins <noreply@trichologyacademy.com>",
+}));
+
+vi.mock("@/server/modules/email/enquiry-delivery", () => ({
+  sendAndRecordEnquiryEmails: vi.fn(),
 }));
 
 vi.mock("@/server/modules/settings/notifications", () => ({
   getOperationalAdminRecipients: getOperationalAdminRecipientsMock,
+  getEnquiryAdminRecipients: vi.fn(),
 }));
 
 vi.mock("@/server/schema/env", () => ({

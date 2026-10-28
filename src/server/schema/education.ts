@@ -94,6 +94,13 @@ export const checkoutSessionSchema = z.object({
   successUrl: z.string().url(),
   cancelUrl: z.string().url(),
   metadata: z.record(z.string()).optional(),
+  digitalContentConsentAccepted: z.literal(true, {
+    errorMap: () => ({
+      message:
+        "You must agree to the Terms, request immediate access, and acknowledge that the 14-day cancellation right is lost once access starts.",
+    }),
+  }),
+  digitalContentConsentAcceptedAt: z.coerce.date(),
 });
 
 export const enrollmentUpdateSchema = z.object({

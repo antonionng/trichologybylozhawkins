@@ -1,8 +1,9 @@
 "use client";
 
 import { startCheckout } from "@/app/actions/education";
+import { DigitalContentConsent } from "@/components/education/DigitalContentConsent";
 import { Button } from "@/components/ui/Button";
-import { useRouter } from "next/navigation";
+import { DIGITAL_CONTENT_CONSENT_ERROR } from "@/lib/digitalContentConsent";
 import { useState } from "react";
 
 export function PurchaseButton({
@@ -10,8 +11,6 @@ export function PurchaseButton({
   priceId,
   amount,
   currency,
-  courseSlug,
-  isLoggedIn,
 }: {
   courseId: string;
   priceId?: string;
@@ -20,16 +19,24 @@ export function PurchaseButton({
   courseSlug?: string;
   isLoggedIn?: boolean;
 }) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [accepted, setAccepted] = useState(false);
 
   const handlePurchase = async () => {
+    if (!accepted) {
+      alert(DIGITAL_CONTENT_CONSENT_ERROR);
+      return;
+    }
+
     setLoading(true);
     try {
-      await startCheckout(courseId, priceId);
+      await startCheckout(courseId, priceId, {
+        accepted: true,
+        acceptedAt: new Date().toISOString(),
+      });
     } catch (error) {
       console.error(error);
-      alert("Failed to start checkout. Please try again.");
+      alert(error instanceof Error ? error.message : "Failed to start checkout. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -38,14 +45,21 @@ export function PurchaseButton({
   const label = currency === "GBP" ? `£${amount}` : `${currency} ${amount}`;
 
   return (
-    <Button
-      variant="secondary"
-      size="md"
-      className="w-full justify-center"
-      onClick={handlePurchase}
-      disabled={loading}
-    >
-      {loading ? "Enrolling..." : `Enrol — ${label}`}
-    </Button>
+    <div className="space-y-4">
+      <DigitalContentConsent
+        id={`digital-content-consent-${courseId}`}
+        checked={accepted}
+        onChange={setAccepted}
+      />
+      <Button
+        variant="secondary"
+        size="md"
+        className="w-full justify-center"
+        onClick={handlePurchase}
+        disabled={loading || !accepted}
+      >
+        {loading ? "Enrolling..." : `Enrol for ${label}`}
+      </Button>
+    </div>
   );
 }

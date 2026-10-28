@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { startCheckout, startBundleCheckout, startVideoCheckout } from "@/app/actions/education";
+import { DigitalContentConsent } from "@/components/education/DigitalContentConsent";
 import { Button } from "@/components/ui/Button";
+import { DIGITAL_CONTENT_CONSENT_ERROR } from "@/lib/digitalContentConsent";
 
 type Tab = "login" | "signup";
 
@@ -47,14 +49,19 @@ export function CheckoutAuthClient({
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [accepted, setAccepted] = useState(false);
 
   const proceedAfterAuth = async () => {
+    if (!accepted) {
+      throw new Error(DIGITAL_CONTENT_CONSENT_ERROR);
+    }
+    const consent = { accepted: true, acceptedAt: new Date().toISOString() };
     if (bundleSlug) {
-      await startBundleCheckout(bundleSlug);
+      await startBundleCheckout(bundleSlug, consent);
     } else if (courseId) {
-      await startCheckout(courseId, priceId);
+      await startCheckout(courseId, priceId, consent);
     } else if (videoProductId) {
-      await startVideoCheckout(videoProductId, priceId);
+      await startVideoCheckout(videoProductId, priceId, consent);
     } else {
       throw new Error("Missing checkout target");
     }
@@ -196,12 +203,18 @@ export function CheckoutAuthClient({
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 
+          <DigitalContentConsent
+            id="digital-content-consent-auth-signup"
+            checked={accepted}
+            onChange={setAccepted}
+          />
+
           <Button
             type="submit"
             variant="secondary"
             size="lg"
             className="w-full justify-center"
-            disabled={loading}
+            disabled={loading || !accepted}
           >
             {loading ? "Processing..." : "Create account & checkout"}
           </Button>
@@ -235,12 +248,18 @@ export function CheckoutAuthClient({
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 
+          <DigitalContentConsent
+            id="digital-content-consent-auth-login"
+            checked={accepted}
+            onChange={setAccepted}
+          />
+
           <Button
             type="submit"
             variant="secondary"
             size="lg"
             className="w-full justify-center"
-            disabled={loading}
+            disabled={loading || !accepted}
           >
             {loading ? "Signing in..." : "Sign in & checkout"}
           </Button>

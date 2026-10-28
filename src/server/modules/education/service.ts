@@ -19,8 +19,10 @@ import {
   sendCourseEnquiryAdminEmail,
   sendCourseEnquiryConfirmationEmail,
 } from "@/server/modules/email/transactional";
+import { sendAndRecordEnquiryEmails } from "@/server/modules/email/enquiry-delivery";
 import { sendEducationPurchaseNotifications } from "@/server/modules/education/notifications";
 import { getEnquiryAdminRecipients } from "@/server/modules/settings/notifications";
+import { DIGITAL_CONTENT_CONSENT_TEXT } from "@/lib/digitalContentConsent";
 import { publicCourseCatalogWhere, publicVideoCatalogWhere } from "@/lib/publicCatalog";
 import {
   GUEST_CHECKOUT_SOURCE,
@@ -94,6 +96,20 @@ const stripeClient = () => {
   return new Stripe(env.STRIPE_SECRET_KEY, {
     apiVersion: "2024-06-20",
   });
+};
+
+const digitalContentStripeConsent = (appUrl: string) => {
+  const termsUrl = `${appUrl.replace(/\/+$/, "")}/terms`;
+  return {
+    consent_collection: {
+      terms_of_service: "required" as const,
+    },
+    custom_text: {
+      terms_of_service_acceptance: {
+        message: `I agree to the [Terms](${termsUrl}), request immediate access to this digital content, and acknowledge that my 14-day cancellation right is lost once access starts.`,
+      },
+    },
+  };
 };
 
 const MAX_SLUG_RETRIES = 20;
@@ -583,12 +599,14 @@ export const createCheckoutSession = async (
   }
 
   const customerEmail = data.metadata?.userEmail;
+  const appUrl = (env.NEXT_PUBLIC_APP_URL?.trim() || "https://trichologyacademy.co.uk").replace(/\/+$/, "");
 
   const session = await client.checkout.sessions.create({
     mode: selectedPrice.billingType === "ONE_TIME" ? "payment" : "subscription",
     success_url: data.successUrl,
     cancel_url: data.cancelUrl,
     ...(customerEmail ? { customer_email: customerEmail } : {}),
+    ...digitalContentStripeConsent(appUrl),
     line_items: [
       {
         price_data: {
@@ -616,6 +634,8 @@ export const createCheckoutSession = async (
       productId: data.productId,
       priceId: selectedPrice.id,
       ...data.metadata,
+      digitalContentConsentAccepted: "true",
+      digitalContentConsentAcceptedAt: data.digitalContentConsentAcceptedAt.toISOString(),
     },
   });
 
@@ -636,7 +656,14 @@ export const createCheckoutSession = async (
       status: "PENDING",
       paymentProvider: "STRIPE",
       providerSessionId: session.id,
-      metadata: data.metadata,
+      digitalContentConsentAccepted: data.digitalContentConsentAccepted,
+      digitalContentConsentAcceptedAt: data.digitalContentConsentAcceptedAt,
+      metadata: {
+        ...data.metadata,
+        digitalContentConsentAccepted: "true",
+        digitalContentConsentAcceptedAt: data.digitalContentConsentAcceptedAt.toISOString(),
+        digitalContentConsentText: DIGITAL_CONTENT_CONSENT_TEXT,
+      },
       items: {
         create: [
           isCourse
@@ -699,19 +726,28 @@ export const createBundleCheckoutSession = async (options: {
   successUrl: string;
   cancelUrl: string;
   metadata?: Record<string, string>;
+  digitalContentConsentAccepted: true;
+  digitalContentConsentAcceptedAt: Date;
 }) => {
   const bundle = await getBundleBySlug(options.bundleSlug);
   if (!bundle) throw new Error("Bundle not found.");
+  if (!options.digitalContentConsentAccepted) {
+    throw new Error(
+      "You must agree to the Terms, request immediate access, and acknowledge that the 14-day cancellation right is lost once access starts.",
+    );
+  }
   const env = getServerEnv();
   const client = stripeClient();
 
   const customerEmail = options.metadata?.userEmail;
+  const appUrl = (env.NEXT_PUBLIC_APP_URL?.trim() || "https://trichologyacademy.co.uk").replace(/\/+$/, "");
 
   const session = await client.checkout.sessions.create({
     mode: "payment",
     success_url: options.successUrl,
     cancel_url: options.cancelUrl,
     ...(customerEmail ? { customer_email: customerEmail } : {}),
+    ...digitalContentStripeConsent(appUrl),
     line_items: [
       {
         price_data: {
@@ -729,6 +765,8 @@ export const createBundleCheckoutSession = async (options: {
       productType: "BUNDLE",
       bundleSlug: options.bundleSlug,
       ...options.metadata,
+      digitalContentConsentAccepted: "true",
+      digitalContentConsentAcceptedAt: options.digitalContentConsentAcceptedAt.toISOString(),
     },
   });
 
@@ -747,9 +785,17 @@ export const createBundleCheckoutSession = async (options: {
       totalAmount: bundle.amount,
       currency: bundle.currency,
       status: "PENDING",
+      digitalContentConsentAccepted: options.digitalContentConsentAccepted,
+      digitalContentConsentAcceptedAt: options.digitalContentConsentAcceptedAt,
       paymentProvider: "STRIPE",
       providerSessionId: session.id,
-      metadata: { bundleSlug: options.bundleSlug, ...options.metadata },
+      metadata: {
+        bundleSlug: options.bundleSlug,
+        ...options.metadata,
+        digitalContentConsentAccepted: "true",
+        digitalContentConsentAcceptedAt: options.digitalContentConsentAcceptedAt.toISOString(),
+        digitalContentConsentText: DIGITAL_CONTENT_CONSENT_TEXT,
+      },
       items: {
         create: bundle.courses.map((c) => ({
           courseId: c.id,
@@ -1061,29 +1107,42 @@ export const createCourseEnquiry = async (
   const firstName = contact.firstName || data.name.split(" ")[0] || data.name;
   const appUrl = getServerEnv().NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
   const adminRecipients = await getEnquiryAdminRecipients();
+  const courseTitle = course?.title ?? "Lorraine Hawkins Program";
 
-  await Promise.allSettled([
-    sendCourseEnquiryConfirmationEmail({
-      to: data.email,
-      appUrl,
-      firstName,
-      courseTitle: course?.title ?? "Lorraine Hawkins Program",
-    }),
-    ...(adminRecipients.length > 0
-      ? [
-          sendCourseEnquiryAdminEmail({
-            to: adminRecipients,
+  await sendAndRecordEnquiryEmails({
+    contactId: contact.id,
+    courseEnquiryId: enquiry.id,
+    jobs: [
+      {
+        name: "course-enquiry-confirmation",
+        run: () =>
+          sendCourseEnquiryConfirmationEmail({
+            to: data.email,
             appUrl,
-            contactId: contact.id,
-            customerName: data.name,
-            customerEmail: data.email,
-            courseTitle: course?.title ?? "Lorraine Hawkins Program",
-            message: data.message,
-            phone: data.phone,
+            firstName,
+            courseTitle,
           }),
-        ]
-      : []),
-  ]);
+      },
+      ...(adminRecipients.length > 0
+        ? [
+            {
+              name: "course-enquiry-admin",
+              run: () =>
+                sendCourseEnquiryAdminEmail({
+                  to: adminRecipients,
+                  appUrl,
+                  contactId: contact.id,
+                  customerName: data.name,
+                  customerEmail: data.email,
+                  courseTitle,
+                  message: data.message,
+                  phone: data.phone,
+                }),
+            },
+          ]
+        : []),
+    ],
+  });
 
   return enquiry;
 };

@@ -10,8 +10,9 @@ import { z } from "zod";
 import { buildSystemPrompt } from "@/lib/chatPrompts";
 import { upsertContact } from "@/server/modules/crm/service";
 import { prisma as db } from "@/server/db/client";
-import { sendNewChatLeadEmail } from "@/server/modules/email/transactional";
-import { getOperationalAdminRecipients } from "@/server/modules/settings/notifications";
+import { sendAdminEnquiryNotificationEmail, sendNewChatLeadEmail } from "@/server/modules/email/transactional";
+import { sendAndRecordEnquiryEmails } from "@/server/modules/email/enquiry-delivery";
+import { getEnquiryAdminRecipients, getOperationalAdminRecipients } from "@/server/modules/settings/notifications";
 import { getServerEnv } from "@/server/schema/env";
 
 const openai = new OpenAI({
@@ -431,7 +432,6 @@ export async function executeFunction(
           });
         }
 
-        // For now, log as activity (in real implementation, would create CourseEnquiry)
         await prisma.activity.create({
           data: {
             contactId: contact.id,
@@ -440,6 +440,35 @@ export async function executeFunction(
             body: `${args.message}\n\nContact: ${args.name}\nEmail: ${args.email}\nPhone: ${args.phone || "Not provided"}`,
             activityAt: new Date(),
           },
+        });
+
+        const appUrl = getServerEnv().NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
+        const adminRecipients = await getEnquiryAdminRecipients();
+        const nameParts = String(args.name ?? "").trim().split(/\s+/);
+        const firstName = nameParts[0] || args.name;
+        const lastName = nameParts.slice(1).join(" ");
+
+        await sendAndRecordEnquiryEmails({
+          contactId: contact.id,
+          jobs: adminRecipients.length > 0
+            ? [
+                {
+                  name: "chat-course-enquiry-admin",
+                  run: () =>
+                    sendAdminEnquiryNotificationEmail({
+                      to: adminRecipients,
+                      appUrl,
+                      contactId: contact.id,
+                      customerName: `${firstName} ${lastName}`.trim() || args.name,
+                      customerEmail: args.email,
+                      enquiryType: "education",
+                      message: `Course: ${args.courseName}\n\n${args.message}`,
+                      preferredContactMethod: args.phone ? "phone" : "email",
+                      urgency: "normal",
+                    }),
+                },
+              ]
+            : [],
         });
 
         resourceType = "enquiry";

@@ -15,6 +15,7 @@ describe("course checkout bundle choice", () => {
     expect(checkoutPage).not.toContain("redirect(`/education/${params.slug}`)");
     expect(checkoutPage).toContain("PurchaseButton");
     expect(checkoutPage).not.toContain("CheckoutAuthClient");
+    expect(checkoutPage).toContain("request immediate access to this digital content");
   });
 
   it("uses a shared bundle offer helper for the eligible course pair", () => {

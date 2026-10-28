@@ -6,6 +6,7 @@ const upsertTaskMock = vi.fn();
 const getEnquiryAdminRecipientsMock = vi.fn();
 const sendEnquiryConfirmationEmailMock = vi.fn();
 const sendAdminEnquiryNotificationEmailMock = vi.fn();
+const sendAndRecordEnquiryEmailsMock = vi.fn();
 
 vi.mock("@/server/modules/crm/service", () => ({
   upsertContact: upsertContactMock,
@@ -26,6 +27,10 @@ vi.mock("@/server/schema", () => ({
 vi.mock("@/server/modules/email/transactional", () => ({
   sendEnquiryConfirmationEmail: sendEnquiryConfirmationEmailMock,
   sendAdminEnquiryNotificationEmail: sendAdminEnquiryNotificationEmailMock,
+}));
+
+vi.mock("@/server/modules/email/enquiry-delivery", () => ({
+  sendAndRecordEnquiryEmails: sendAndRecordEnquiryEmailsMock,
 }));
 
 describe("crm enquiries route emails", () => {
@@ -49,6 +54,10 @@ describe("crm enquiries route emails", () => {
     sendAdminEnquiryNotificationEmailMock.mockResolvedValue({
       skipped: false,
       id: "msg_2",
+    });
+    sendAndRecordEnquiryEmailsMock.mockImplementation(async ({ jobs }) => {
+      await Promise.allSettled(jobs.map((job: { run: () => Promise<unknown> }) => job.run()));
+      return { status: "sent", error: null, results: [] };
     });
   });
 
@@ -92,5 +101,39 @@ describe("crm enquiries route emails", () => {
         enquiryType: "education",
       }),
     );
+    expect(sendAndRecordEnquiryEmailsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactId: "contact_1",
+        jobs: expect.arrayContaining([
+          expect.objectContaining({ name: "enquiry-confirmation" }),
+          expect.objectContaining({ name: "enquiry-admin" }),
+        ]),
+      }),
+    );
+  });
+
+  it("records a failed admin send on the enquiry instead of swallowing it", async () => {
+    sendAdminEnquiryNotificationEmailMock.mockRejectedValueOnce(
+      new Error("Resend (enquiry-admin): The trichologyacademy.com domain is not verified."),
+    );
+
+    const { POST } = await import("@/app/api/crm/enquiries/route");
+
+    const response = await POST(
+      new Request("http://localhost/api/crm/enquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          enquiryType: "clinic",
+          firstName: "Jane",
+          lastName: "Doe",
+          email: "jane@example.com",
+          message: "Please call me about a consultation.",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(sendAndRecordEnquiryEmailsMock).toHaveBeenCalledTimes(1);
   });
 });
